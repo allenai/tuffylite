@@ -3,8 +3,8 @@ package tuffy.sample;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Random;
 
@@ -25,9 +25,9 @@ public class SampleAlgorithm_MCSAT extends MRFSampleAlgorithm{
 		
 	int nRuns = 0;
 	
-	HashSet<Integer> cannotBeTrue = new HashSet<Integer>();
+	LinkedHashSet<Integer> cannotBeTrue = new LinkedHashSet<Integer>();
 	
-	public SampleAlgorithm_MCSAT(HashMap<String, Object> property, ArrayList<Integer> sampleDomain) {
+	public SampleAlgorithm_MCSAT(LinkedHashMap<String, Object> property, ArrayList<Integer> sampleDomain) {
 		super(property, sampleDomain);
 		this.capable_for_small_components_optimization = true;
 		

@@ -14,10 +14,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
 
 import org.postgresql.PGConnection;
 
@@ -50,7 +50,7 @@ public class RDB {
 	public String password;
 	public String schema = null;
 
-	public static HashSet<RDB> historyInstances = new HashSet<RDB>();
+	public static LinkedHashSet<RDB> historyInstances = new LinkedHashSet<RDB>();
 
 	/**
 	 *  Disable auto-commit so that JDBC won't fetch all query results at once. 
@@ -239,7 +239,7 @@ public class RDB {
 	 * @param fout path of output file
 	 */
 	public void dumpTableToFile(Predicate p, String fout) {
-		HashMap<Long,String> cmap = this.loadIdSymbolMapFromTable();
+		LinkedHashMap<Long,String> cmap = this.loadIdSymbolMapFromTable();
 		try {
 			BufferedWriter bufferedWriter = null;
 			bufferedWriter = new BufferedWriter(new OutputStreamWriter
@@ -454,9 +454,9 @@ public class RDB {
 	 * 
 	 * @see Config#relConstants
 	 */
-	public ConcurrentHashMap<String, Integer> loadSymbolIdMapFromTable() {
-		ConcurrentHashMap<String, Integer> map =
-			new ConcurrentHashMap<String, Integer>();
+	public LinkedHashMap<String, Integer> loadSymbolIdMapFromTable() {
+		LinkedHashMap<String, Integer> map =
+			new LinkedHashMap<String, Integer>();
 		String rel = Config.relConstants;
 		String sql = "SELECT * FROM " + rel;
 		ResultSet rs = query(sql);
@@ -479,9 +479,9 @@ public class RDB {
 	 * 
 	 * @see Config#relConstants
 	 */
-	public HashMap<Long,String> loadIdSymbolMapFromTable() {
-		HashMap<Long,String> map =
-			new HashMap<Long,String>();
+	public LinkedHashMap<Long,String> loadIdSymbolMapFromTable() {
+		LinkedHashMap<Long,String> map =
+			new LinkedHashMap<Long,String>();
 		String sql = "SELECT * FROM " + Config.relConstants;
 		ResultSet rs = query(sql);
 		try {
@@ -586,7 +586,7 @@ public class RDB {
 	 * @param rel the name of the table
 	 * @param set the set of integers
 	 */
-	public void createSetTable(String rel, HashSet<Integer> set){
+	public void createSetTable(String rel, LinkedHashSet<Integer> set){
 		dropTable(rel);
 		String sql = "CREATE TEMPORARY TABLE " + rel +
 		"(id INT)";

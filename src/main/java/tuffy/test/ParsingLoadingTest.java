@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 
 import org.junit.BeforeClass;
@@ -182,8 +182,8 @@ public class ParsingLoadingTest {
 		
 		ConjunctiveQuery.clearIndexHistory();
 
-		Clause.mappingFromID2Const = new HashMap<Integer, String>();
-		Clause.mappingFromID2Desc = new HashMap<String, String>();
+		Clause.mappingFromID2Const = new LinkedHashMap<Integer, String>();
+		Clause.mappingFromID2Desc = new LinkedHashMap<String, String>();
 		
 		MarkovLogicNetwork mln = new MarkovLogicNetwork();
 		String prog = "// predicates\r\n" + 

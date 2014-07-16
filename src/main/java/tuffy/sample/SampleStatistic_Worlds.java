@@ -3,9 +3,9 @@ package tuffy.sample;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.util.myDouble;
 

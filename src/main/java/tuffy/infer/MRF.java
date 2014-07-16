@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.infer.ds.GAtom;
 import tuffy.infer.ds.GClause;
@@ -69,23 +69,23 @@ public class MRF {
 	/**
 	 * Map from GAtom ID to GAtom object.
 	 */
-	public HashMap<Integer, GAtom> atoms = new HashMap<Integer, GAtom>();
+	public LinkedHashMap<Integer, GAtom> atoms = new LinkedHashMap<Integer, GAtom>();
 
 	public boolean ownsAllAtoms = false;
 
 	// TODO: blocking
 	private boolean usingBlocks = true;
 
-	private HashSet<Integer> coreAtoms = new HashSet<Integer>();
+	private LinkedHashSet<Integer> coreAtoms = new LinkedHashSet<Integer>();
 
 	/**
 	 * Array of all GClause objects in this MRF.
 	 */
 	public ArrayList<GClause> clauses = new ArrayList<GClause>();
 
-	HashMap<Integer, GClause> singletons = null;
+	LinkedHashMap<Integer, GClause> singletons = null;
 
-	public HashMap<BitSet, myInt> mleTallies = new HashMap<BitSet, myInt>();
+	public LinkedHashMap<BitSet, myInt> mleTallies = new LinkedHashMap<BitSet, myInt>();
 
 
 	/**
@@ -100,25 +100,25 @@ public class MRF {
 	public boolean isCompiled = false;
 	public String clausesSignature = null;
 
-	public HashMap<GAtom, Integer> localAtomID = new HashMap<GAtom, Integer>();
-	public HashMap<Integer, GAtom> globalAtom = new HashMap<Integer, GAtom>();
-	public ConcurrentHashMap<Integer, BitSet> localAtomToUnitBitmap =
-			new ConcurrentHashMap<Integer, BitSet>();
+	public LinkedHashMap<GAtom, Integer> localAtomID = new LinkedHashMap<GAtom, Integer>();
+	public LinkedHashMap<Integer, GAtom> globalAtom = new LinkedHashMap<Integer, GAtom>();
+	public LinkedHashMap<Integer, BitSet> localAtomToUnitBitmap =
+			new LinkedHashMap<Integer, BitSet>();
 
-	public HashSet<Integer> isQueryForLearning = new HashSet<Integer>();
-	public HashSet<Integer> isFiexedForLearning = new HashSet<Integer>();
+	public LinkedHashSet<Integer> isQueryForLearning = new LinkedHashSet<Integer>();
+	public LinkedHashSet<Integer> isFiexedForLearning = new LinkedHashSet<Integer>();
 
-	public HashMap<Integer, HashSet<Integer>> localAtom2Clause = 
-			new HashMap<Integer, HashSet<Integer>>();
-	public HashMap<Integer, HashSet<Integer>> localClause2Atom = 
-			new HashMap<Integer, HashSet<Integer>>();
+	public LinkedHashMap<Integer, LinkedHashSet<Integer>> localAtom2Clause = 
+			new LinkedHashMap<Integer, LinkedHashSet<Integer>>();
+	public LinkedHashMap<Integer, LinkedHashSet<Integer>> localClause2Atom = 
+			new LinkedHashMap<Integer, LinkedHashSet<Integer>>();
 
-	public HashMap<Integer, HashSet<Integer>> keyToLocalAtoms = 
-			new HashMap<Integer, HashSet<Integer>>();
-	public HashMap<Integer, HashSet<Integer>> localAtomsToKey = 
-			new HashMap<Integer, HashSet<Integer>>();
+	public LinkedHashMap<Integer, LinkedHashSet<Integer>> keyToLocalAtoms = 
+			new LinkedHashMap<Integer, LinkedHashSet<Integer>>();
+	public LinkedHashMap<Integer, LinkedHashSet<Integer>> localAtomsToKey = 
+			new LinkedHashMap<Integer, LinkedHashSet<Integer>>();
 
-	public ConcurrentHashMap<String, Double> cweights = null;
+	public LinkedHashMap<String, Double> cweights = null;
 
 	public void updateWeight(Map<String, Double> currentWeight){
 		int ct = 0;
@@ -171,7 +171,7 @@ public class MRF {
 	 * compile current MRF into a set of bitmaps, so that the calculation of
 	 * costs can be conducted efficiently.
 	 */
-	public void compile(HashMap<String, Double>... weights){
+	public void compile(LinkedHashMap<String, Double>... weights){
 
 		//System.out.println("compile 1");
 
@@ -257,10 +257,10 @@ public class MRF {
 				bitmap_mask.set(localID);
 
 				if(!localAtom2Clause.containsKey(localID)){
-					localAtom2Clause.put(localID, new HashSet<Integer>());
+					localAtom2Clause.put(localID, new LinkedHashSet<Integer>());
 				}
 				if(!localClause2Atom.containsKey(ct)){
-					localClause2Atom.put(ct, new HashSet<Integer>());
+					localClause2Atom.put(ct, new LinkedHashSet<Integer>());
 				}
 
 				localAtom2Clause.get(localID).add(ct);
@@ -273,13 +273,13 @@ public class MRF {
 					int localID = this.localAtomID.get(this.atoms.get(atomid));
 
 					if(!keyToLocalAtoms.containsKey(gc.id)){
-						keyToLocalAtoms.put(gc.id, new HashSet<Integer>());
+						keyToLocalAtoms.put(gc.id, new LinkedHashSet<Integer>());
 					}
 
 					keyToLocalAtoms.get(gc.id).add(localID);
 
 					if(!localAtomsToKey.containsKey(localID)){
-						localAtomsToKey.put(localID, new HashSet<Integer>());
+						localAtomsToKey.put(localID, new LinkedHashSet<Integer>());
 					}
 
 					localAtomsToKey.get(localID).add(gc.id);
@@ -641,17 +641,17 @@ public class MRF {
 		return logX + java.lang.Math.log(1.0 + java.lang.Math.exp(negDiff)); 
 	}
 
-	public HashMap<String, Double> MLE_getGradientUpdate(HashMap<String, Double> currentWeight, double mu, double alpha){
+	public LinkedHashMap<String, Double> MLE_getGradientUpdate(LinkedHashMap<String, Double> currentWeight, double mu, double alpha){
 
 		ExceptionMan.die("Why are you still using the slower version? :-)");
 		return null;
 
 		//System.out.println("graident 1");
 		/*
-		HashMap<String, Double> rs = new HashMap<String, Double>();
+		LinkedHashMap<String, Double> rs = new LinkedHashMap<String, Double>();
 
-		HashMap<String, myDouble> tally_small = new HashMap<String, myDouble>();
-		HashMap<String, myDouble> tally_large = new HashMap<String, myDouble>();
+		LinkedHashMap<String, myDouble> tally_small = new LinkedHashMap<String, myDouble>();
+		LinkedHashMap<String, myDouble> tally_large = new LinkedHashMap<String, myDouble>();
 		Double smallZ = Double.NEGATIVE_INFINITY;
 		Double largeZ = Double.NEGATIVE_INFINITY;
 
@@ -693,8 +693,8 @@ public class MRF {
 
 			}
 
-			HashMap<String, Double> tally_small_meta = getClauseTallies(bitmap_smallsample);
-			HashMap<String, Double> tally_large_meta = getClauseTallies(bitmap_largesample);
+			LinkedHashMap<String, Double> tally_small_meta = getClauseTallies(bitmap_smallsample);
+			LinkedHashMap<String, Double> tally_large_meta = getClauseTallies(bitmap_largesample);
 
 			double c_small = this.getCost(bitmap_smallsample);
 			double c_large = this.getCost(bitmap_largesample);
@@ -878,7 +878,7 @@ public class MRF {
 
 		MLEWorld allworld = new MLEWorld(empty);
 
-		HashMap<BitSet, MLEWorld> worlds = new HashMap<BitSet, MLEWorld>();
+		LinkedHashMap<BitSet, MLEWorld> worlds = new LinkedHashMap<BitSet, MLEWorld>();
 		for(int i=0;i<Config.innerPara;i++){
 			// TODO: may need some smarter top-k algorithm
 			ArrayList<MLEWorld> topk = samplers.get(i).getTopK(-1);
@@ -963,9 +963,9 @@ public class MRF {
 
 
 
-	public void updateSingletonClauses(HashMap<Integer, Double> deltas, boolean inv) {
+	public void updateSingletonClauses(LinkedHashMap<Integer, Double> deltas, boolean inv) {
 		if (singletons == null) {
-			singletons = new HashMap<Integer, GClause>();
+			singletons = new LinkedHashMap<Integer, GClause>();
 			for (GClause gc : clauses) {
 				if (gc.lits.length == 1) {
 					singletons.put(gc.lits[0], gc);
@@ -1011,7 +1011,7 @@ public class MRF {
 	/**
 	 * Index from GAtom ID to GClause.
 	 */
-	public HashMap<Integer, ArrayList<GClause>> adj = new HashMap<Integer, ArrayList<GClause>>();
+	public LinkedHashMap<Integer, ArrayList<GClause>> adj = new LinkedHashMap<Integer, ArrayList<GClause>>();
 
 	int numCriticalNodesLocal = 0;
 
@@ -1022,7 +1022,7 @@ public class MRF {
 	/**
 	 * Atoms that have been flipped since last saving to low.
 	 */
-	protected HashSet<Integer> dirtyAtoms = new HashSet<Integer>();
+	protected LinkedHashSet<Integer> dirtyAtoms = new LinkedHashSet<Integer>();
 
 	/**
 	 * The total cost of this MRF under current atoms' truth setting.
@@ -1083,11 +1083,11 @@ public class MRF {
 		Random r = SeededRandom.getInstance();
 		ArrayList<MRF> pieces = new ArrayList<MRF>();
 		ArrayList<Integer> as = new ArrayList<Integer>(atoms.keySet());
-		HashSet<Integer> danglings = new HashSet<Integer>(atoms.keySet());
+		LinkedHashSet<Integer> danglings = new LinkedHashSet<Integer>(atoms.keySet());
 		Collections.shuffle(as);
 		int imb = 1;// + r.nextInt(3);
 		int maxs = (int) (atoms.size() * (1.0/np + r.nextDouble()*(1.0/np)));
-		HashMap<Integer, MRF> amap = new HashMap<Integer, MRF>();
+		LinkedHashMap<Integer, MRF> amap = new LinkedHashMap<Integer, MRF>();
 		int cur = 0;
 		// assign seed nodes
 		for(int i=0; i<np; i++){
@@ -1135,7 +1135,7 @@ public class MRF {
 			Iterator<Integer> it = danglings.iterator();
 			while(it.hasNext()){
 				int aid = it.next();
-				HashSet<Integer> ns = getAtomNeighbors(aid);
+				LinkedHashSet<Integer> ns = getAtomNeighbors(aid);
 				ArrayList<Integer> opts = new ArrayList<Integer>();
 				for(int a : ns){
 					if(amap.get(a) != null){
@@ -1222,8 +1222,8 @@ public class MRF {
 	 * @param aid id of the core atom
 	 * @return id of neighbors
 	 */
-	private HashSet<Integer> getAtomNeighbors(int aid){
-		HashSet<Integer> ns = new HashSet<Integer>();
+	private LinkedHashSet<Integer> getAtomNeighbors(int aid){
+		LinkedHashSet<Integer> ns = new LinkedHashSet<Integer>();
 		for(GClause gc : adj.get(aid)){
 			for(int lit : gc.lits){
 				ns.add(Math.abs(lit));
@@ -1270,7 +1270,7 @@ public class MRF {
 	 * @param partID id of this MRF
 	 * @param gatoms ground atoms
 	 */
-	public MRF(MarkovLogicNetwork mln, int partID, HashMap<Integer, GAtom> gatoms){
+	public MRF(MarkovLogicNetwork mln, int partID, LinkedHashMap<Integer, GAtom> gatoms){
 		this.partID = partID;
 		atoms = gatoms;
 	}
@@ -1287,7 +1287,7 @@ public class MRF {
 		return ownsAllAtoms || getCoreAtoms().contains(aid);
 	}
 
-	protected boolean ownsAtom(int aid, HashSet<Integer> notChange){
+	protected boolean ownsAtom(int aid, LinkedHashSet<Integer> notChange){
 
 		if(notChange != null && notChange.contains(aid)){
 			return false;
@@ -1494,7 +1494,7 @@ public class MRF {
 	@SuppressWarnings("unused")
 	private void testKeyConstraints(){
 
-		HashMap<Integer, myInt> counter = new HashMap<Integer, myInt>();
+		LinkedHashMap<Integer, myInt> counter = new LinkedHashMap<Integer, myInt>();
 
 		for(GAtom g : atoms.values()){
 
@@ -1530,7 +1530,7 @@ public class MRF {
 	}
 
 	@SuppressWarnings("unchecked")
-	public void inferWalkSAT(int nTries, long nSteps, HashSet<Integer> notChanges){
+	public void inferWalkSAT(int nTries, long nSteps, LinkedHashSet<Integer> notChanges){
 		if(Config.use_atom_blocking == false){
 			this.inferWalkSATwithoutBlocking(nTries, nSteps, notChanges);
 		}else{
@@ -1544,12 +1544,12 @@ public class MRF {
 	 * @param nSteps number of steps per try
 	 */
 	private synchronized void inferWalkSATwithoutBlocking(int nTries, 
-			long nSteps, HashSet<Integer>... notChanges){
+			long nSteps, LinkedHashSet<Integer>... notChanges){
 		if(atoms.size() == 0){
 			return;
 		}
 
-		HashSet<Integer> notChange = null;
+		LinkedHashSet<Integer> notChange = null;
 		if(notChanges.length == 1){
 			notChange = notChanges[0];
 		}
@@ -1952,8 +1952,8 @@ public class MRF {
 					// update f-nsat
 					ArrayList<GClause> addNSAT = new ArrayList<GClause>();
 					ArrayList<GClause> minusNSAT = new ArrayList<GClause>();
-					HashSet<GClause> allGCs = new HashSet<GClause>();
-					HashSet<Integer> needToReCalcCost = new HashSet<Integer>();
+					LinkedHashSet<GClause> allGCs = new LinkedHashSet<GClause>();
+					LinkedHashSet<Integer> needToReCalcCost = new LinkedHashSet<Integer>();
 
 					for(GAtom toFlip : influenced ){
 						if(toFlip.truth == false){
@@ -2242,7 +2242,7 @@ public class MRF {
 	 * ad hoc and heuristic stats.
 	 */
 	private void assignGreedyTruthValues(){
-		HashMap<Integer, Double> wts = new HashMap<Integer, Double>();
+		LinkedHashMap<Integer, Double> wts = new LinkedHashMap<Integer, Double>();
 		if(ownsAllAtoms){
 			for(GAtom n : atoms.values()){
 				wts.put(n.id, 0.0);
@@ -2423,7 +2423,7 @@ public class MRF {
 			}
 
 			//TODO: CHANGE TO MORE EFFICIENT DATA STRUCTURE
-			HashMap<GClause, Integer> delta = new HashMap<GClause, Integer>();
+			LinkedHashMap<GClause, Integer> delta = new LinkedHashMap<GClause, Integer>();
 			for(GClause gc : minusNSAT){
 				if(!delta.containsKey(gc)){
 					delta.put(gc, 0);
@@ -2454,9 +2454,9 @@ public class MRF {
 	}
 
 
-	private double calcCostsForWalkSAT(HashSet<Integer> needToBeReset){
+	private double calcCostsForWalkSAT(LinkedHashSet<Integer> needToBeReset){
 
-		HashSet<Integer> afterClosure = new HashSet<Integer>();
+		LinkedHashSet<Integer> afterClosure = new LinkedHashSet<Integer>();
 		/*	
 		if(ownsAllAtoms){
 			for(GAtom n : atoms.values()){
@@ -2512,7 +2512,7 @@ public class MRF {
 			}
 
 			//TODO: CHANGE TO MORE EFFICIENT DATA STRUCTURE
-			HashMap<GClause, myInt> delta = new HashMap<GClause, myInt>();
+			LinkedHashMap<GClause, myInt> delta = new LinkedHashMap<GClause, myInt>();
 			for(GClause gc : minusNSAT){
 				if(!delta.containsKey(gc)){
 					delta.put(gc, new myInt(0));
@@ -2610,7 +2610,7 @@ public class MRF {
 		return atotalCost;
 	}
 
-	public HashSet<Integer> getCoreAtoms() {
+	public LinkedHashSet<Integer> getCoreAtoms() {
 		return coreAtoms;
 	}
 
@@ -2626,30 +2626,30 @@ public class MRF {
 	 * This map records the expectation of #violation for
 	 * each clause. This is filled by {@link MCSAT#calcExpViolation()}.
 	 */
-	public HashMap<String, Double> expectationOfViolation = null;
+	public LinkedHashMap<String, Double> expectationOfViolation = null;
 
 	/**
 	 * This map records the expectation of square #violation for
 	 * each clause. This is filled by {@link MCSAT#calcExpViolation()}.
 	 */
-	public HashMap<String, Double> expectationOfSquareViolation = null;
+	public LinkedHashMap<String, Double> expectationOfSquareViolation = null;
 
 	/**
 	 * This map records the tallies for calculating E(v_i*v_j).
 	 */
-	public HashMap<String, Long> clauseNiNjViolationTallies = null;
+	public LinkedHashMap<String, Long> clauseNiNjViolationTallies = null;
 
 	/**
 	 * This map records the expectation of E(v_i*v_j). 
 	 * This is filled by {@link MCSAT#calcExpViolation()}.
 	 */
-	public HashMap<String, Double> expectationOfNiNjViolation = null;
+	public LinkedHashMap<String, Double> expectationOfNiNjViolation = null;
 
 	/**
 	 * This array records the expection of #satisfaction for
 	 * each clause. This is filled by {@link MCSAT#calcExpViolation()}.
 	 */
-	public HashMap<String, Double> expectationOfSatisfication = null;
+	public LinkedHashMap<String, Double> expectationOfSatisfication = null;
 
 
 	/**
@@ -2657,19 +2657,19 @@ public class MRF {
 	 * Dividing this number by {@link MCSAT#nClauseVioTallies}
 	 * will give the estimated expectation of #violation. 
 	 */
-	public HashMap<String, Long> clauseVioTallies = null;
+	public LinkedHashMap<String, Long> clauseVioTallies = null;
 
 	/**
 	 * This array records total number of square violation for a clause.
 	 * Dividing this number by {@link MCSAT#nClauseVioTallies}
 	 * will give the estimated expectation of #violation. 
 	 */
-	public HashMap<String, Long> clauseSquareVioTallies = null;
+	public LinkedHashMap<String, Long> clauseSquareVioTallies = null;
 
 	/**
 	 * This array records total number of satisfaction for a clause.
 	 */
-	public HashMap<String, Long> clauseSatTallies = null;
+	public LinkedHashMap<String, Long> clauseSatTallies = null;
 
 	/**
 	 * Number of iterations of tallies. 
@@ -3044,14 +3044,14 @@ public class MRF {
 		int dumpingTime = 0;
 		int lastTime = (int)Timer.elapsedSeconds();
 
-		HashSet<Integer> historyTime = new HashSet<Integer>();
+		LinkedHashSet<Integer> historyTime = new LinkedHashSet<Integer>();
 
 		double sumCost = 0;
 		int nSample = numSamples;
 		int size = this.atoms.size();
 		double knob = Math.pow(2, this.atoms.size()+1);
 
-		HashSet<Integer> history_po2 = new HashSet<Integer>();
+		LinkedHashSet<Integer> history_po2 = new LinkedHashSet<Integer>();
 
 		double maxWeight = Double.NEGATIVE_INFINITY;
 		double treeWidth = 0;
@@ -3274,7 +3274,7 @@ public class MRF {
 		int dumpingTime = 0;
 		int lastTime = (int)Timer.elapsedSeconds();
 
-		HashSet<Integer> historyTime = new HashSet<Integer>();
+		LinkedHashSet<Integer> historyTime = new LinkedHashSet<Integer>();
 
 		double sumCost = 0;
 
@@ -3344,13 +3344,13 @@ public class MRF {
 		// assert(GClause.maxFCID >= 0);
 
 		if(this.clauseVioTallies == null){
-			this.clauseVioTallies = new HashMap<String, Long>();
-			this.clauseSatTallies = new HashMap<String, Long>();
-			this.clauseSquareVioTallies = new HashMap<String, Long>();
-			this.clauseNiNjViolationTallies = new HashMap<String, Long>();
-			//this.nGClauseEachClause = new HashMap<String, Long>();
+			this.clauseVioTallies = new LinkedHashMap<String, Long>();
+			this.clauseSatTallies = new LinkedHashMap<String, Long>();
+			this.clauseSquareVioTallies = new LinkedHashMap<String, Long>();
+			this.clauseNiNjViolationTallies = new LinkedHashMap<String, Long>();
+			//this.nGClauseEachClause = new LinkedHashMap<String, Long>();
 		}
-		HashMap<String, Long> tmpSquareViolation = new HashMap<String, Long>();
+		LinkedHashMap<String, Long> tmpSquareViolation = new LinkedHashMap<String, Long>();
 
 		this.nClauseVioTallies ++ ;
 
@@ -3530,7 +3530,7 @@ public class MRF {
 	}
 
 	/**
-	 * Calculating the different expectations by filling the HashMaps related to
+	 * Calculating the different expectations by filling the LinkedHashMaps related to
 	 * expectations in this class.
 	 */
 	public void calcExpViolation(){
@@ -3538,10 +3538,10 @@ public class MRF {
 		assert(this.clauseVioTallies != null);
 		assert(this.nClauseVioTallies > 0);
 
-		this.expectationOfViolation = new HashMap<String, Double>();
-		this.expectationOfSatisfication = new HashMap<String, Double>();
-		this.expectationOfSquareViolation = new HashMap<String, Double>();
-		this.expectationOfNiNjViolation = new HashMap<String, Double>();
+		this.expectationOfViolation = new LinkedHashMap<String, Double>();
+		this.expectationOfSatisfication = new LinkedHashMap<String, Double>();
+		this.expectationOfSquareViolation = new LinkedHashMap<String, Double>();
+		this.expectationOfNiNjViolation = new LinkedHashMap<String, Double>();
 
 		for(String k : this.clauseVioTallies.keySet()){
 			this.expectationOfViolation.put(k, 
@@ -3569,7 +3569,7 @@ public class MRF {
 	 * @param currentWeight The weight of clauses to be flushed
 	 * in this MCSAT instance.
 	 */
-	public void updateClauseWeights(HashMap<String, Double> currentWeight){
+	public void updateClauseWeights(LinkedHashMap<String, Double> currentWeight){
 		for(GClause c : this.clauses){
 			
 			String[] ffcid = c.ffcid;

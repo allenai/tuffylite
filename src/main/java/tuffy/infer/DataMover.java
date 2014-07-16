@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.postgresql.PGConnection;
@@ -59,8 +59,8 @@ public class DataMover {
 	/**
 	 * Load the truth table of atoms from the database.
 	 */
-	public HashMap<Integer, Boolean> loadTruthTable(String relAtoms){
-		HashMap<Integer, Boolean> map = new HashMap<Integer, Boolean>();
+	public LinkedHashMap<Integer, Boolean> loadTruthTable(String relAtoms){
+		LinkedHashMap<Integer, Boolean> map = new LinkedHashMap<Integer, Boolean>();
 		String sql = "SELECT atomID, truth FROM " + relAtoms;
 		ResultSet rs = db.query(sql);
 		try {
@@ -292,7 +292,7 @@ public class DataMover {
 				}
 
 				if(!wordLogPF.containsKey(p)){
-					wordLogPF.put(p, new HashMap<BitSet, Double>());
+					wordLogPF.put(p, new LinkedHashMap<BitSet, Double>());
 				}
 				wordLogPF.get(p).put(conf, -p.mrf.calcCosts());
 
@@ -319,8 +319,8 @@ public class DataMover {
 
 	}
 
-	public HashMap<Partition, HashMap<BitSet, Double>> wordLogPF = new HashMap<Partition, HashMap<BitSet, Double>>();
-	public HashMap<Partition, Double> partLogPF = new HashMap<Partition, Double>();
+	public LinkedHashMap<Partition, LinkedHashMap<BitSet, Double>> wordLogPF = new LinkedHashMap<Partition, LinkedHashMap<BitSet, Double>>();
+	public LinkedHashMap<Partition, Double> partLogPF = new LinkedHashMap<Partition, Double>();
 	public Double wholeLogPF = new Double(1);
 
 	public double logAdd(double logX, double logY) {
@@ -518,7 +518,7 @@ public class DataMover {
 			parts.addAll(c.parts);
 		}
 
-		HashMap<BitSet, myInt> sampleCache = new HashMap<BitSet, myInt>();
+		LinkedHashMap<BitSet, myInt> sampleCache = new LinkedHashMap<BitSet, myInt>();
 
 		double sum = 0;
 
@@ -571,8 +571,8 @@ public class DataMover {
 		}
 
 		// latter change to more efficient case
-		HashMap<BitSet, Double> sampleCache = new HashMap<BitSet, Double>();
-		HashMap<BitSet, myInt> sampleCount = new HashMap<BitSet, myInt>();
+		LinkedHashMap<BitSet, Double> sampleCache = new LinkedHashMap<BitSet, Double>();
+		LinkedHashMap<BitSet, myInt> sampleCount = new LinkedHashMap<BitSet, myInt>();
 
 		double sum = -1;
 		double count = 0;
@@ -884,7 +884,7 @@ public class DataMover {
 		}
 	}
 
-	private String atomToString(Predicate p, ResultSet rs, HashMap<Long,String> cmap){
+	private String atomToString(Predicate p, ResultSet rs, LinkedHashMap<Long,String> cmap){
 		String line = p.getName() + "(";
 		ArrayList<String> cs = new ArrayList<String>();
 		try{
@@ -911,7 +911,7 @@ public class DataMover {
 	}
 
 	public void dumpTruthToFile(String relAtoms, String fout){
-		HashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
+		LinkedHashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
 		try {
 			String sql;
 			BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
@@ -978,7 +978,7 @@ public class DataMover {
 	/**
 	 * Propagate inference results to a predicate table.
 	 */
-	public void updateMasterPredTableFromAtoms(HashSet<String> relAtomsSet, 
+	public void updateMasterPredTableFromAtoms(LinkedHashSet<String> relAtomsSet, 
 			Predicate p){
 		String sql;
 		for(String relAtoms : relAtomsSet){
@@ -998,7 +998,7 @@ public class DataMover {
 	 * @param marginal
 	 */
 	public void populatePredTableWithInferenceResults(
-			HashSet<String> relAtomsTables, Predicate p, 
+			LinkedHashSet<String> relAtomsTables, Predicate p, 
 			String targetTable, boolean marginal){
 
 		db.dropTable(targetTable);
@@ -1031,7 +1031,7 @@ public class DataMover {
 	 */
 	public void dumpProbsToFile(String relAtoms, String fout){
 		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
-		HashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
+		LinkedHashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
 		int digits = 4;
 		String sql;
 		try {
@@ -1070,6 +1070,7 @@ public class DataMover {
 						line += " // prior = " + UIMan.decimalRound(digits, prior);
 						line += " ; delta = " + UIMan.decimalRound(digits, prob - prior);
 					}
+					UIMan.verbose(3, line);
 					bufferedWriter.append(line + "\n");
 				}
 				rs.close();
@@ -1096,7 +1097,7 @@ public class DataMover {
 				atom.tallyTrueFreq/atom.tallyFreq
 			*/	
 		
-		HashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
+		LinkedHashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
 		
 		db.dropTable("sample");
 		db.update("CREATE TABLE sample (nsample int, sig text, sampleAlgo TEXT, compsize INT," +

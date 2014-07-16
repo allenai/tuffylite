@@ -2,14 +2,15 @@ package tuffy.sample;
 
 import java.util.BitSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
 
+import tuffy.util.DeterministicMapHelper;
 import tuffy.util.myDouble;
 
 public class SampleStatistic_WorldLogWeight extends MRFSampleStatistic{
 
-	ConcurrentHashMap<BitSet, myDouble> worldLogWeights = 
-			new ConcurrentHashMap<BitSet, myDouble>();
+	LinkedHashMap<BitSet, myDouble> worldLogWeights = 
+			new LinkedHashMap<BitSet, myDouble>();
 	
 	public SampleStatistic_WorldLogWeight(){
 		this.type = StatisticType.WorldLogWeight;
@@ -18,7 +19,7 @@ public class SampleStatistic_WorldLogWeight extends MRFSampleStatistic{
 	@Override
 	public void process(MRFSampleResult sampleWorld) {
 		
-		this.worldLogWeights.putIfAbsent((BitSet) sampleWorld.world.clone(), new myDouble());
+		DeterministicMapHelper.putIfAbsent(this.worldLogWeights, (BitSet) sampleWorld.world.clone(), new myDouble());
 		this.worldLogWeights.get(sampleWorld.world).tallylog(-sampleWorld.getCost());
 		
 		this.nProcessedSample ++;
@@ -47,7 +48,7 @@ public class SampleStatistic_WorldLogWeight extends MRFSampleStatistic{
 			for(Object world_g : sampler.getStatisticDomain()){
 				BitSet world = (BitSet) world_g;
 				
-				worldLogWeights.putIfAbsent(world, new myDouble());
+				DeterministicMapHelper.putIfAbsent(worldLogWeights, world, new myDouble());
 				
 				worldLogWeights.get(world).tallylog(sampler.lookupStatistic(world));
 				

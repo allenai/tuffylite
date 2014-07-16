@@ -4,8 +4,8 @@ package tuffy.ground.partition;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 //import javaewah.EWAHCompressedBitmap;
@@ -30,11 +30,11 @@ public class Bucket {
 	
 	private static int guid = 0;
 
-	public HashMap<Integer, Component> atom2comp = new HashMap<Integer, Component>();
+	public LinkedHashMap<Integer, Component> atom2comp = new LinkedHashMap<Integer, Component>();
 	
 	public boolean loaded = false;
 	
-	public void updateAtomBiases(HashMap<Integer, Double> deltas, boolean inv) {
+	public void updateAtomBiases(LinkedHashMap<Integer, Double> deltas, boolean inv) {
 		if (!loaded) {
 			System.err.println("!!!!!!! BUCKET NOT LOADED YET!");
 			System.exit(2);
@@ -56,8 +56,8 @@ public class Bucket {
 	private PartitionScheme pmap;
 	private int id;
 	
-	private HashSet<Component> comps = new HashSet<Component>();
-	private HashSet<Partition> parts = new HashSet<Partition>();
+	private LinkedHashSet<Component> comps = new LinkedHashSet<Component>();
+	private LinkedHashSet<Partition> parts = new LinkedHashSet<Partition>();
 	
 	public Set<Component> getComponents(){
 		return (comps);
@@ -159,7 +159,7 @@ public class Bucket {
 		}
 		
 		for(Component com : comps){
-			com.atoms = new HashMap<Integer, GAtom>();
+			com.atoms = new LinkedHashMap<Integer, GAtom>();
 			for(Partition p : com.parts){
 				//if(parts.contains(p)){
 				if(filter[p.id]){

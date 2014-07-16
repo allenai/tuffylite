@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
 
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -275,7 +275,7 @@ public class UIMan {
 				System.err.println(e.getMessage());
 				return false;
 			}
-			Hashtable<String, String> map = parser.map;
+			LinkedHashMap<String, String> map = parser.map;
 			String value;
 			
 			value = map.get("db_url");

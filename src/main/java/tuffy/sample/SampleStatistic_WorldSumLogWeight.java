@@ -1,9 +1,9 @@
 package tuffy.sample;
 
 import java.util.BitSet;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.util.Config;
 import tuffy.util.myDouble;
@@ -30,7 +30,7 @@ public class SampleStatistic_WorldSumLogWeight extends MRFSampleStatistic{
 
 	@Override
 	public Set getStatisticDomain() {
-		return new HashSet<String>();
+		return new LinkedHashSet<String>();
 	}
 
 	@Override

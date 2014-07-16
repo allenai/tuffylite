@@ -3,7 +3,7 @@ package tuffy.test;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 
 import org.junit.Test;
@@ -132,7 +132,7 @@ public class LiteralTest {
 		list.add(2);
 		list.add(3);
 		Tuple tu = new Tuple(list);
-		HashMap<String, Term> mgu = l.mostGeneralUnification(tu);
+		LinkedHashMap<String, Term> mgu = l.mostGeneralUnification(tu);
 		assertEquals(true, mgu.containsKey("variable"));
 		assertFalse(Config.constants_as_raw_string);
 		assertEquals(2, mgu.get("variable").constant());

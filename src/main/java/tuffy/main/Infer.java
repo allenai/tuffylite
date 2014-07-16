@@ -3,7 +3,7 @@ package tuffy.main;
 
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.db.RDB;
 import tuffy.ground.Grounding;
@@ -68,8 +68,8 @@ public abstract class Infer {
 		options = opt;
 		Timer.resetClock();
 
-		Clause.mappingFromID2Const = new HashMap<Integer, String>();
-		Clause.mappingFromID2Desc = new HashMap<String, String>();
+		Clause.mappingFromID2Const = new LinkedHashMap<Integer, String>();
+		Clause.mappingFromID2Desc = new LinkedHashMap<String, String>();
 		
 		UIMan.println(">>> Connecting to RDBMS at " + Config.db_url);
 		db = RDB.getRDBbyConfig();
@@ -102,8 +102,8 @@ public abstract class Infer {
 		options = opt;
 		Timer.resetClock();
 
-		//Clause.mappingFromID2Const = new HashMap<Integer, String>();
-		//Clause.mappingFromID2Desc = new HashMap<String, String>();
+		//Clause.mappingFromID2Const = new LinkedHashMap<Integer, String>();
+		//Clause.mappingFromID2Desc = new LinkedHashMap<String, String>();
 		
 		UIMan.println(">>> Connecting to RDBMS at " + Config.db_url);
 		db = RDB.getRDBbyConfig();

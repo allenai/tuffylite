@@ -1,7 +1,7 @@
 // $ANTLR 3.2 Sep 23, 2009 12:02:23 /scratch/leonn/workspace/tuffy/src/tuffy/parse/Config.g 2012-02-17 15:34:25
 
 package tuffy.parse;
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import tuffy.mln.*;
 import tuffy.util.*;
 
@@ -49,7 +49,7 @@ public class ConfigParser extends Parser {
     public String getGrammarFileName() { return "/scratch/leonn/workspace/tuffy/src/tuffy/parse/Config.g"; }
 
 
-    public Hashtable<String, String> map = new Hashtable<String, String>();
+    public LinkedHashMap<String, String> map = new LinkedHashMap<String, String>();
 
 
     public static class config_return extends ParserRuleReturnScope {

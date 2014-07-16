@@ -11,7 +11,7 @@ import java.util.Stack;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import org.antlr.runtime.tree.*;
 
@@ -88,7 +88,7 @@ public class MLNParser extends Parser {
         }
         public MLNParser(TokenStream input, RecognizerSharedState state) {
             super(input, state);
-            this.state.ruleMemo = new HashMap[133+1];
+            this.state.ruleMemo = new LinkedHashMap[133+1];
              
              
         }

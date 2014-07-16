@@ -3,8 +3,8 @@ package tuffy.sample;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Random;
 
@@ -20,9 +20,9 @@ public class SampleAlgorithm_NaiveSampling extends MRFSampleAlgorithm{
 		
 	int nRuns = 0;
 	
-	HashSet<Integer> cannotBeTrue = new HashSet<Integer>();
+	LinkedHashSet<Integer> cannotBeTrue = new LinkedHashSet<Integer>();
 		
-	public SampleAlgorithm_NaiveSampling(HashMap<String, Object> property, ArrayList<Integer> sampleDomain) {
+	public SampleAlgorithm_NaiveSampling(LinkedHashMap<String, Object> property, ArrayList<Integer> sampleDomain) {
 		super(property, sampleDomain);
 		this.capable_for_small_components_optimization = true;
 		
@@ -60,7 +60,7 @@ public class SampleAlgorithm_NaiveSampling extends MRFSampleAlgorithm{
 			
 			Config.avoid_breaking_hard_clauses = true;
 			
-			HashSet<Integer> notChange = new HashSet<Integer>();
+			LinkedHashSet<Integer> notChange = new LinkedHashSet<Integer>();
 			
 			if(maintain_fixed_query_in_mrf){
 				for(int i : sampleDomain){

@@ -1,15 +1,15 @@
 package tuffy.infer.ds;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 /**
  * A block of ground atoms. Exactly one atom in a block can be true.
  */
 public class KeyBlock{
 
-	public HashMap<Integer, ArrayList<GAtom>> keyConstraints = new HashMap<Integer, ArrayList<GAtom>>();
+	public LinkedHashMap<Integer, ArrayList<GAtom>> keyConstraints = new LinkedHashMap<Integer, ArrayList<GAtom>>();
 	
-	public HashMap<GAtom, Integer> gatom2key = new HashMap<GAtom, Integer>();
+	public LinkedHashMap<GAtom, Integer> gatom2key = new LinkedHashMap<GAtom, Integer>();
 	
 	public void pushGAtom(Integer key, GAtom gatom){
 		

@@ -3,9 +3,8 @@ package tuffy.mln;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,7 +45,7 @@ public class Clause implements Cloneable{
 		ret.metaTypes = (ArrayList<Type>) this.metaTypes.clone();
 		ret.metaVars = (ArrayList<String>) this.metaVars.clone();
 		ret.name = this.name;
-		ret.predIndex = (HashMap<Predicate, ArrayList<Literal>>) this.predIndex.clone();
+		ret.predIndex = (LinkedHashMap<Predicate, ArrayList<Literal>>) this.predIndex.clone();
 		ret.reglits = (ArrayList<Literal>) this.reglits.clone();
 		ret.relIntanceClauses = this.relIntanceClauses;
 		ret.signature = this.signature;
@@ -75,16 +74,16 @@ public class Clause implements Cloneable{
 	 * a string like <Clause ID>.<Instance ID or 0 if not a template>.
 	 * This variable is materialized in {@link Infer#setUp(CommandOptions)}.
 	 */
-	public static HashMap<String, String> mappingFromID2Desc = null;
-	//	new HashMap<String, String>();
+	public static LinkedHashMap<String, String> mappingFromID2Desc = null;
+	//	new LinkedHashMap<String, String>();
 	
 	/**
 	 * Map from Constant ID to Constant Name. This map is filled
 	 * in {@link MarkovLogicNetwork#getSymbolID(String, Type)}.
 	 * This variable is materialized in {@link Infer#setUp(CommandOptions)}.
 	 */
-	public static HashMap<Integer, String> mappingFromID2Const = null;
-	//	new HashMap<Integer, String>();
+	public static LinkedHashMap<Integer, String> mappingFromID2Const = null;
+	//	new LinkedHashMap<Integer, String>();
 
 	/**
 	 * The set of boolean expressions that must all be TRUE;
@@ -139,8 +138,8 @@ public class Clause implements Cloneable{
 	/**
 	 * The index of predicate to set of literals referencing that predicate.
 	 */
-	protected HashMap<Predicate, ArrayList<Literal>> predIndex =
-		new HashMap<Predicate, ArrayList<Literal>>();
+	protected LinkedHashMap<Predicate, ArrayList<Literal>> predIndex =
+		new LinkedHashMap<Predicate, ArrayList<Literal>>();
 	
 	/**
 	 * List of variables that are existentially quantified.
@@ -381,8 +380,8 @@ public class Clause implements Cloneable{
 	 * @see MarkovLogicNetwork#registerClause(Clause)
 	 */
 	public Clause normalize() {
-		HashMap<String, Integer> varIndex = new HashMap<String, Integer>();
-		HashMap<String, Integer> conIndex = new HashMap<String, Integer>();
+		LinkedHashMap<String, Integer> varIndex = new LinkedHashMap<String, Integer>();
+		LinkedHashMap<String, Integer> conIndex = new LinkedHashMap<String, Integer>();
 		ArrayList<Term> conList = new ArrayList<Term>();
 		ArrayList<Type> conTypeList = new ArrayList<Type>();
 		
@@ -471,7 +470,7 @@ public class Clause implements Cloneable{
 		}
 		sigb.append(StringMan.join((Config.clause_display_multiline ? "\n" : "") + " v ", litlist));
 		
-		HashMap<String, String> mapVarVar = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarVar = new LinkedHashMap<String, String>();
 		for(String v : varIndex.keySet()){
 			mapVarVar.put(v, "v" + varIndex.get(v));
 		}
@@ -719,8 +718,8 @@ public class Clause implements Cloneable{
 	 * i.e., if it does not appear in the body in the Datalog form.
 	 */
 	public void checkVariableSafety(){
-		HashSet<String> vars = new HashSet<String>();
-		HashSet<String> safeVars = new HashSet<String>();
+		LinkedHashSet<String> vars = new LinkedHashSet<String>();
+		LinkedHashSet<String> safeVars = new LinkedHashSet<String>();
 		ArrayList<Literal> posLits = new ArrayList<Literal>();
 		for(Literal lit : reglits){
 			vars.addAll(lit.getVars());
@@ -762,7 +761,7 @@ public class Clause implements Cloneable{
 	 */
 	public void generateSQL() {
 		
-		HashMap<String, String> mapVarAttr = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarAttr = new LinkedHashMap<String, String>();
 		ArrayList<String> groundAttrs = new ArrayList<String>();
 		ArrayList<String> whereList = new ArrayList<String>();
 		whereList.add("1=1");
@@ -815,7 +814,7 @@ public class Clause implements Cloneable{
 		
 		// build variable bindings; distinguish pos lits that rely on partial materialization
 
-		HashMap<String, Type> var2type = new HashMap<String, Type>();
+		LinkedHashMap<String, Type> var2type = new LinkedHashMap<String, Type>();
 		
 		ArrayList<String> attachConds = new ArrayList<String>();
 		
@@ -916,7 +915,7 @@ public class Clause implements Cloneable{
 		
 		
 		// express constraints in SQL
-		HashSet<String> cvars = new HashSet<String>();
+		LinkedHashSet<String> cvars = new LinkedHashSet<String>();
 		int nChangeName = 0;
 		for(Expression e : constraints){
 			if(e.changeName == true){
@@ -924,8 +923,8 @@ public class Clause implements Cloneable{
 			}
 			cvars.addAll(e.getVars());
 		}
-		HashMap<String, String> mapVarVal = new HashMap<String, String>();
-		HashMap<String, String> mapVarValNotChangeName = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarVal = new LinkedHashMap<String, String>();
+		LinkedHashMap<String, String> mapVarValNotChangeName = new LinkedHashMap<String, String>();
 		int idx = 0;
 		for(String v : cvars){
 			++ idx;
@@ -1030,7 +1029,7 @@ public class Clause implements Cloneable{
 		}
 		
 		ArrayList<String> tojoin = new ArrayList<String>();
-		HashMap<String, String> var2const = new HashMap<String, String>();
+		LinkedHashMap<String, String> var2const = new LinkedHashMap<String, String>();
 		
 		for(Literal l : this.reglits){
 			

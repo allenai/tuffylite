@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -30,12 +30,12 @@ public class MLEWorkerInstance extends MLEWorker{
 
 	Class<? extends MRFSampleAlgorithm> sampleAlgo = null;
 	
-	HashMap<String, Object> prop = null;
+	LinkedHashMap<String, Object> prop = null;
 	
 	int nSamples = 0;
-	HashMap<BitSet, MLEWorld> worlds = new HashMap<BitSet, MLEWorld>();
+	LinkedHashMap<BitSet, MLEWorld> worlds = new LinkedHashMap<BitSet, MLEWorld>();
 	
-	public MLEWorkerInstance(MRF _mrf, int _nSamples, Class<? extends MRFSampleAlgorithm> _sampleAlgo, HashMap<String, Object> _prop) {
+	public MLEWorkerInstance(MRF _mrf, int _nSamples, Class<? extends MRFSampleAlgorithm> _sampleAlgo, LinkedHashMap<String, Object> _prop) {
 		super(_mrf);
 		nSamples = _nSamples;
 		sampleAlgo = _sampleAlgo;
@@ -79,11 +79,11 @@ public class MLEWorkerInstance extends MLEWorker{
 		return nrs;
 	}
 	
-	public HashSet<Integer> toEnumerate = new HashSet<Integer>();
+	public LinkedHashSet<Integer> toEnumerate = new LinkedHashSet<Integer>();
 	
-	public ArrayList<HashSet<Integer>> partitionMRFIfToLarge(){
-		ArrayList<HashSet<Integer>> sampleDomains = new 
-				ArrayList<HashSet<Integer>>();
+	public ArrayList<LinkedHashSet<Integer>> partitionMRFIfToLarge(){
+		ArrayList<LinkedHashSet<Integer>> sampleDomains = new 
+				ArrayList<LinkedHashSet<Integer>>();
 				
 		int nAtom = this.mrf.atoms.size();
 		if(nAtom > 15){
@@ -110,7 +110,7 @@ public class MLEWorkerInstance extends MLEWorker{
 			
 			
 			
-			HashSet<Integer> sampleDomain = new HashSet<Integer>();
+			LinkedHashSet<Integer> sampleDomain = new LinkedHashSet<Integer>();
 			while(!remain.isEmpty()){
 				
 				if(sampleDomain.size() < 60){
@@ -154,22 +154,22 @@ public class MLEWorkerInstance extends MLEWorker{
 					
 				}else{
 					sampleDomains.add(sampleDomain);
-					sampleDomain = new HashSet<Integer>();
+					sampleDomain = new LinkedHashSet<Integer>();
 				}
 			}
 			
 			sampleDomains.add(sampleDomain);
-			sampleDomain = new HashSet<Integer>();
+			sampleDomain = new LinkedHashSet<Integer>();
 			
 			
 			toEnumerate.clear();
-			HashSet<Integer> fixed = new HashSet<Integer>();
-			for(HashSet<Integer> domain1 : sampleDomains){
+			LinkedHashSet<Integer> fixed = new LinkedHashSet<Integer>();
+			for(LinkedHashSet<Integer> domain1 : sampleDomains){
 				for(int atom1 : domain1){
 				
 					boolean shouldAdd = false;
 					
-					for(HashSet<Integer> domain2 : sampleDomains){
+					for(LinkedHashSet<Integer> domain2 : sampleDomains){
 						if(domain1 == domain2){
 							continue;
 						}
@@ -180,7 +180,7 @@ public class MLEWorkerInstance extends MLEWorker{
 								continue;
 							}
 							
-							HashSet<Integer> tmp = (HashSet<Integer>) this.mrf.localAtom2Clause.get(atom1).clone();
+							LinkedHashSet<Integer> tmp = (LinkedHashSet<Integer>) this.mrf.localAtom2Clause.get(atom1).clone();
 							tmp.retainAll(this.mrf.localAtom2Clause.get(atom2));
 							if(!tmp.isEmpty()){
 								shouldAdd = true;
@@ -230,7 +230,7 @@ public class MLEWorkerInstance extends MLEWorker{
 		ArrayList<Integer> sampledomain = new ArrayList<Integer>();
 		ArrayList<Integer> enumDomain = new ArrayList<Integer>();
 		
-		ArrayList<HashSet<Integer>> smallparts = null;
+		ArrayList<LinkedHashSet<Integer>> smallparts = null;
 		
 		if(!Config.mle_partition_components && this.mrf.atoms.size() > 1000){
 			System.out.println("---Skip large component (size " + this.mrf.atoms.size() + ")");
@@ -239,7 +239,7 @@ public class MLEWorkerInstance extends MLEWorker{
 		
 		if(Config.mle_partition_components){
 			smallparts = this.partitionMRFIfToLarge();
-			for(HashSet<Integer> part : smallparts){
+			for(LinkedHashSet<Integer> part : smallparts){
 				sampledomain = new ArrayList<Integer>();
 				sampledomain.addAll(part);
 				sampledomain.removeAll(this.toEnumerate);
@@ -318,7 +318,7 @@ public class MLEWorkerInstance extends MLEWorker{
 			
 			for(int i=0;i< ratio + 1;i++){
 				//System.out.println("*");
-				HashSet<Integer> cannotBeTrue = new HashSet<Integer>();
+				LinkedHashSet<Integer> cannotBeTrue = new LinkedHashSet<Integer>();
 				Collections.shuffle(enumDomain);
 				
 				BitSet world = new BitSet();

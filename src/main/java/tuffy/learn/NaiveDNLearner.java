@@ -1,7 +1,7 @@
 package tuffy.learn;
 
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.infer.MRF;
 import tuffy.infer.MRF.INIT_STRATEGY;
@@ -22,9 +22,9 @@ import tuffy.util.UIMan;
 @Deprecated
 public class NaiveDNLearner extends Learner{
 	
-	public HashMap<String, Double> oldG = null;
-	public HashMap<String, Double> oldD = null;
-	public HashMap<String, Double> oldDW = null;
+	public LinkedHashMap<String, Double> oldG = null;
+	public LinkedHashMap<String, Double> oldD = null;
+	public LinkedHashMap<String, Double> oldDW = null;
 	public double oldDHD = 0.0;
 	public double oldDG = 0.0;
 	public double lambda = 100.0;

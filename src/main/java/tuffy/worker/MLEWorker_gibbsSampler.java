@@ -7,8 +7,8 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +22,7 @@ import tuffy.worker.ds.MLEWorld;
 public class MLEWorker_gibbsSampler extends MLEWorker{
 
 	int nSamples = 0;
-	HashMap<BitSet, MLEWorld> worlds = new HashMap<BitSet, MLEWorld>();
+	LinkedHashMap<BitSet, MLEWorld> worlds = new LinkedHashMap<BitSet, MLEWorld>();
 	
 	public MLEWorker_gibbsSampler(MRF _mrf, int _nSamples) {
 		super(_mrf);
@@ -61,12 +61,12 @@ public class MLEWorker_gibbsSampler extends MLEWorker{
 	}
 
 	
-	HashMap<Integer, Double> flipDelta = 
-			new HashMap<Integer, Double>();
+	LinkedHashMap<Integer, Double> flipDelta = 
+			new LinkedHashMap<Integer, Double>();
 	
 	public void updateDelta(BitSet currentWorld, int flipped){
 		
-		HashSet<Integer> impactedAtoms = new HashSet<Integer>();
+		LinkedHashSet<Integer> impactedAtoms = new LinkedHashSet<Integer>();
 		for(Integer impactedClause : this.mrf.localAtom2Clause.get(flipped)){
 			for(Integer impactedAtom : this.mrf.localClause2Atom.get(impactedClause)){
 				impactedAtoms.add(impactedAtom);

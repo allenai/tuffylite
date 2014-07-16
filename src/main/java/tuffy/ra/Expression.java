@@ -1,7 +1,7 @@
 package tuffy.ra;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 
@@ -40,8 +40,8 @@ final public class Expression implements Cloneable{
 	 * Get the variables referenced by this expression.
 	 * 
 	 */
-	public HashSet<String> getVars(){
-		HashSet<String> set = new HashSet<String>();
+	public LinkedHashSet<String> getVars(){
+		LinkedHashSet<String> set = new LinkedHashSet<String>();
 		if(func_ == Function.VariableBinding){
 			set.add(val);
 		}else{

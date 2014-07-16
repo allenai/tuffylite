@@ -3,8 +3,8 @@ package tuffy.sample;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 
 import tuffy.infer.MRF;
@@ -23,10 +23,10 @@ public class MRFSampler extends Worker{
 	public ArrayList<Integer> sampleDomain = null;
 	
 	public int nSample = 0;
-	public HashMap<String, Object> prop = null;
+	public LinkedHashMap<String, Object> prop = null;
 	
 	public MRFSampler(MRF _mrf, Class<? extends MRFSampleAlgorithm> _sampleAlgo, 
-			HashMap<String, Object> _prop, int _nSample){
+			LinkedHashMap<String, Object> _prop, int _nSample){
 		
 		super(_mrf);
 		sampleAlgo = _sampleAlgo;
@@ -36,7 +36,7 @@ public class MRFSampler extends Worker{
 	}
 	
 	public MRFSampler(MRF _mrf, Class<? extends MRFSampleAlgorithm> _sampleAlgo, 
-			HashMap<String, Object> _prop, int _nSample, ArrayList<Integer> _sampleDomain){
+			LinkedHashMap<String, Object> _prop, int _nSample, ArrayList<Integer> _sampleDomain){
 		
 		super(_mrf);
 		sampleAlgo = _sampleAlgo;
@@ -46,8 +46,8 @@ public class MRFSampler extends Worker{
 		
 	}
 
-	public HashMap<StatisticType, MRFSampleStatistic> statMaps = new 
-			HashMap<StatisticType, MRFSampleStatistic>();
+	public LinkedHashMap<StatisticType, MRFSampleStatistic> statMaps = new 
+			LinkedHashMap<StatisticType, MRFSampleStatistic>();
 	
 	public void addOrReplaceSamplerStatistic(MRFSampleStatistic samplerStatistic){
 		this.statMaps.put(samplerStatistic.type, samplerStatistic);
@@ -60,7 +60,7 @@ public class MRFSampler extends Worker{
 	private MRFSampleAlgorithm getSampleAlgorithmInstance(Class<? extends MRFSampleAlgorithm> _sampleAlgo) {
 			
 		try{
-			Class[] types = new Class[] { HashMap.class, ArrayList.class };
+			Class[] types = new Class[] { LinkedHashMap.class, ArrayList.class };
 			Constructor cons = _sampleAlgo.getConstructor(types);
 			Object[] args = new Object[] { prop, sampleDomain};
 			MRFSampleAlgorithm sampleAlgoInstance = (MRFSampleAlgorithm) cons.newInstance(args);
@@ -96,7 +96,7 @@ public class MRFSampler extends Worker{
 		double knob = Math.pow(2, this.mrf.atoms.size()+1);
 		int size = this.mrf.atoms.size();
 		
-		HashSet<Integer> history_po2 = new HashSet<Integer>();
+		LinkedHashSet<Integer> history_po2 = new LinkedHashSet<Integer>();
 		
 		double time = 0;
 		

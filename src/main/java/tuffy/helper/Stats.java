@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.PriorityQueue;
 
 import tuffy.db.RDB;
@@ -51,9 +51,9 @@ public class Stats {
 	
 	public static void pullAtomReps(MRF mrf){
 		MarkovLogicNetwork mln = mrf.getMLN();
-		HashMap<Integer, GAtom> atoms = mrf.atoms;
+		LinkedHashMap<Integer, GAtom> atoms = mrf.atoms;
 		RDB db = mln.getRDB();
-		HashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
+		LinkedHashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
 		for(Predicate p : mln.getAllPred()) {
 			if(p.isImmutable()) continue;
 			String sql = "SELECT * FROM " + p.getRelName() +

@@ -1,15 +1,16 @@
 package tuffy.sample;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.sample.MRFSampleStatistic.StatisticType;
+import tuffy.util.DeterministicMapHelper;
 import tuffy.util.myDouble;
 
 public class SampleStatistic_ClauseFreqViolation extends MRFSampleStatistic{
 
-	ConcurrentHashMap<String, myDouble> clauseLogWeightedViolations = 
-			new ConcurrentHashMap<String, myDouble>();
+	LinkedHashMap<String, myDouble> clauseLogWeightedViolations = 
+			new LinkedHashMap<String, myDouble>();
 	
 	public SampleStatistic_ClauseFreqViolation(){
 		this.type = StatisticType.ClauseFreqViolation;
@@ -26,7 +27,7 @@ public class SampleStatistic_ClauseFreqViolation extends MRFSampleStatistic{
 				if(ffcid.startsWith("-")){
 					ffcid = ffcid.substring(1);
 				}
-				this.clauseLogWeightedViolations.putIfAbsent(ffcid, new myDouble(0));
+				DeterministicMapHelper.putIfAbsent(this.clauseLogWeightedViolations, ffcid, new myDouble(0));
 				if(clauseVio[i] != 0){
 					this.clauseLogWeightedViolations.get(ffcid).tallyDouble(clauseVio[i]);
 				}
@@ -59,7 +60,7 @@ public class SampleStatistic_ClauseFreqViolation extends MRFSampleStatistic{
 			for(Object ffcid_g : sampler.getStatisticDomain()){
 				String ffcid = (String) ffcid_g;
 				
-				clauseLogWeightedViolations.putIfAbsent(ffcid, new myDouble());
+				DeterministicMapHelper.putIfAbsent(clauseLogWeightedViolations, ffcid, new myDouble());
 				clauseLogWeightedViolations.get(ffcid).tallylog(sampler.lookupStatistic(ffcid));
 				
 			}

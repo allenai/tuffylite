@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 
@@ -61,7 +61,7 @@ public class ConjunctiveQuery implements Cloneable{
 
 	public boolean isCRFChainRule = false;
 
-	public static HashSet<String> indexBuilt = new HashSet<String>();
+	public static LinkedHashSet<String> indexBuilt = new LinkedHashSet<String>();
 
 	private static int idGen = 0;
 	public boolean isView = false;
@@ -70,7 +70,7 @@ public class ConjunctiveQuery implements Cloneable{
 
 	public String allFreeBinding = null;
 
-	private static HashMap<Integer, ConjunctiveQuery> objMap = new HashMap<Integer, ConjunctiveQuery>();
+	private static LinkedHashMap<Integer, ConjunctiveQuery> objMap = new LinkedHashMap<Integer, ConjunctiveQuery>();
 
 	private int id = 0;
 
@@ -97,10 +97,10 @@ public class ConjunctiveQuery implements Cloneable{
 
 			cloned.additionalWhereClause = this.additionalWhereClause;
 			cloned.allFreeBinding = this.allFreeBinding;
-			cloned.allVariable = (HashSet<String>) this.allVariable.clone();
+			cloned.allVariable = (LinkedHashSet<String>) this.allVariable.clone();
 			cloned.body = (ArrayList<Literal>) this.body.clone();
 			cloned.constraints = (ArrayList<Expression>) this.constraints.clone();
-			cloned.freeVars = (HashMap<String, Type>) this.freeVars.clone();
+			cloned.freeVars = (LinkedHashMap<String, Type>) this.freeVars.clone();
 			cloned.head = (Literal) this.head.clone();
 			cloned.inverseEmbededWeight = this.inverseEmbededWeight;
 			cloned.isCRFChainRule = this.isCRFChainRule;
@@ -109,7 +109,7 @@ public class ConjunctiveQuery implements Cloneable{
 			cloned.isStatic = this.isStatic;
 			cloned.isView = this.isView;
 			cloned.newTuplePrior = this.newTuplePrior;
-			cloned.psMap = (HashMap<String, PreparedStatement>) this.psMap.clone();
+			cloned.psMap = (LinkedHashMap<String, PreparedStatement>) this.psMap.clone();
 			cloned.sourceClause = this.sourceClause;
 			cloned.type = this.type;
 			cloned.weight = this.weight;
@@ -126,14 +126,14 @@ public class ConjunctiveQuery implements Cloneable{
 	 * is a string like "11011", which means the third parameter need to be queried, while other
 	 * four are provided.
 	 */
-	public HashMap<String, PreparedStatement> psMap = new HashMap<String, PreparedStatement>();
+	public LinkedHashMap<String, PreparedStatement> psMap = new LinkedHashMap<String, PreparedStatement>();
 
 	public String getAllFreeBinding(){
 		return this.allFreeBinding;
 	}
 
 	public static void clearIndexHistory(){
-		indexBuilt = new  HashSet<String>();
+		indexBuilt = new  LinkedHashSet<String>();
 	}
 
 	private double weight = 0;
@@ -161,7 +161,7 @@ public class ConjunctiveQuery implements Cloneable{
 
 	public Literal head;
 	public ArrayList<Literal> body = new ArrayList<Literal>();
-	HashMap<String, Type> freeVars = new HashMap<String, Type>();
+	LinkedHashMap<String, Type> freeVars = new LinkedHashMap<String, Type>();
 
 	private ArrayList<Expression> constraints = new ArrayList<Expression>();
 
@@ -177,7 +177,7 @@ public class ConjunctiveQuery implements Cloneable{
 		return constraints;
 	}
 
-	public ArrayList<Expression> getConstraint(HashSet<String> allVariables){
+	public ArrayList<Expression> getConstraint(LinkedHashSet<String> allVariables){
 		//		return constraints;
 		ArrayList<Expression> ret = new ArrayList<Expression>();
 
@@ -265,7 +265,7 @@ public class ConjunctiveQuery implements Cloneable{
 	 */
 	public void materialize(RDB db, Boolean truth, ArrayList<String> orderBy){
 		Predicate p = head.getPred();
-		HashMap<String, String> mapVarAttr = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarAttr = new LinkedHashMap<String, String>();
 		ArrayList<String> selList = new ArrayList<String>();
 		ArrayList<String> fromList = new ArrayList<String>();
 		ArrayList<String> whereList = new ArrayList<String>();
@@ -278,7 +278,7 @@ public class ConjunctiveQuery implements Cloneable{
 			fromList.add(t.getRelName() + " " + tname);
 			mapVarAttr.put(v, tname + ".constantID");
 		}
-		HashMap<String, Type> var2type = new HashMap<String, Type>();
+		LinkedHashMap<String, Type> var2type = new LinkedHashMap<String, Type>();
 		ArrayList<String> exceptList = new ArrayList<String>();
 		// variable/constant binding
 		for(int i=0; i<body.size();i++) {
@@ -351,7 +351,7 @@ public class ConjunctiveQuery implements Cloneable{
 		}
 
 		// express constraints in SQL
-		HashSet<String> cvars = new HashSet<String>();
+		LinkedHashSet<String> cvars = new LinkedHashSet<String>();
 		int nChangeName = 0;
 		for(Expression e : constraints){
 			for(String var : e.getVars()){
@@ -365,8 +365,8 @@ public class ConjunctiveQuery implements Cloneable{
 			cvars.addAll(e.getVars());
 		}
 
-		HashMap<String, String> mapVarVal = new HashMap<String, String>();
-		HashMap<String, String> mapVarValNotChangeName = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarVal = new LinkedHashMap<String, String>();
+		LinkedHashMap<String, String> mapVarValNotChangeName = new LinkedHashMap<String, String>();
 		int idx = 0;
 		for(String v : cvars){
 			++ idx;
@@ -394,7 +394,7 @@ public class ConjunctiveQuery implements Cloneable{
 
 
 		// select list
-		HashMap<String, String> var2argMap = new HashMap<String, String>();
+		LinkedHashMap<String, String> var2argMap = new LinkedHashMap<String, String>();
 		ArrayList<String> selSigList = new ArrayList<String>();
 		for(int i=0; i<p.arity(); i++){
 			Term t = head.getTerms().get(i);
@@ -526,10 +526,10 @@ public class ConjunctiveQuery implements Cloneable{
 		 */
 	}
 
-	public String getJoinSQL(HashSet<String> whichToBound){
+	public String getJoinSQL(LinkedHashSet<String> whichToBound){
 		Predicate p = head.getPred();
 
-		HashMap<String, String> mapVarAttr = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarAttr = new LinkedHashMap<String, String>();
 		ArrayList<String> selList = new ArrayList<String>();
 		ArrayList<String> fromList = new ArrayList<String>();
 		ArrayList<String> whereList = new ArrayList<String>();
@@ -544,7 +544,7 @@ public class ConjunctiveQuery implements Cloneable{
 			mapVarAttr.put(v, tname + ".constantID");
 		}
 
-		HashMap<String, Type> var2type = new HashMap<String, Type>();
+		LinkedHashMap<String, Type> var2type = new LinkedHashMap<String, Type>();
 		// variable/constant binding
 		for(int i=0; i<body.size();i++) {
 			Literal lit = body.get(i);
@@ -625,7 +625,7 @@ public class ConjunctiveQuery implements Cloneable{
 		}
 
 		// express constraints in SQL
-		HashSet<String> cvars = new HashSet<String>();
+		LinkedHashSet<String> cvars = new LinkedHashSet<String>();
 		int nChangeName = 0;
 		for(Expression e : constraints){
 			for(String var : e.getVars()){
@@ -639,8 +639,8 @@ public class ConjunctiveQuery implements Cloneable{
 			cvars.addAll(e.getVars());
 		}
 
-		HashMap<String, String> mapVarVal = new HashMap<String, String>();
-		HashMap<String, String> mapVarValNotChangeName = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarVal = new LinkedHashMap<String, String>();
+		LinkedHashMap<String, String> mapVarValNotChangeName = new LinkedHashMap<String, String>();
 		int idx = 0;
 		for(String v : cvars){
 			++ idx;
@@ -699,10 +699,10 @@ public class ConjunctiveQuery implements Cloneable{
 		return sub;
 	}
 
-	public String getBoundedSQL(HashSet<String> whichToBound){
+	public String getBoundedSQL(LinkedHashSet<String> whichToBound){
 		Predicate p = head.getPred();
 
-		HashMap<String, String> mapVarAttr = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarAttr = new LinkedHashMap<String, String>();
 		ArrayList<String> selList = new ArrayList<String>();
 		ArrayList<String> fromList = new ArrayList<String>();
 		ArrayList<String> whereList = new ArrayList<String>();
@@ -710,7 +710,7 @@ public class ConjunctiveQuery implements Cloneable{
 		whereList.add("1=1");
 
 
-		HashMap<String, Type> var2type = new HashMap<String, Type>();
+		LinkedHashMap<String, Type> var2type = new LinkedHashMap<String, Type>();
 		// instantiate dangling variables with the type dict
 		for(String v : freeVars.keySet()){
 			Type t = freeVars.get(v);
@@ -793,7 +793,7 @@ public class ConjunctiveQuery implements Cloneable{
 
 		///////////////////////////////////
 		// express constraints in SQL
-		HashSet<String> cvars = new HashSet<String>();
+		LinkedHashSet<String> cvars = new LinkedHashSet<String>();
 		int nChangeName = 0;
 		for(Expression e : constraints){
 			for(String var : e.getVars()){
@@ -811,8 +811,8 @@ public class ConjunctiveQuery implements Cloneable{
 			cvars.addAll(e.getVars());
 		}
 
-		HashMap<String, String> mapVarVal = new HashMap<String, String>();
-		HashMap<String, String> mapVarValNotChangeName = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarVal = new LinkedHashMap<String, String>();
+		LinkedHashMap<String, String> mapVarValNotChangeName = new LinkedHashMap<String, String>();
 		int idx = 0;
 		for(String v : cvars){
 			++ idx;
@@ -870,7 +870,7 @@ public class ConjunctiveQuery implements Cloneable{
 		return sub;
 	}
 
-	public HashSet<String> allVariable = new HashSet<String>();
+	public LinkedHashSet<String> allVariable = new LinkedHashSet<String>();
 
 	/**
 	 * Set the head of this query.
@@ -904,16 +904,16 @@ public class ConjunctiveQuery implements Cloneable{
 
 		Predicate p = head.getPred();
 
-		HashMap<String, String> mapVarAttr = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarAttr = new LinkedHashMap<String, String>();
 		ArrayList<String> selList = new ArrayList<String>();
 		ArrayList<String> fromList = new ArrayList<String>();
 		ArrayList<String> whereList = new ArrayList<String>();
 		ArrayList<String> exceptList = new ArrayList<String>();
 		whereList.add("1=1");
 
-		HashSet<String> tables = new HashSet<String>();
-		HashSet<String> indices = new HashSet<String>();
-		HashMap<String, String> indicesAssistor = new HashMap<String, String>();
+		LinkedHashSet<String> tables = new LinkedHashSet<String>();
+		LinkedHashSet<String> indices = new LinkedHashSet<String>();
+		LinkedHashMap<String, String> indicesAssistor = new LinkedHashMap<String, String>();
 
 		// instantiate dangling variables with the type dict
 		for(String v : freeVars.keySet()){
@@ -923,7 +923,7 @@ public class ConjunctiveQuery implements Cloneable{
 			mapVarAttr.put(v, tname + ".constantID");
 		}
 
-		HashMap<String, Type> var2type = new HashMap<String, Type>();
+		LinkedHashMap<String, Type> var2type = new LinkedHashMap<String, Type>();
 
 		ArrayList<String> priors = new ArrayList<String>();
 		// variable/constant binding
@@ -1028,7 +1028,7 @@ public class ConjunctiveQuery implements Cloneable{
 
 
 		// express constraints in SQL
-		HashSet<String> cvars = new HashSet<String>();
+		LinkedHashSet<String> cvars = new LinkedHashSet<String>();
 		int nChangeName = 0;
 		for(Expression e : constraints){
 			for(String var : e.getVars()){
@@ -1042,8 +1042,8 @@ public class ConjunctiveQuery implements Cloneable{
 			cvars.addAll(e.getVars());
 		}
 
-		HashMap<String, String> mapVarVal = new HashMap<String, String>();
-		HashMap<String, String> mapVarValNotChangeName = new HashMap<String, String>();
+		LinkedHashMap<String, String> mapVarVal = new LinkedHashMap<String, String>();
+		LinkedHashMap<String, String> mapVarValNotChangeName = new LinkedHashMap<String, String>();
 		int idx = 0;
 		for(String v : cvars){
 			++ idx;
@@ -1217,7 +1217,7 @@ public class ConjunctiveQuery implements Cloneable{
 		public ArrayList<String> as = new ArrayList<String>();
 		public ArrayList<String> prevas = new ArrayList<String>();
 		public ArrayList<String> headas = new ArrayList<String>();
-		public HashMap<String, String> arg2as = new HashMap<String, String>();
+		public LinkedHashMap<String, String> arg2as = new LinkedHashMap<String, String>();
 		public String classAs;
 		public String classAsO;
 		public Predicate headPred;
