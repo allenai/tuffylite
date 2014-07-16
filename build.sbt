@@ -2,7 +2,7 @@ name := "tuffy-internal"
 
 organization := "edu.wisc.hazy"
 
-version := "0.3.1"
+version := "0.3.1-SNAPSHOT"
 
 description := "An internal version of Tuffy available at: http://hazy.cs.wisc.edu/hazy/tuffy/"
 
