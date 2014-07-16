@@ -2705,7 +2705,7 @@ public class MRF {
 	 */
 	public boolean sampleSAT(long nSteps){
 		if(!Config.learning_mode)
-			UIMan.println("    Running SampleSAT for " + UIMan.comma(nSteps) + " flips...");
+			UIMan.verbose(3, "    Running SampleSAT for " + UIMan.comma(nSteps) + " flips...");
 
 		if(adj.isEmpty()) buildIndices();
 		Random rand = SeededRandom.getInstance();
@@ -3085,7 +3085,7 @@ public class MRF {
 			if(Config.learning_mode)
 				UIMan.print("*");
 			else
-				UIMan.println(">>> MC-SAT Sample #" + i + "");
+				UIMan.verbose(3, ">>> MC-SAT Sample #" + i + "");
 			sumCost += performMCSatStep(numFlips);
 			int curTime = (int) Timer.elapsedSeconds();
 
