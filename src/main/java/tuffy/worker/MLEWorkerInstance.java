@@ -21,6 +21,7 @@ import tuffy.sample.SampleStatistic_WorldLogWeight;
 import tuffy.sample.MRFSampleStatistic.StatisticType;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
+import tuffy.util.SeededRandom;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
 import tuffy.worker.ds.MLEWorld;
@@ -323,7 +324,7 @@ public class MLEWorkerInstance extends MLEWorker{
 				BitSet world = new BitSet();
 				
 				for(Integer localAtom : enumDomain){
-					if(Math.random() > 0.5 && !cannotBeTrue.contains(localAtom)){
+					if(SeededRandom.getInstance().nextDouble() > 0.5 && !cannotBeTrue.contains(localAtom)){
 						this.mrf.globalAtom.get(localAtom).truth = true;
 						if(this.mrf.localAtomsToKey.containsKey(localAtom)){
 							for(Integer key : this.mrf.localAtomsToKey.get(localAtom)){

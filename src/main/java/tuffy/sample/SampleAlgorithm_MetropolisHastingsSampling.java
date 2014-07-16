@@ -11,12 +11,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import tuffy.infer.MRF;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
+import tuffy.util.SeededRandom;
 
 public class SampleAlgorithm_MetropolisHastingsSampling extends MRFSampleAlgorithm{
 
 	int lengthOfBitMap = -1;
 	BitSet bitmap;
-	Random random = new Random();
+	Random random = SeededRandom.getInstance();
 	
 	int nRuns = 0;
 	
@@ -45,7 +46,7 @@ public class SampleAlgorithm_MetropolisHastingsSampling extends MRFSampleAlgorit
 		// initial world
 		bitmap = new BitSet();
 		for(int j : this.sampleDomain){	
-			if(Math.random() > 0.5){
+			if(SeededRandom.getInstance().nextDouble() > 0.5){
 				bitmap.set(j);
 			}	
 		}
@@ -116,7 +117,7 @@ public class SampleAlgorithm_MetropolisHastingsSampling extends MRFSampleAlgorit
 		}
 		
 		// sample from proposal distribution
-		double rand = Math.random();
+		double rand = SeededRandom.getInstance().nextDouble();
 		double agg = 0;
 		int toFlip = -1;
 		for(int i : this.sampleDomain){
@@ -160,7 +161,7 @@ public class SampleAlgorithm_MetropolisHastingsSampling extends MRFSampleAlgorit
 					  - (logWeightCache[toFlip] - logSum)
 				);
 				
-		if(Math.random() < alpha){
+		if(SeededRandom.getInstance().nextDouble() < alpha){
 			return toFlip;
 		}else{
 			return -1;
@@ -186,7 +187,7 @@ public class SampleAlgorithm_MetropolisHastingsSampling extends MRFSampleAlgorit
 			}
 			//bitmap = new BitSet();
 			//for(int j : this.sampleDomain){	
-			//	if(Math.random() > 0.5){
+			//	if(SeededRandom.getInstance().nextDouble() > 0.5){
 			//		bitmap.set(j);
 			//	}	
 			//}

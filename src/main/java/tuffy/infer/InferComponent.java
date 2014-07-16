@@ -11,6 +11,7 @@ import tuffy.infer.MRF.INIT_STRATEGY;
 import tuffy.infer.ds.GAtom;
 import tuffy.util.Config;
 import tuffy.util.MathMan;
+import tuffy.util.SeededRandom;
 /**
  * Performing inference on one MRF component.
  */
@@ -84,7 +85,7 @@ public class InferComponent {
 	
 	
 	private void initTruthRandom(){
-		Random rand = new Random();
+		Random rand = SeededRandom.getInstance();
 		for(GAtom a : comp.atoms.values()){
 			a.lowTruth = a.truth = rand.nextBoolean();
 		}

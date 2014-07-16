@@ -27,6 +27,7 @@ import tuffy.util.Config;
 import tuffy.util.DebugMan;
 import tuffy.util.ExceptionMan;
 import tuffy.util.HashArray;
+import tuffy.util.SeededRandom;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
 import tuffy.util.myInt;
@@ -676,16 +677,16 @@ public class MRF {
 					if(atom.truth){
 						bitmap_smallsample.set(atomid);
 					}
-					if(Math.random() > 0.5){
+					if(SeededRandom.getInstance().nextDouble() > 0.5){
 						bitmap_largesample.set(atomid);
 					}
 				}else{
 
-					if(Math.random() > 0.5){
+					if(SeededRandom.getInstance().nextDouble() > 0.5){
 						bitmap_smallsample.set(atomid);
 					}
 
-					if(Math.random() > 0.5){
+					if(SeededRandom.getInstance().nextDouble() > 0.5){
 						bitmap_largesample.set(atomid);
 					}
 				}
@@ -710,16 +711,16 @@ public class MRF {
 					if(atom.truth){
 						bitmap_smallsample.set(atomid);
 					}
-					if(Math.random() > 0.5){
+					if(SeededRandom.getInstance().nextDouble() > 0.5){
 						bitmap_largesample.set(atomid);
 					}
 				}else{
 
-					if(Math.random() > 0.5){
+					if(SeededRandom.getInstance().nextDouble() > 0.5){
 						bitmap_smallsample.set(atomid);
 					}
 
-					if(Math.random() > 0.5){
+					if(SeededRandom.getInstance().nextDouble() > 0.5){
 						bitmap_largesample.set(atomid);
 					}
 				}
@@ -1079,7 +1080,7 @@ public class MRF {
 	 */
 	@SuppressWarnings("unused")
 	private ArrayList<MRF> split(int np){
-		Random r = new Random();
+		Random r = SeededRandom.getInstance();
 		ArrayList<MRF> pieces = new ArrayList<MRF>();
 		ArrayList<Integer> as = new ArrayList<Integer>(atoms.keySet());
 		HashSet<Integer> danglings = new HashSet<Integer>(atoms.keySet());
@@ -1479,7 +1480,7 @@ public class MRF {
 		}
 	}
 
-	private Random rand = new Random();
+	private Random rand = SeededRandom.getInstance();
 
 	/**
 	 * Coin flipping.
@@ -1557,7 +1558,7 @@ public class MRF {
 		if(!Config.learning_mode) UIMan.println("    Running WalkSAT for " + nTries +
 				" tries, " + UIMan.comma(nSteps) + " flips/try");
 		if(adj.isEmpty()) buildIndices();
-		Random rand = new Random();
+		Random rand = SeededRandom.getInstance();
 		// low cost of periodic flushing
 		for(long itry=1; itry<=nTries; itry++){
 			if(!Config.learning_mode)  UIMan.println("[Try #" + itry + "/" + nTries + "]");
@@ -1803,7 +1804,7 @@ public class MRF {
 		UIMan.println(">>> Running WalkSAT for " + nTries +
 				" tries, " + UIMan.comma(nSteps) + " flips/try");
 		if(adj.isEmpty()) buildIndices();
-		Random rand = new Random();
+		Random rand = SeededRandom.getInstance();
 		// low cost of periodic flushing
 		for(int itry=1; itry<=nTries; itry++){
 			UIMan.println("[Try #" + itry + "/" + nTries + "]");
@@ -2221,7 +2222,7 @@ public class MRF {
 	 * Set random atom truth values.
 	 */
 	private void assignRandomTruthValues(){
-		Random rand = new Random();
+		Random rand = SeededRandom.getInstance();
 		if(ownsAllAtoms){
 			for(GAtom n : atoms.values()){
 				if(n.fixed || (Config.focus_on_critical_atoms && !n.critical())) continue;
@@ -2280,7 +2281,7 @@ public class MRF {
 	// * NEED TO CHANGE.
 	// */
 	/*private void assignTruthValuesAccording2TrainingData(){
-		Random rand = new Random();
+		Random rand = SeededRandom.getInstance();
 		if(ownsAllAtoms){
 			for(GAtom n : atoms.values()){
 				if(n.fixed || (Config.focus_on_critical_atoms && !n.critical())) continue;
@@ -2707,7 +2708,7 @@ public class MRF {
 			UIMan.println("    Running SampleSAT for " + UIMan.comma(nSteps) + " flips...");
 
 		if(adj.isEmpty()) buildIndices();
-		Random rand = new Random();
+		Random rand = SeededRandom.getInstance();
 
 		initMRF();
 

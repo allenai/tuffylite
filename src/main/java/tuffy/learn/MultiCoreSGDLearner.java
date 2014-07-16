@@ -28,6 +28,7 @@ import tuffy.util.BitSetIntPair;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
 import tuffy.util.FileMan;
+import tuffy.util.SeededRandom;
 import tuffy.util.Settings;
 import tuffy.util.StringMan;
 import tuffy.util.Timer;
@@ -257,7 +258,7 @@ public class MultiCoreSGDLearner extends Infer{
 	
 						if(Config.debug_mode) System.out.print("*");
 						
-						if(Math.random() > 1){	// TODO: stochastic on component side
+						if(SeededRandom.getInstance().nextDouble() > 1){	// TODO: stochastic on component side
 							continue;
 						}
 						
@@ -306,7 +307,7 @@ public class MultiCoreSGDLearner extends Infer{
 								continue;
 							}
 								
-							if(Math.random() > 1){	// TODO: stochastic on component side
+							if(SeededRandom.getInstance().nextDouble() > 1){	// TODO: stochastic on component side
 								continue;
 							}
 							

@@ -11,11 +11,12 @@ import java.util.Random;
 import tuffy.infer.MRF;
 import tuffy.infer.MRF.INIT_STRATEGY;
 import tuffy.util.Config;
+import tuffy.util.SeededRandom;
 
 public class SampleAlgorithm_NaiveSampling extends MRFSampleAlgorithm{
 
 	int lengthOfBitMap = -1;
-	Random random = new Random();
+	Random random = SeededRandom.getInstance();
 		
 	int nRuns = 0;
 	
@@ -64,7 +65,7 @@ public class SampleAlgorithm_NaiveSampling extends MRFSampleAlgorithm{
 			if(maintain_fixed_query_in_mrf){
 				for(int i : sampleDomain){
 					if(this.mrf.isQueryForLearning.contains(i)){
-						if(Math.random() > 0.5){
+						if(SeededRandom.getInstance().nextDouble() > 0.5){
 							this.mrf.globalAtom.get(i).truth = true;
 						}else{
 							this.mrf.globalAtom.get(i).truth = false;
@@ -81,7 +82,7 @@ public class SampleAlgorithm_NaiveSampling extends MRFSampleAlgorithm{
 				}
 			}else{
 				for(int i : sampleDomain){
-					double random = Math.random();
+					double random = SeededRandom.getInstance().nextDouble();
 					if(random > 0.5){
 						this.mrf.globalAtom.get(i).truth = true;
 					}else{
@@ -89,7 +90,7 @@ public class SampleAlgorithm_NaiveSampling extends MRFSampleAlgorithm{
 					}
 					if(this.mrf.isQueryForLearning.contains(i)){
 						// random fix.
-						if(Math.random() > 0.9){
+						if(SeededRandom.getInstance().nextDouble() > 0.9){
 							notChange.add(this.mrf.globalAtom.get(i).id);
 						}
 					}else{
@@ -122,7 +123,7 @@ public class SampleAlgorithm_NaiveSampling extends MRFSampleAlgorithm{
 						bitmap.set(j);
 					}else{
 						
-						if(Math.random() > 0.5){
+						if(SeededRandom.getInstance().nextDouble() > 0.5){
 						
 							if(this.maintain_fixed_query_in_mrf == true 
 									&& this.mrf.isQueryForLearning.contains(j)){
@@ -160,7 +161,7 @@ public class SampleAlgorithm_NaiveSampling extends MRFSampleAlgorithm{
 						continue;
 					}
 					
-					if(Math.random() > 0.5 && !cannotBeTrue.contains(j)){
+					if(SeededRandom.getInstance().nextDouble() > 0.5 && !cannotBeTrue.contains(j)){
 						bitmap.set(j);
 						if(this.mrf.localAtomsToKey.containsKey(j)){
 							for(Integer key : this.mrf.localAtomsToKey.get(j)){

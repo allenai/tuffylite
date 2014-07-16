@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-
 import org.postgresql.PGConnection;
 
 import tuffy.db.RDB;
@@ -33,6 +32,7 @@ import tuffy.util.BitSetIntPair;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
 import tuffy.util.FileMan;
+import tuffy.util.SeededRandom;
 import tuffy.util.StringMan;
 import tuffy.util.UIMan;
 import tuffy.util.myInt;
@@ -356,7 +356,7 @@ public class DataMover {
 		for(Partition p : parts){
 
 			double logpdf = partLogPF.get(p);
-			double sample = Math.random();
+			double sample = SeededRandom.getInstance().nextDouble();
 
 			double acc = 0;
 			BitSet bs = null;
@@ -381,7 +381,7 @@ public class DataMover {
 		BitSet rs = new BitSet(atoms.size()+1);
 
 		for(GAtom atom : atoms){
-			if(Math.random() > 0.5){
+			if(SeededRandom.getInstance().nextDouble() > 0.5){
 				rs.set(atom.id);
 			}
 		}

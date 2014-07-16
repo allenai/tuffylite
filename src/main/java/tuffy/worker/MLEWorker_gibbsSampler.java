@@ -15,6 +15,7 @@ import java.util.Set;
 import tuffy.infer.MRF;
 import tuffy.util.Config;
 import tuffy.util.Enumerator;
+import tuffy.util.SeededRandom;
 import tuffy.util.UIMan;
 import tuffy.worker.ds.MLEWorld;
 
@@ -103,7 +104,7 @@ public class MLEWorker_gibbsSampler extends MLEWorker{
 			currentWorld.flip(atom);
 		}
 		
-		double rand = Math.random();
+		double rand = SeededRandom.getInstance().nextDouble();
 		double agg = 0;
 		
 		Integer toFlip = -1;
@@ -148,7 +149,7 @@ public class MLEWorker_gibbsSampler extends MLEWorker{
 		
 		double alpha = Math.min(1, pi_wp*q_w_wp/pi_w/q_wp_w);
 		
-		if(Math.random() < alpha){
+		if(SeededRandom.getInstance().nextDouble() < alpha){
 			return toFlip;
 		}
 		
@@ -166,7 +167,7 @@ public class MLEWorker_gibbsSampler extends MLEWorker{
 		// init world
 		BitSet currentWorld = new BitSet();
 		for(int i=1;i<lengthOfBitMap+1;i++){
-			if(Math.random() > 0.5){
+			if(SeededRandom.getInstance().nextDouble() > 0.5){
 				currentWorld.set(i);
 			}
 		}

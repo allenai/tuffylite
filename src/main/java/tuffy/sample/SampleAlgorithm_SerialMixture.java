@@ -12,6 +12,7 @@ import tuffy.infer.MRF;
 import tuffy.infer.MRF.INIT_STRATEGY;
 import tuffy.infer.ds.GAtom;
 import tuffy.util.Config;
+import tuffy.util.SeededRandom;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
 
@@ -20,7 +21,7 @@ public class SampleAlgorithm_SerialMixture extends MRFSampleAlgorithm{
 	int nFlips = 10000;
 	
 	int lengthOfBitMap = -1;
-	Random random = new Random();
+	Random random = SeededRandom.getInstance();
 		
 	int nRuns = 0;
 	
