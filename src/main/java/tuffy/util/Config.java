@@ -127,7 +127,7 @@ public class Config {
 	public static double walksat_random_step_probability = 0.5;
 	public static double sweepsat_greedy_probability = 0.5;
 	public static boolean avoid_breaking_hard_clauses = false;
-	public static boolean apply_greedy_throttling = true;
+	public static boolean apply_greedy_throttling = false;
 
 	public static boolean ground_atoms_ignore_neg_embedded_wgts = false;
 	
