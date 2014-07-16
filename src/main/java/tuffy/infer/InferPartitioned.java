@@ -25,7 +25,7 @@ import tuffy.util.UIMan;
  *
  */
 public class InferPartitioned {
-	MarkovLogicNetwork mln;
+	public MarkovLogicNetwork mln;
 	DataMover dmover;
 	RDB db;
 	Grounding grounding;
