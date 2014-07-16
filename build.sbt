@@ -1,10 +1,10 @@
 name := "tuffy-internal"
 
-organization := "edu.wisc.hazy"
+organization := "edu.stanford.hazy"
 
-version := "0.3.1-SNAPSHOT"
+version := "0.4.1-SNAPSHOT"
 
-description := "An internal version of Tuffy available at: http://hazy.cs.wisc.edu/hazy/tuffy/"
+description := "An internal version of Tuffy downloaded from: http://i.stanford.edu/hazy/tuffy/download/"
 
 Publish.settings
 
