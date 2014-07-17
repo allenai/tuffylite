@@ -1,7 +1,7 @@
 package tuffy.ra;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import tuffy.mln.Type;
@@ -15,8 +15,8 @@ import tuffy.mln.Type;
  */
 
 public class Function {
-	public static HashMap<String, Function> builtInMap = 
-		new HashMap<String, Function>();
+	public static LinkedHashMap<String, Function> builtInMap = 
+		new LinkedHashMap<String, Function>();
 
 	public static Function getBuiltInFunctionByName(String name){
 		return builtInMap.get(name);

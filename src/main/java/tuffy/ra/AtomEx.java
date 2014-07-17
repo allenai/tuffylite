@@ -1,7 +1,7 @@
 package tuffy.ra;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import tuffy.mln.Predicate;
 
@@ -13,7 +13,7 @@ import tuffy.mln.Predicate;
 public class AtomEx{
 	private Predicate pred;
 	private ArrayList<Expression> args = new ArrayList<Expression>();
-	private HashSet<String> vars = new HashSet<String>();
+	private LinkedHashSet<String> vars = new LinkedHashSet<String>();
 
 	public ArrayList<Expression> getArguments(){
 		return args;
@@ -30,7 +30,7 @@ public class AtomEx{
 	/**
 	 * Returns the set of variable names in this literal.
 	 */
-	public HashSet<String> getVars(){
+	public LinkedHashSet<String> getVars(){
 		return vars;
 	}
 

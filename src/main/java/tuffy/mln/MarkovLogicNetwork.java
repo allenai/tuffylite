@@ -5,9 +5,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.zip.GZIPInputStream;
 
 import tuffy.db.RDB;
@@ -60,17 +59,17 @@ public class MarkovLogicNetwork implements Cloneable{
 	/**
 	 * Map from string name to Predicate object.
 	 */
-	private Hashtable<String, Predicate> nameMapPred = 
-		new Hashtable<String, Predicate>();
+	private LinkedHashMap<String, Predicate> nameMapPred = 
+		new LinkedHashMap<String, Predicate>();
 
-	private Hashtable<String, Function> nameMapFunc = 
-		new Hashtable<String, Function>();
+	private LinkedHashMap<String, Function> nameMapFunc = 
+		new LinkedHashMap<String, Function>();
 
 	/**
 	 * Map from string name to Type object.
 	 */
-	private Hashtable<String, Type> nameMapType = 
-		new Hashtable<String, Type>();
+	private LinkedHashMap<String, Type> nameMapType = 
+		new LinkedHashMap<String, Type>();
 
 	public Type getTypeByName(String tname) {
 		return nameMapType.get(tname);
@@ -79,9 +78,9 @@ public class MarkovLogicNetwork implements Cloneable{
 	/**
 	 * List of clauses marked as relevant.
 	 */
-	private HashSet<Clause> relevantClauses = new HashSet<Clause>();
+	private LinkedHashSet<Clause> relevantClauses = new LinkedHashSet<Clause>();
 	
-	private HashMap<Clause, Clause> unnormal2normal = new HashMap<Clause, Clause>();
+	private LinkedHashMap<Clause, Clause> unnormal2normal = new LinkedHashMap<Clause, Clause>();
 
 	/**
 	 * List of normalized clauses.
@@ -97,24 +96,24 @@ public class MarkovLogicNetwork implements Cloneable{
 	 * Map from signature of clauses to Clause object.
 	 * For the definition of ``signature'', see {@link Clause#normalize()}.
 	 */
-	private Hashtable<String, Clause> sigMap = new Hashtable<String, Clause>();
+	private LinkedHashMap<String, Clause> sigMap = new LinkedHashMap<String, Clause>();
 
 	/**
 	 * Map from string name to integer constant ID.
 	 */
-	private HashMap<String, Integer> mapConstantID = new HashMap<String, Integer>();
+	private LinkedHashMap<String, Integer> mapConstantID = new LinkedHashMap<String, Integer>();
 
 	/**
 	 * 
 	 */
-	private HashMap<Predicate, ArrayList<ConjunctiveQuery>> scopes =
-		new HashMap<Predicate, ArrayList<ConjunctiveQuery>>();
+	private LinkedHashMap<Predicate, ArrayList<ConjunctiveQuery>> scopes =
+		new LinkedHashMap<Predicate, ArrayList<ConjunctiveQuery>>();
 
 	private ArrayList<ConjunctiveQuery> scopingRules = new ArrayList<ConjunctiveQuery>();
 	
 	private ArrayList<Predicate> clusteringPredicates = new ArrayList<Predicate>();
 	
-	public HashSet<ConjunctiveQuery> dedupalogRules = new HashSet<ConjunctiveQuery>();
+	public LinkedHashSet<ConjunctiveQuery> dedupalogRules = new LinkedHashSet<ConjunctiveQuery>();
 	
 	
 	@SuppressWarnings("unchecked")
@@ -128,23 +127,23 @@ public class MarkovLogicNetwork implements Cloneable{
 
 		clone.listPred = (ArrayList<Predicate>) listPred.clone();
 
-		clone.nameMapPred = (Hashtable<String, Predicate>) nameMapPred.clone();
+		clone.nameMapPred = (LinkedHashMap<String, Predicate>) nameMapPred.clone();
 
-		clone.nameMapFunc = (Hashtable<String, Function>) nameMapFunc.clone();
+		clone.nameMapFunc = (LinkedHashMap<String, Function>) nameMapFunc.clone();
 
-		clone.nameMapType = (Hashtable<String, Type>) nameMapType.clone();
+		clone.nameMapType = (LinkedHashMap<String, Type>) nameMapType.clone();
 
-		clone.relevantClauses = (HashSet<Clause>) relevantClauses.clone();
+		clone.relevantClauses = (LinkedHashSet<Clause>) relevantClauses.clone();
 
 		clone.listClauses = (ArrayList<Clause>) listClauses.clone();
 
 		clone.unnormalizedClauses = (ArrayList<Clause>) unnormalizedClauses.clone();
 
-		clone.sigMap = (Hashtable<String, Clause>) sigMap.clone();
+		clone.sigMap = (LinkedHashMap<String, Clause>) sigMap.clone();
 
-//		clone.mapConstantID = (HashMap<String, Integer>) mapConstantID.clone();
+//		clone.mapConstantID = (LinkedHashMap<String, Integer>) mapConstantID.clone();
 
-		clone.scopes = (HashMap<Predicate, ArrayList<ConjunctiveQuery>>) scopes.clone();
+		clone.scopes = (LinkedHashMap<Predicate, ArrayList<ConjunctiveQuery>>) scopes.clone();
 
 		clone.scopingRules = (ArrayList<ConjunctiveQuery>) scopingRules.clone();
 		
@@ -203,7 +202,7 @@ public class MarkovLogicNetwork implements Cloneable{
 	/**
 	 * Returns the set of relevant clauses.
 	 */
-	public HashSet<Clause> getRelevantClauses(){
+	public LinkedHashSet<Clause> getRelevantClauses(){
 		return relevantClauses;
 	}
 
@@ -472,8 +471,8 @@ public class MarkovLogicNetwork implements Cloneable{
 	/**
 	 * Return the set of all predicates.
 	 */
-	public HashSet<Predicate> getAllPred() {
-		return new HashSet<Predicate>(listPred);
+	public LinkedHashSet<Predicate> getAllPred() {
+		return new LinkedHashSet<Predicate>(listPred);
 	}
 
 	public ArrayList<Predicate> getAllPredOrderByName(){
@@ -553,7 +552,7 @@ public class MarkovLogicNetwork implements Cloneable{
 		return listClauses;
 	}
 
-	public HashSet<String> additionalHardClauseInstances = new HashSet<String>();
+	public LinkedHashSet<String> additionalHardClauseInstances = new LinkedHashSet<String>();
 	
 	/**
 	 * Return assigned ID of a constant symbol.

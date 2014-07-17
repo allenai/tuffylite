@@ -1,11 +1,11 @@
 package tuffy.util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Settings {
-	private HashMap<String, Object> map = new HashMap<String, Object>();
+	private LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
 	
 	public Settings(){
 		

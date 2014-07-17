@@ -3,7 +3,7 @@ package tuffy.infer.ds;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
@@ -225,7 +225,7 @@ public class GClause {
 	 * for obtaining the truth value of GAtom, which is inevitable
 	 * for determining violation.
 	 */
-	public String toLongString(HashMap<Integer, GAtom> atoms){
+	public String toLongString(LinkedHashMap<Integer, GAtom> atoms){
 		StringBuilder sb = new StringBuilder();
 		sb.append("ViolatedGroundClause" + id + " [weight=" + weight +
 				", satisfied=" + (nsat > 0) + "]\n");

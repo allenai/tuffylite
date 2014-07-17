@@ -2,8 +2,8 @@ package tuffy.ground.partition;
 
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import tuffy.infer.ds.GAtom;
 import tuffy.util.UIMan;
@@ -26,10 +26,10 @@ public class Component implements Comparable<Component>{
 	// partitions in this component; maybe only one
 	public ArrayList<Partition> parts = new ArrayList<Partition>();
 	// atoms that are at the boundary
-	public HashSet<Integer> cutset = new HashSet<Integer>();
+	public LinkedHashSet<Integer> cutset = new LinkedHashSet<Integer>();
 
 	// aid --> atom
-	public HashMap<Integer, GAtom> atoms;
+	public LinkedHashMap<Integer, GAtom> atoms;
 
 
 	/**

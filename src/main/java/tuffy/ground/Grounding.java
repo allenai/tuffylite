@@ -4,7 +4,7 @@ package tuffy.ground;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import tuffy.db.RDB;
 import tuffy.db.SQLMan;
@@ -423,8 +423,8 @@ public class Grounding {
 		int cnt = 1;
 		int frontier = -2;
 		String relTemp = "temp_clauses";
-		HashSet<Predicate> changedLastTime = new HashSet<Predicate>();
-		HashSet<Predicate> changedThisTime = new HashSet<Predicate>();
+		LinkedHashSet<Predicate> changedLastTime = new LinkedHashSet<Predicate>();
+		LinkedHashSet<Predicate> changedThisTime = new LinkedHashSet<Predicate>();
 
 		for(Predicate p : mln.getAllPred()){
 			changedLastTime.add(p);
@@ -459,7 +459,7 @@ public class Grounding {
 			converged = true;
 			for(Clause c : mln.getRelevantClauses()) {
 				
-				HashSet<Boolean> possibleClausePos = new HashSet<Boolean>();
+				LinkedHashSet<Boolean> possibleClausePos = new LinkedHashSet<Boolean>();
 				if(c.hasEmbeddedWeight()){
 					possibleClausePos.add(true);
 					possibleClausePos.add(false);
@@ -733,7 +733,7 @@ public class Grounding {
 			UIMan.verbose(1, "");
 			if(nmore == 0) break;
 			changedLastTime = changedThisTime;
-			changedThisTime = new HashSet<Predicate>();
+			changedThisTime = new LinkedHashSet<Predicate>();
 			-- frontier;
 		}
 		db.dropTable(relTemp);
@@ -797,7 +797,7 @@ public class Grounding {
 		int clstotal = relevantClauses.size();
 		for(Clause c : relevantClauses) {
 			
-			HashSet<Boolean> possibleClausePos = new HashSet<Boolean>();
+			LinkedHashSet<Boolean> possibleClausePos = new LinkedHashSet<Boolean>();
 			if(c.hasEmbeddedWeight()){
 				if(Config.learning_mode && c.isFixedWeight == false){
 					possibleClausePos.add(true);

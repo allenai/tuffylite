@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import org.postgresql.PGConnection;
@@ -126,7 +126,7 @@ public class Predicate {
 	/**
 	 * Map from name to built-in predicates, e.g., same.
 	 */
-	private static HashMap<String, Predicate> builtInMap = new HashMap<String, Predicate>();
+	private static LinkedHashMap<String, Predicate> builtInMap = new LinkedHashMap<String, Predicate>();
 
 	/**
 	 * Return true if the argument is the name of a built-in predicate.
@@ -227,7 +227,7 @@ public class Predicate {
 	/**
 	 * Set of clauses referencing this predicate.
 	 */
-	private HashSet<Clause> iclauses = new HashSet<Clause>();
+	private LinkedHashSet<Clause> iclauses = new LinkedHashSet<Clause>();
 
 	/**
 	 * Set of queries referencing this predicate.
@@ -321,7 +321,7 @@ public class Predicate {
 	/**
 	 * Return clauses referencing this predicate.
 	 */
-	public HashSet<Clause> getRelatedClauses() {
+	public LinkedHashSet<Clause> getRelatedClauses() {
 		return iclauses;
 	}
 
@@ -767,7 +767,7 @@ public class Predicate {
 		argNameList.add(null);
 	}
 
-	private HashMap<String, Integer> argNameMap = new HashMap<String, Integer>();
+	private LinkedHashMap<String, Integer> argNameMap = new LinkedHashMap<String, Integer>();
 	private ArrayList<String> argNameList = new ArrayList<String>();
 
 	/**
@@ -811,8 +811,8 @@ public class Predicate {
 	 * arguments again to try to give unnamed arguments names.
 	 */
 	public void sealDefinition() {
-		HashSet<Type> tset = new HashSet<Type>();
-		HashSet<Type> dset = new HashSet<Type>();
+		LinkedHashSet<Type> tset = new LinkedHashSet<Type>();
+		LinkedHashSet<Type> dset = new LinkedHashSet<Type>();
 		for (Type t : types) {
 			if (tset.contains(t))
 				dset.add(t);
@@ -837,7 +837,7 @@ public class Predicate {
 	 */
 	@SuppressWarnings("unused")
 	private class FunctionalDependency {
-		HashSet<Integer> determinant = null;
+		LinkedHashSet<Integer> determinant = null;
 		public int dependent = -1;
 	}
 
@@ -862,7 +862,7 @@ public class Predicate {
 	 */
 	public void addFunctionalDependency(List<String> determinant,
 			String dependent) {
-		HashSet<Integer> det = new HashSet<Integer>();
+		LinkedHashSet<Integer> det = new LinkedHashSet<Integer>();
 		for (String s : determinant) {
 			int idx = argNameMap.get(s);
 			if (idx < 0) {

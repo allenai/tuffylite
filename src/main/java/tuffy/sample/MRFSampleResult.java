@@ -1,9 +1,10 @@
 package tuffy.sample;
 
 import java.util.BitSet;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap; // formerly java.util.concurrent.ConcurrentHashMap
 
 import tuffy.infer.MRF;
+import tuffy.util.DeterministicMapHelper;
 import tuffy.util.myDouble;
 
 public class MRFSampleResult {
@@ -20,15 +21,15 @@ public class MRFSampleResult {
 		return this.mrf.getCost(world);
 	}
 	
-	public ConcurrentHashMap<String, myDouble> getClauseViolations(){
+	public LinkedHashMap<String, myDouble> getClauseViolations(){
 		
-		ConcurrentHashMap<String, myDouble> rs = new 
-				ConcurrentHashMap<String, myDouble>();
+		LinkedHashMap<String, myDouble> rs = new 
+				LinkedHashMap<String, myDouble>();
 		
 		Integer[] tallies = this.mrf.getClauseTallies(world);
 		for(int i=0;i<tallies.length;i++){
 			for(String ffcid : (String[]) this.mrf.clauseToFFCID[i]){
-				rs.putIfAbsent(ffcid, new myDouble(0));
+				DeterministicMapHelper.putIfAbsent(rs, ffcid, new myDouble(0));
 				rs.get(ffcid).tallyDouble(tallies[i]);
 			}
 		}

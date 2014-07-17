@@ -2,7 +2,7 @@ package tuffy.test;
 
 import static org.junit.Assert.*;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 
 import org.junit.BeforeClass;
@@ -52,8 +52,8 @@ public class ClauseTest {
 		
 		ConjunctiveQuery.clearIndexHistory();
 
-		Clause.mappingFromID2Const = new HashMap<Integer, String>();
-		Clause.mappingFromID2Desc = new HashMap<String, String>();
+		Clause.mappingFromID2Const = new LinkedHashMap<Integer, String>();
+		Clause.mappingFromID2Desc = new LinkedHashMap<String, String>();
 		
 		Clause c1 = new Clause();
 		Literal lit1 = new Literal(p1, true);

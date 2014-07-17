@@ -1,9 +1,8 @@
 package tuffy.ground;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Iterator;
 
 
@@ -39,7 +38,7 @@ public class KBMC {
 		this.mln = mln;
 	}
 	
-	public HashSet<Clause> allowedClauses = null;
+	public LinkedHashSet<Clause> allowedClauses = null;
 	
 	/**
 	 * Run KBMC to identify and materialize relevant groundings of predicates.
@@ -65,11 +64,11 @@ public class KBMC {
 	 */
 	public void run() {
 		// atoms to be explored
-		Hashtable<Predicate, AtomCutSet> toExp = new 
-			Hashtable<Predicate, AtomCutSet>();
+		LinkedHashMap<Predicate, AtomCutSet> toExp = new 
+			LinkedHashMap<Predicate, AtomCutSet>();
 		// atoms deemed relevant
-		Hashtable<Predicate, AtomCutSet> relAtoms = new 
-			Hashtable<Predicate, AtomCutSet>();
+		LinkedHashMap<Predicate, AtomCutSet> relAtoms = new 
+			LinkedHashMap<Predicate, AtomCutSet>();
 		UIMan.verbose(1, ">>> KBMC: Identifying relevant atoms/clauses...");
 		// begin with queries
 		for(Predicate qp : mln.getAllPred()) {
@@ -112,7 +111,7 @@ public class KBMC {
 					for(Literal lit : c.getLiteralsOfPredicate(pred)) {
 						if(lit.isBuiltIn()) continue;
 						// calc mgu
-						HashMap<String, Term> vmap = lit.mostGeneralUnification(seed);
+						LinkedHashMap<String, Term> vmap = lit.mostGeneralUnification(seed);
 						if(vmap == null) continue;
 						// apply to other literals
 						for(Literal ol : c.getRegLiterals()) {
@@ -204,7 +203,7 @@ public class KBMC {
 		/**
 		 * Set of all tuples in each stratum.
 		 */
-		HashSet<Tuple> heap = new HashSet<Tuple>();
+		LinkedHashSet<Tuple> heap = new LinkedHashSet<Tuple>();
 		
 		/**
 		 * Copy all tuples in each stratum to {@link AtomCutSet#heap}. 
@@ -317,7 +316,7 @@ public class KBMC {
 			/**
 			 * Set of tuples in this stratum.
 			 */
-			HashSet<Tuple> tuples = new HashSet<Tuple>();
+			LinkedHashSet<Tuple> tuples = new LinkedHashSet<Tuple>();
 
 			/**
 			 * Add a tuple to this stratum.

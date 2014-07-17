@@ -3,7 +3,7 @@ package tuffy.test;
 import static org.junit.Assert.*;
 
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import org.junit.Test;
 
@@ -72,7 +72,7 @@ public class GClauseTest {
 	public final void test_GClause_toString() {
 		
 		assertEquals("{3,-4} | -1.0", gc.toPGString());
-		HashMap<Integer, GAtom> map = new HashMap<Integer, GAtom>();
+		LinkedHashMap<Integer, GAtom> map = new LinkedHashMap<Integer, GAtom>();
 		GAtom atom3 = new GAtom(3);
 		atom3.truth = true;
 		atom3.rep = "atom3";

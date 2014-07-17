@@ -10,8 +10,8 @@ import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 
 import org.postgresql.PGConnection;
@@ -77,7 +77,7 @@ public class Partitioning {
 		try {
 			db.disableAutoCommitForNow();
 			// read in set of atoms
-			HashSet<Integer> qatoms = new HashSet<Integer>();
+			LinkedHashSet<Integer> qatoms = new LinkedHashSet<Integer>();
 			ArrayList<Integer> atoms = new ArrayList<Integer>();
 			String sql = "SELECT atomID,isQuery, isqueryevid FROM " + mln.relAtoms;
 			ResultSet rs = db.query(sql);
@@ -91,7 +91,7 @@ public class Partitioning {
 			rs.close();
 
 			// the memory usage amortized onto individual atoms
-			HashMap<Integer, Double> atomWts = new HashMap<Integer, Double>();
+			LinkedHashMap<Integer, Double> atomWts = new LinkedHashMap<Integer, Double>();
 			for(int a : atoms){
 				atomWts.put(a, perAtomWeight());
 			}
@@ -130,7 +130,7 @@ public class Partitioning {
 				Integer[] lits = (Integer[])rs.getArray("lits").getArray();
 				if(lits.length <= 1) continue;
 				double afterSize = 0;
-				HashSet<Integer> roots = new HashSet<Integer>();
+				LinkedHashSet<Integer> roots = new LinkedHashSet<Integer>();
 				for(int lit : lits){
 					Integer root = ufpart.getRoot(Math.abs(lit));
 					if(!roots.contains(root)){
@@ -150,7 +150,7 @@ public class Partitioning {
 			rs.close();
 
 			// allocate result data structures
-			HashMap<Integer, Component> compMap = new HashMap<Integer, Component>();
+			LinkedHashMap<Integer, Component> compMap = new LinkedHashMap<Integer, Component>();
 			for(Integer r : ufcomp.getRoots()){
 				int size = ufcomp.clusterSize(r);
 				double wt = ufcomp.clusterWeight(r);
@@ -161,7 +161,7 @@ public class Partitioning {
 				compMap.put(r, comp);
 			}
 
-			HashMap<Integer, Partition> partMap = new HashMap<Integer, Partition>();
+			LinkedHashMap<Integer, Partition> partMap = new LinkedHashMap<Integer, Partition>();
 			for(Integer r : ufpart.getRoots()){
 				int size = ufpart.clusterSize(r);
 				double wt = ufpart.clusterWeight(r);
@@ -193,7 +193,7 @@ public class Partitioning {
 				comp.totalWeight += weight;
 				comp.numClauses ++;
 				comp.numPins += lits.length;
-				HashSet<Partition> pset = new HashSet<Partition>();
+				LinkedHashSet<Partition> pset = new LinkedHashSet<Partition>();
 				for(int lit : lits){
 					int a = Math.abs(lit);
 					Partition part = partMap.get(ufpart.getRoot(a));

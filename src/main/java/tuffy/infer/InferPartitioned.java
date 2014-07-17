@@ -4,7 +4,7 @@ package tuffy.infer;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.db.RDB;
 import tuffy.ground.Grounding;
@@ -32,8 +32,8 @@ public class InferPartitioned {
 	Partitioning parting;
 	PartitionScheme pmap;
 	public ArrayList<Bucket> wholeBuckets = new ArrayList<Bucket>();
-	HashMap<Component, ArrayList<Bucket>> partBuckets = 
-		new HashMap<Component, ArrayList<Bucket>>();
+	LinkedHashMap<Component, ArrayList<Bucket>> partBuckets = 
+		new LinkedHashMap<Component, ArrayList<Bucket>>();
 	
 	public PartitionScheme getPartitionScheme(){
 		return pmap;
@@ -115,7 +115,7 @@ public class InferPartitioned {
 	}
 
 	
-	public void setAtomBiases(HashMap<Integer, Double> deltas, boolean inv) {
+	public void setAtomBiases(LinkedHashMap<Integer, Double> deltas, boolean inv) {
 		for(Bucket z : wholeBuckets){
 			z.updateAtomBiases(deltas, inv);
 		}

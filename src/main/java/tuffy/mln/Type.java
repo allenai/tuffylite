@@ -8,8 +8,8 @@ import java.io.OutputStreamWriter;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import org.postgresql.PGConnection;
 
@@ -77,7 +77,7 @@ public class Type {
 	 * The domain of variable values. The members of a domain are
 	 * named as integer.
 	 */
-	private HashSet<Integer> domain = new HashSet<Integer>();
+	private LinkedHashSet<Integer> domain = new LinkedHashSet<Integer>();
 	
 	/**
 	 * Name of this Type.
@@ -184,7 +184,7 @@ public class Type {
 		domain.add(con);
 	}
 	
-	public HashSet<Integer> getDomain(){
+	public LinkedHashSet<Integer> getDomain(){
 		return domain;
 	}
 	

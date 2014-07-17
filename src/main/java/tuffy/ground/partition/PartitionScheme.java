@@ -2,7 +2,7 @@ package tuffy.ground.partition;
 
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.infer.MRF;
 import tuffy.util.StringMan;
@@ -20,8 +20,8 @@ public class PartitionScheme {
 	 * Each component or partition has a unique ID.
 	 */
 	public ArrayList<Component> components = new ArrayList<Component>();
-	private HashMap<Integer, Component> compMap = new HashMap<Integer, Component>();
-	private HashMap<Integer, Partition> partMap = new HashMap<Integer, Partition>();
+	private LinkedHashMap<Integer, Component> compMap = new LinkedHashMap<Integer, Component>();
+	private LinkedHashMap<Integer, Partition> partMap = new LinkedHashMap<Integer, Partition>();
 	
 	/**
 	 * Stats.

@@ -54,6 +54,12 @@ public class CommandOptions {
     
     @Option(name="-lineHeader", usage="Precede each line printed on the console with this string.")
     public String consoleLineHeader = null;
+    
+    @Option(name="-seed", usage="Seed for Java random number generator (Default = 0, which picks a random seed")
+    public long seed = 0;
+    
+    @Option(name="-pgSeed", usage="Seed for Postgres random number generator between 0.0 and 1.0 (Default = 0, which picks a random seed")
+    public float pgSeed = 0.0f;
 
     //@Option(name="-psec", usage="Dump MCSAT results every [psec] seconds.")
     public int mcsatDumpPeriodSec = 0;

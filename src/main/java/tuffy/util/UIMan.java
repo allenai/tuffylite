@@ -155,6 +155,9 @@ public class UIMan {
 		Config.max_threads = opt.maxThreads;
 		//Config.use_atom_blocking = opt.block;
 		
+		Config.seed = opt.seed;
+		Config.pgSeed = opt.pgSeed;
+		
 		Config.evidDBSchema = opt.evidDBSchema;
 		Config.dbNeedTranslate = opt.dbNeedTranslate;
 		

@@ -1,11 +1,11 @@
 package tuffy.util;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 
 public class BoundHashList<T> {
 	LinkedList<T> list = new LinkedList<T>();
-	HashSet<T> set = new HashSet<T>();
+	LinkedHashSet<T> set = new LinkedHashSet<T>();
 	
 	private int bound = Integer.MAX_VALUE;
 	

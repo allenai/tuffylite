@@ -4,8 +4,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import tuffy.ground.partition.PartitionScheme;
 import tuffy.infer.InferPartitioned;
@@ -52,7 +52,7 @@ public class SGDLearner extends Infer{
 		}
 		
 		
-		HashMap<String, Double> weights = new HashMap<String, Double>();
+		LinkedHashMap<String, Double> weights = new LinkedHashMap<String, Double>();
 
 		String sql = "SELECT DISTINCT weight, ffcid FROM " + "mln" + mln.getID() + "_cbuffer" + ";";
 		ResultSet rs = db.query(sql);
@@ -92,11 +92,11 @@ public class SGDLearner extends Infer{
 		cleanUp();
 	}
 	
-	public void dumpAnswers(HashMap<String, Double> currentWeight, String fout){
+	public void dumpAnswers(LinkedHashMap<String, Double> currentWeight, String fout){
 		ArrayList<String> lines = new ArrayList<String>();
 		DecimalFormat twoDForm = new DecimalFormat("#.####");
 		
-		HashSet<Predicate> allp = mln.getAllPred();
+		LinkedHashSet<Predicate> allp = mln.getAllPred();
 		for(Predicate p : allp){
 			String s = "";
 			if(p.isClosedWorld()){

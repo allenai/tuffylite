@@ -1,9 +1,9 @@
 package tuffy.sample;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
+// formerly also imported java.util.concurrent.ConcurrentHashMap
 
 import tuffy.infer.MRF;
 
@@ -21,9 +21,9 @@ public abstract class MRFSampleAlgorithm {
 	
 	public boolean hasStopped = false;
 	
-	public HashMap<String, Object> property = null;
+	public LinkedHashMap<String, Object> property = null;
 	
-	public MRFSampleAlgorithm(HashMap<String, Object> property, ArrayList<Integer> sampleDomain) {
+	public MRFSampleAlgorithm(LinkedHashMap<String, Object> property, ArrayList<Integer> sampleDomain) {
 			this.sampleDomain = sampleDomain;
 			
 			this.property = property;

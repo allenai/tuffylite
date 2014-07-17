@@ -28,13 +28,13 @@ public class UnionFind<E> {
 		private double weight;
 		private E name;
 		private Record<E> parent = null;
-		private HashSet<Record<E>> kids = null;
+		private LinkedHashSet<Record<E>> kids = null;
 
 		public Record(E name) {
 			this.name = name;
 			size = 1;
 			weight = 1;
-			if (trackKids) kids = new HashSet<Record<E>>();
+			if (trackKids) kids = new LinkedHashSet<Record<E>>();
 		}
 		
 		public void setWeight(double wt){
@@ -51,9 +51,9 @@ public class UnionFind<E> {
 			this.parent = parent;
 		}
 		
-		public HashSet<E> getAllKids() {
+		public LinkedHashSet<E> getAllKids() {
 			if (!trackKids) return null;
-			HashSet<E> ret = new HashSet<E>();
+			LinkedHashSet<E> ret = new LinkedHashSet<E>();
 			for (Record<E> k : kids) {
 				ret.add(k.getName());
 				ret.addAll(k.getAllKids());
@@ -97,9 +97,9 @@ public class UnionFind<E> {
 		}
 	}
 	
-	public HashSet<E> getAllNodesInCluster(E e) {
+	public LinkedHashSet<E> getAllNodesInCluster(E e) {
 		E root = getRoot(e);
-		HashSet<E> ret = map.get(root).getAllKids();
+		LinkedHashSet<E> ret = map.get(root).getAllKids();
 		ret.add(root);
 		return ret;
 	}
@@ -136,7 +136,7 @@ public class UnionFind<E> {
 		if (!node.kids.isEmpty()) {
 			if (opa != null) {
 				// this node has a parent; attach all kids to the parent
-				for (Record<E> kid : (HashSet<Record<E>>) node.kids.clone()) {
+				for (Record<E> kid : (LinkedHashSet<Record<E>>) node.kids.clone()) {
 					kid.setParent(opa);
 				}
 			} else {
@@ -148,7 +148,7 @@ public class UnionFind<E> {
 				}
 				nroot.setParent(null);
 				// now nroot should be no longer a kid
-				for (Record<E> kid :(HashSet<Record<E>>) node.kids.clone()){
+				for (Record<E> kid :(LinkedHashSet<Record<E>>) node.kids.clone()){
 					kid.setParent(nroot);
 				}
 			}
@@ -157,7 +157,7 @@ public class UnionFind<E> {
 	
 	/* data member - ArrayList containing all the records */	
 	private ArrayList<Record<E>> records = new ArrayList<Record<E>>();
-	private HashMap<E,Record<E>> map = new HashMap<E, Record<E>>();
+	private LinkedHashMap<E,Record<E>> map = new LinkedHashMap<E, Record<E>>();
 
 	private int nClusters = 0;
 	
@@ -165,8 +165,8 @@ public class UnionFind<E> {
 		return nClusters;
 	}
 	
-	public HashSet<E> getRoots(){
-		HashSet<E> roots = new HashSet<E>();
+	public LinkedHashSet<E> getRoots(){
+		LinkedHashSet<E> roots = new LinkedHashSet<E>();
 		for(Record<E> rec : records){
 			if(rec.isRoot()){
 				roots.add(rec.getName());
@@ -176,7 +176,7 @@ public class UnionFind<E> {
 	}
 	
 	/* Initalizes all sets, one for every element in list set */
-	public void makeUnionFind(List<E> Set, HashMap<E,Double> wts) {
+	public void makeUnionFind(List<E> Set, LinkedHashMap<E,Double> wts) {
 		for(E it : Set){
 			Record<E> rec = new Record<E>(it);
 			if(wts.containsKey(it)){
@@ -274,8 +274,8 @@ public class UnionFind<E> {
 		return find(rec).getWeight();
 	}
 	
-	public HashMap<E,E> getPartitionMap(){
-		HashMap<E,E> pmap = new HashMap<E, E>();
+	public LinkedHashMap<E,E> getPartitionMap(){
+		LinkedHashMap<E,E> pmap = new LinkedHashMap<E, E>();
 		for(Record<E> rec : records){
 			pmap.put(rec.getName(), find(rec).getName());
 		}

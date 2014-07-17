@@ -2,7 +2,7 @@ package tuffy.infer;
 
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.ground.partition.Bucket;
 import tuffy.ground.partition.Component;

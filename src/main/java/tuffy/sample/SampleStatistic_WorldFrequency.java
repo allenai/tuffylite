@@ -2,14 +2,15 @@ package tuffy.sample;
 
 import java.util.BitSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap; // formerly java.util.concurrent.ConcurrentHashMap
 
+import tuffy.util.DeterministicMapHelper;
 import tuffy.util.myDouble;
 
 public class SampleStatistic_WorldFrequency extends MRFSampleStatistic{
 
-	ConcurrentHashMap<BitSet, myDouble> worldFreqs = 
-			new ConcurrentHashMap<BitSet, myDouble>();
+	LinkedHashMap<BitSet, myDouble> worldFreqs = 
+			new LinkedHashMap<BitSet, myDouble>();
 	
 	public SampleStatistic_WorldFrequency(){
 		this.type = StatisticType.WorldFrequency;
@@ -18,7 +19,7 @@ public class SampleStatistic_WorldFrequency extends MRFSampleStatistic{
 	@Override
 	public void process(MRFSampleResult sampleWorld) {
 		
-		this.worldFreqs.putIfAbsent((BitSet) sampleWorld.world.clone(), new myDouble(0));
+		DeterministicMapHelper.putIfAbsent(this.worldFreqs, (BitSet) sampleWorld.world.clone(), new myDouble(0));
 		this.worldFreqs.get(sampleWorld.world).tallyDouble(1);
 		
 		this.nProcessedSample ++;
@@ -47,7 +48,7 @@ public class SampleStatistic_WorldFrequency extends MRFSampleStatistic{
 			for(Object world_g : sampler.getStatisticDomain()){
 				BitSet world = (BitSet) world_g;
 				
-				worldFreqs.putIfAbsent(world, new myDouble(0));
+				DeterministicMapHelper.putIfAbsent(worldFreqs, world, new myDouble(0));
 				
 				worldFreqs.get(world).tallyDouble(sampler.lookupStatistic(world));
 				

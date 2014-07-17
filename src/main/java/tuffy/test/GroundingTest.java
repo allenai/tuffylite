@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import org.junit.Test;
 
@@ -35,8 +35,8 @@ public class GroundingTest extends Infer{
 		
 		ConjunctiveQuery.clearIndexHistory();
 
-		Clause.mappingFromID2Const = new HashMap<Integer, String>();
-		Clause.mappingFromID2Desc = new HashMap<String, String>();
+		Clause.mappingFromID2Const = new LinkedHashMap<Integer, String>();
+		Clause.mappingFromID2Desc = new LinkedHashMap<String, String>();
 
 		
 		System.out.println("testing grounding");

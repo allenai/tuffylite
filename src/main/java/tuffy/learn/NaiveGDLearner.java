@@ -78,7 +78,7 @@ public class NaiveGDLearner extends Learner {
 				delta += (ev - trainv) * (ev - trainv);
 				Learner.currentWeight.put(k, newCW);
 			}
-			//this.currentWeight.put(k, Math.random());
+			//this.currentWeight.put(k, SeededRandom.getInstance().nextDouble());
 		}
 		UIMan.println("AVG. DELTA = " + delta/n);
 

@@ -3,7 +3,7 @@ package tuffy.util;
 import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 
 /**
@@ -38,6 +38,10 @@ public class Config {
 	
 
 	public static boolean log_trace = true;
+	
+	public static long seed = 0;
+	
+	public static float pgSeed = 0.0f;
 	
 	/**
 	 * Runtime
@@ -96,8 +100,8 @@ public class Config {
 		"pred_mentionfeature_textlc","type_word","pred_fullmention"};
 	private static String[] aVolatileTables = {"pred_query", "pred_mcoref_scope", 
 		"pred_mcoref_map", "pred_asqueryfull"}; 
-	public static HashSet<String> goodTables = new HashSet<String>();
-	public static HashSet<String> volatileTables = new HashSet<String>();
+	public static LinkedHashSet<String> goodTables = new LinkedHashSet<String>();
+	public static LinkedHashSet<String> volatileTables = new LinkedHashSet<String>();
 	static {
 		for (String t : aGoodTables) {
 			goodTables.add(t);

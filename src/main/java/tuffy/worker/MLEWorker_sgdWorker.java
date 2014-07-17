@@ -3,11 +3,11 @@ package tuffy.worker;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+//formerly also imported java.util.concurrent.ConcurrentHashMap
 
 import tuffy.infer.MRF;
 import tuffy.infer.ds.GAtom;
@@ -21,6 +21,7 @@ import tuffy.sample.SampleStatistic_WorldLogWeight;
 import tuffy.sample.MRFSampleStatistic.StatisticType;
 import tuffy.sample.SampleStatistic_WorldSumLogWeight;
 import tuffy.util.Config;
+import tuffy.util.DeterministicMapHelper;
 import tuffy.worker.ds.MLEWorld;
 
 public class MLEWorker_sgdWorker implements Runnable{
@@ -36,25 +37,25 @@ public class MLEWorker_sgdWorker implements Runnable{
 	double logZ2;
 	double logQueryZ2;
 	
-	HashMap<String, myDouble> logVioTally;
-	HashMap<String, myDouble> logVioQueryTally;
-	HashSet<String> changedWeights;
+	LinkedHashMap<String, myDouble> logVioTally;
+	LinkedHashMap<String, myDouble> logVioQueryTally;
+	LinkedHashSet<String> changedWeights;
 	
-	HashSet<String> fixedWeights;
+	LinkedHashSet<String> fixedWeights;
 	
-	ConcurrentHashMap<String, Double> weights = new ConcurrentHashMap<String, Double>();
+	LinkedHashMap<String, Double> weights = new LinkedHashMap<String, Double>();
 	
 	double alpha = 0;
 	double mu = 0;
 	
 	public static double gradientNorm = 0;
 	
-	public static ConcurrentHashMap<String, myDouble> gradientCache = 
-			new ConcurrentHashMap<String, myDouble>();
+	public static LinkedHashMap<String, myDouble> gradientCache = 
+			new LinkedHashMap<String, myDouble>();
 	
 	public MLEWorker_sgdWorker(MRF _mrf, int _nSamples, double _alpha, 
-			double _mu, ConcurrentHashMap<String, Double> _weights,
-			HashSet<String> _fixedWeights, boolean _isReporter) {
+			double _mu, LinkedHashMap<String, Double> _weights,
+			LinkedHashSet<String> _fixedWeights, boolean _isReporter) {
 		mrf = _mrf;
 		nSamples = _nSamples;
 		alpha = _alpha;
@@ -84,8 +85,8 @@ public class MLEWorker_sgdWorker implements Runnable{
 		return logX + java.lang.Math.log(1.0 + java.lang.Math.exp(negDiff)); 
 	}
 	
-	HashSet<Integer> getNeighborExcept(int center, HashSet<Integer> except){
-		HashSet<Integer> rs = new HashSet<Integer>();
+	LinkedHashSet<Integer> getNeighborExcept(int center, LinkedHashSet<Integer> except){
+		LinkedHashSet<Integer> rs = new LinkedHashSet<Integer>();
 		
 		if(this.mrf.adj.containsKey(center)){
 			for(GClause gc : this.mrf.adj.get(center)){
@@ -116,7 +117,7 @@ public class MLEWorker_sgdWorker implements Runnable{
 		
 		this.mrf.buildIndices();
 		
-		HashMap<Integer, myDouble> hub = new HashMap<Integer, myDouble>();
+		LinkedHashMap<Integer, myDouble> hub = new LinkedHashMap<Integer, myDouble>();
 		for(GClause gc : this.mrf.clauses){
 			if(gc.lits.length == 1){
 				continue;
@@ -137,16 +138,16 @@ public class MLEWorker_sgdWorker implements Runnable{
 			}
 		}
 		
-		HashSet<Integer> center = new HashSet<Integer>();
+		LinkedHashSet<Integer> center = new LinkedHashSet<Integer>();
 		for(Integer iatom : hub.keySet()){
 			if(hub.get(iatom).value == max){
 				center.add(iatom);
 			}
 		}
 		
-		HashMap<Integer, Integer> partition = new HashMap<Integer, Integer>();
+		LinkedHashMap<Integer, Integer> partition = new LinkedHashMap<Integer, Integer>();
 		int cid = 0;
-		HashSet<Integer> remains = new HashSet<Integer>();
+		LinkedHashSet<Integer> remains = new LinkedHashSet<Integer>();
 		remains.addAll(this.mrf.atoms.keySet());
 		remains.removeAll(center);
 		while(!remains.isEmpty()){
@@ -156,7 +157,7 @@ public class MLEWorker_sgdWorker implements Runnable{
 			partition.put(workon, cid);
 			remains.remove(workon);
 			
-			HashSet<Integer> toadd = this.getNeighborExcept(workon, center);
+			LinkedHashSet<Integer> toadd = this.getNeighborExcept(workon, center);
 			toadd.retainAll(remains);
 			toadd.removeAll(partition.keySet());
 			while(!toadd.isEmpty()){
@@ -175,10 +176,10 @@ public class MLEWorker_sgdWorker implements Runnable{
 		}
 		
 		//System.out.println(center + "\t" + partition);
-		HashMap<Integer, HashSet<Integer>> clusters =
-				new HashMap<Integer, HashSet<Integer>>();
+		LinkedHashMap<Integer, LinkedHashSet<Integer>> clusters =
+				new LinkedHashMap<Integer, LinkedHashSet<Integer>>();
 		
-		HashMap<Integer, myDouble> size = new HashMap<Integer, myDouble>();
+		LinkedHashMap<Integer, myDouble> size = new LinkedHashMap<Integer, myDouble>();
 		for(Integer atom : partition.keySet()){
 			int cluster = partition.get(atom);
 			if(!size.containsKey(cluster)){
@@ -187,7 +188,7 @@ public class MLEWorker_sgdWorker implements Runnable{
 			size.get(cluster).tallyDouble(1);
 			
 			if(!clusters.containsKey(cluster)){
-				clusters.put(cluster, new HashSet<Integer>());
+				clusters.put(cluster, new LinkedHashSet<Integer>());
 			}
 			
 			clusters.get(cluster).add(atom);
@@ -234,10 +235,10 @@ public class MLEWorker_sgdWorker implements Runnable{
 		logZ2 = Double.NEGATIVE_INFINITY;
 		logQueryZ2 = Double.NEGATIVE_INFINITY;
 		
-		logVioTally = new HashMap<String, myDouble>();
-		logVioQueryTally = new HashMap<String, myDouble>();
+		logVioTally = new LinkedHashMap<String, myDouble>();
+		logVioQueryTally = new LinkedHashMap<String, myDouble>();
 		
-		changedWeights = new HashSet<String>();
+		changedWeights = new LinkedHashSet<String>();
 		
 		//this.detectStar();
 		
@@ -253,7 +254,7 @@ public class MLEWorker_sgdWorker implements Runnable{
 
 		
 		//System.out.println("Sample for Query:");
-		HashMap<String, Object> samplerProperty = new HashMap<String, Object>();
+		LinkedHashMap<String, Object> samplerProperty = new LinkedHashMap<String, Object>();
 		samplerProperty.put("maintain_fixed_query_in_mrf", true);
 		MRFSampler sampler = new MRFSampler(mrf, SampleAlgorithm_NaiveSampling.class, 
 				samplerProperty, nSamples, null);
@@ -490,7 +491,7 @@ public class MLEWorker_sgdWorker implements Runnable{
 	
 	public synchronized void tallyGrad(String ffcid, double delta){
 
-		MLEWorker_sgdWorker.gradientCache.putIfAbsent(ffcid, new myDouble(0));
+		DeterministicMapHelper.putIfAbsent(MLEWorker_sgdWorker.gradientCache, ffcid, new myDouble(0));
 		
 		myDouble toTally = MLEWorker_sgdWorker.gradientCache.get(ffcid);
 		

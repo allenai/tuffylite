@@ -1,7 +1,7 @@
 package tuffy.learn;
 
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import tuffy.infer.MRF;
 import tuffy.infer.MRF.INIT_STRATEGY;
@@ -22,30 +22,30 @@ public class DNLearner extends Learner {
 	/**
 	 * Map from clause ID to gradient value in last iteration.
 	 */
-	public HashMap<String, Double> oldG = null;
+	public LinkedHashMap<String, Double> oldG = null;
 
 	/**
 	 * Map from clause ID to H^(-1)g value in last iteration.
 	 */
-	public HashMap<String, Double> oldD = null;
+	public LinkedHashMap<String, Double> oldD = null;
 	
 	/**
 	 * Map from clause ID to weight in last iteration.
 	 * It is used for backtracking.
 	 */
-	public HashMap<String, Double> oldWeight = null;
+	public LinkedHashMap<String, Double> oldWeight = null;
 	
 	/**
 	 * Map from clause ID to current gradient value. This will
 	 * be filled after the invocation of {@link DNLearner#getGradientAndD(MCSAT)}.
 	 */
-	public HashMap<String, Double> currentGradient = null;
+	public LinkedHashMap<String, Double> currentGradient = null;
 	
 	/**
 	 * Map from clause ID to current H^(-1)g value. This will
 	 * be filled after the invocation of {@link DNLearner#getGradientAndD(MCSAT)}.
 	 */	
-	public HashMap<String, Double> currentD = null;
+	public LinkedHashMap<String, Double> currentD = null;
 	
 	/**
 	 * D'HD value of last iteration. Here D = H^(-1)g, H is Hessian.
@@ -91,8 +91,8 @@ public class DNLearner extends Learner {
 	 * @param mcsat MCSAT instance used to estimate the expectation of violations.
 	 */
 	public void getGradientAndD(MRF mcsat){
-		this.currentGradient = new HashMap<String, Double>();
-		this.currentD = new HashMap<String, Double>();
+		this.currentGradient = new LinkedHashMap<String, Double>();
+		this.currentD = new LinkedHashMap<String, Double>();
 		//Fill in gradient
 		for(String k : mcsat.expectationOfViolation.keySet()){
 			
@@ -188,7 +188,7 @@ public class DNLearner extends Learner {
 	        
 	        if (actual/pred < 0.25 && backtrackCount_ < 1000){
 			
-				Learner.currentWeight = (HashMap<String, Double>) this.oldWeight.clone();
+				Learner.currentWeight = (LinkedHashMap<String, Double>) this.oldWeight.clone();
 				
 		        //  for (int i = 0; i < domainCnt_; i++)
 		        //      inferences_[i]->restoreCnts();
@@ -250,9 +250,9 @@ public class DNLearner extends Learner {
 		}
 		
 		if (!backtracked){
-			oldD = (HashMap<String, Double>) this.currentD.clone();
-			oldG = (HashMap<String, Double>) this.currentGradient.clone();	
-			oldWeight = (HashMap<String, Double>) Learner.currentWeight.clone();
+			oldD = (LinkedHashMap<String, Double>) this.currentD.clone();
+			oldG = (LinkedHashMap<String, Double>) this.currentGradient.clone();	
+			oldWeight = (LinkedHashMap<String, Double>) Learner.currentWeight.clone();
 			
 			for(String k : mcsat.expectationOfViolation.keySet()){
 				if(k.contains("fixed")){

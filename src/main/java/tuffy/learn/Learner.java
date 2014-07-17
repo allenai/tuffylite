@@ -4,8 +4,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import tuffy.infer.MRF;
 import tuffy.main.Infer;
@@ -40,41 +40,41 @@ public abstract class Learner extends Infer {
 	/**
 	 * Map from clause name to current clause weight.
 	 */
-	static public HashMap<String, Double> currentWeight = null;
+	static public LinkedHashMap<String, Double> currentWeight = null;
 	
 	/**
 	 * Map from clause name to the clause weight read originally from
 	 * MLN program.
 	 */
-	static public HashMap<String, Double> oriWeight = null;
+	static public LinkedHashMap<String, Double> oriWeight = null;
 	
 	/**
 	 * Map from clause name to whether it is assigned to hard
 	 * weight clause while learning.
 	 */
-	static public HashMap<String, Boolean> isHardMappings = null;
+	static public LinkedHashMap<String, Boolean> isHardMappings = null;
 	
 	/**
 	 * Map from clause name to clause weight learned in last
 	 * iteration.
 	 */
-	public HashMap<String, Double> _oldWeight = null;
+	public LinkedHashMap<String, Double> _oldWeight = null;
 	
-	//public HashMap<String, Double> randomWeight = null;
+	//public LinkedHashMap<String, Double> randomWeight = null;
 	//
-	//public HashMap<String, Double> oriWeight = null;
+	//public LinkedHashMap<String, Double> oriWeight = null;
 	
 	///**
 	// * Map from clause name to the corresponding H^(-1)g value.
 	// */
-	//public static HashMap<String, Double> currentD = null;
+	//public static LinkedHashMap<String, Double> currentD = null;
 	
 	/**
 	 * Map from clause name to final weight. Here by final
 	 * weight, it means the the average of the weights
 	 * in each iteration.
 	 */
-	public static HashMap<String, Double> finalWeight = null;
+	public static LinkedHashMap<String, Double> finalWeight = null;
 	
 	/**
 	 * FOR JUNIT TEST ONLY.
@@ -94,32 +94,32 @@ public abstract class Learner extends Infer {
 	/**
 	 * Map from clause name to current training data violation.
 	 */
-	public HashMap<String, Long> trainingViolation = null;
+	public LinkedHashMap<String, Long> trainingViolation = null;
 	
 	/**
 	 * Map from clause name to current training data satisfaction.
 	 */
-	public HashMap<String, Long> trainingSatisification = null;
+	public LinkedHashMap<String, Long> trainingSatisification = null;
 	
 	/**
 	 * Map from clause name to training data violation of positive weight.
 	 */
-	HashMap<String, Long> positiveWeightViolation = null;
+	LinkedHashMap<String, Long> positiveWeightViolation = null;
 	
 	/**
 	 * Map from clause name to training data satisfaction of positive weight.
 	 */
-	HashMap<String, Long> positiveWeightSatisfication = null;
+	LinkedHashMap<String, Long> positiveWeightSatisfication = null;
 	
 	/**
 	 * Map from clause name to training data violation of negative weight.
 	 */
-	HashMap<String, Long> negativeWeightViolation = null;
+	LinkedHashMap<String, Long> negativeWeightViolation = null;
 	
 	/**
 	 * Map from clause name to training data satisfaction of negative weight.
 	 */
-	HashMap<String, Long> negativeWeightSatisfication = null;
+	LinkedHashMap<String, Long> negativeWeightSatisfication = null;
 	
 	/**
 	 * run the learner
@@ -147,14 +147,14 @@ public abstract class Learner extends Infer {
 			options.maxTries = 3;
 		}
 	
-		Learner.isHardMappings = new HashMap<String, Boolean>();
+		Learner.isHardMappings = new LinkedHashMap<String, Boolean>();
 		//String outputStr = "";
 		
 		// INIT CURRENT WEIGHT, LOAD FROM CBUFFER TABLE
-		Learner.currentWeight = new HashMap<String, Double>();
-		Learner.oriWeight = new HashMap<String, Double>();
-		Learner.finalWeight = new HashMap<String, Double>();
-		//Learner.currentD = new HashMap<String, Double>();
+		Learner.currentWeight = new LinkedHashMap<String, Double>();
+		Learner.oriWeight = new LinkedHashMap<String, Double>();
+		Learner.finalWeight = new LinkedHashMap<String, Double>();
+		//Learner.currentD = new LinkedHashMap<String, Double>();
 		String sql = "SELECT DISTINCT weight, ffcid FROM " + "mln" + mln.getID() + "_cbuffer" + ";";
 		ResultSet rs = db.query(sql);
 		while(rs.next()){
@@ -187,9 +187,9 @@ public abstract class Learner extends Infer {
 		}
 		_mcsat.updateClauseWeights(currentWeight);
 		_mcsat.updateClauseVoiTallies();
-		positiveWeightViolation = (HashMap<String, Long>)
+		positiveWeightViolation = (LinkedHashMap<String, Long>)
 			(_mcsat.clauseVioTallies.clone());
-		positiveWeightSatisfication = (HashMap<String, Long>)
+		positiveWeightSatisfication = (LinkedHashMap<String, Long>)
 			(_mcsat.clauseSatTallies.clone());	
 		
 		// all negative violation
@@ -200,12 +200,12 @@ public abstract class Learner extends Infer {
 		_mcsat.clauseVioTallies.clear();
 		_mcsat.clauseSatTallies.clear();
 		_mcsat.updateClauseVoiTallies();
-		negativeWeightViolation = (HashMap<String, Long>)
+		negativeWeightViolation = (LinkedHashMap<String, Long>)
 			(_mcsat.clauseVioTallies.clone());
-		negativeWeightSatisfication = (HashMap<String, Long>)
+		negativeWeightSatisfication = (LinkedHashMap<String, Long>)
 			(_mcsat.clauseSatTallies.clone());
 		
-		Learner.currentWeight = (HashMap<String, Double>) Learner.oriWeight.clone();
+		Learner.currentWeight = (LinkedHashMap<String, Double>) Learner.oriWeight.clone();
 		this.calcCurrentTrainingViolation();
 		this.fillInCurrentWeight(_mcsat);
 		_mcsat.updateClauseWeights(currentWeight);
@@ -224,7 +224,7 @@ public abstract class Learner extends Infer {
 		
 		UIMan.println(">>> Iteration Begins...");
 		
-		_oldWeight = (HashMap<String, Double>) currentWeight.clone();
+		_oldWeight = (LinkedHashMap<String, Double>) currentWeight.clone();
 	
 		// options.nDIteration = 1;
 		for(int i=0;i<options.nDIteration;i++){
@@ -265,7 +265,7 @@ public abstract class Learner extends Infer {
 
 			this.calcCurrentTrainingViolation();
 
-			_oldWeight = (HashMap<String, Double>) currentWeight.clone();
+			_oldWeight = (LinkedHashMap<String, Double>) currentWeight.clone();
 			
 		}
 				
@@ -294,7 +294,7 @@ public abstract class Learner extends Infer {
 		ArrayList<String> lines = new ArrayList<String>();
 		DecimalFormat twoDForm = new DecimalFormat("#.####");
 		
-		HashSet<Predicate> allp = mln.getAllPred();
+		LinkedHashSet<Predicate> allp = mln.getAllPred();
 		for(Predicate p : allp){
 			String s = "";
 			if(p.isClosedWorld()){
@@ -392,8 +392,8 @@ public abstract class Learner extends Infer {
 	public void calcCurrentTrainingViolation(){
 		
 		if(this.trainingViolation == null){
-			this.trainingViolation = new HashMap<String, Long>();
-			this.trainingSatisification = new HashMap<String, Long>();
+			this.trainingViolation = new LinkedHashMap<String, Long>();
+			this.trainingSatisification = new LinkedHashMap<String, Long>();
 		}
 		
 		for(String s : Learner.currentWeight.keySet()){

@@ -5,10 +5,10 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.LinkedHashMap; // formerly java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -28,6 +28,7 @@ import tuffy.util.BitSetIntPair;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
 import tuffy.util.FileMan;
+import tuffy.util.SeededRandom;
 import tuffy.util.Settings;
 import tuffy.util.StringMan;
 import tuffy.util.Timer;
@@ -36,9 +37,9 @@ import tuffy.worker.MLEWorker_sgdWorker;
 
 public class MultiCoreSGDLearner extends Infer{
 	
-	public ConcurrentHashMap<String, Double> weights = null;
+	public LinkedHashMap<String, Double> weights = null;
 	
-	public HashSet<String> fixedWeights = null;
+	public LinkedHashSet<String> fixedWeights = null;
 	
 	public InferPartitioned ip = null;
 	
@@ -81,8 +82,8 @@ public class MultiCoreSGDLearner extends Infer{
 		// init ori weights
 		UIMan.println(">> Init Weights...");
 		
-		weights = new ConcurrentHashMap<String, Double>();
-		fixedWeights = new HashSet<String>();
+		weights = new LinkedHashMap<String, Double>();
+		fixedWeights = new LinkedHashSet<String>();
 		
 		String sql = "SELECT DISTINCT weight, ffcid FROM " + Config.db_schema + "." + "mln" + mln.getID() + "_cbuffer" + ";";
 		ResultSet rs = db.query(sql);
@@ -231,7 +232,7 @@ public class MultiCoreSGDLearner extends Infer{
 				
 				
 				MLEWorker_sgdWorker.gradientNorm = 0;
-				//HashSet<MLEWorker_sgdWorker> workers = new HashSet<MLEWorker_sgdWorker>();
+				//LinkedHashSet<MLEWorker_sgdWorker> workers = new LinkedHashSet<MLEWorker_sgdWorker>();
 				int npart = 0;
 				
 				for(ArrayList<Partition> parts : chunks){
@@ -257,12 +258,12 @@ public class MultiCoreSGDLearner extends Infer{
 	
 						if(Config.debug_mode) System.out.print("*");
 						
-						if(Math.random() > 1){	// TODO: stochastic on component side
+						if(SeededRandom.getInstance().nextDouble() > 1){	// TODO: stochastic on component side
 							continue;
 						}
 						
 						
-								//MRF _mrf, int _nSamples, double _alpha, double _mu, HashMap<String, Double> _weights
+								//MRF _mrf, int _nSamples, double _alpha, double _mu, LinkedHashMap<String, Double> _weights
 						MLEWorker_sgdWorker worker = new MLEWorker_sgdWorker(p.mrf, nSample, alpha, mu, weights, fixedWeights, false);
 							//workers.add(worker);
 						
@@ -306,12 +307,12 @@ public class MultiCoreSGDLearner extends Infer{
 								continue;
 							}
 								
-							if(Math.random() > 1){	// TODO: stochastic on component side
+							if(SeededRandom.getInstance().nextDouble() > 1){	// TODO: stochastic on component side
 								continue;
 							}
 							
 								
-									//MRF _mrf, int _nSamples, double _alpha, double _mu, HashMap<String, Double> _weights
+									//MRF _mrf, int _nSamples, double _alpha, double _mu, LinkedHashMap<String, Double> _weights
 							MLEWorker_sgdWorker worker = new MLEWorker_sgdWorker(p.mrf, nSample, alpha, mu, weights, fixedWeights, true);
 								//workers.add(worker);
 							this.threadExecutor.execute(worker);
@@ -456,7 +457,7 @@ public class MultiCoreSGDLearner extends Infer{
 		ArrayList<String> lines = new ArrayList<String>();
 		DecimalFormat twoDForm = new DecimalFormat("#.####");
 		
-		HashSet<Predicate> allp = mln.getAllPred();
+		LinkedHashSet<Predicate> allp = mln.getAllPred();
 		for(Predicate p : allp){
 			String s = "";
 			if(p.isClosedWorld()){

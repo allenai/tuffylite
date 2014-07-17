@@ -2,7 +2,7 @@ package tuffy.sample;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Properties;
 
 import tuffy.infer.MRF;
@@ -13,7 +13,7 @@ public class SampleAlgorithm_BruteForceEnumerate extends MRFSampleAlgorithm{
 	int lengthOfBitMap = -1;
 	Enumerator enumerator = null;
 	
-	public SampleAlgorithm_BruteForceEnumerate(HashMap<String, Object> property, ArrayList<Integer> sampleDomain) {
+	public SampleAlgorithm_BruteForceEnumerate(LinkedHashMap<String, Object> property, ArrayList<Integer> sampleDomain) {
 		super(property, sampleDomain);
 		capable_for_small_components_optimization = false;
 	}

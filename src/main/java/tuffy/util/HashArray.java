@@ -1,13 +1,13 @@
 package tuffy.util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Random;
 
 public class HashArray<T> {
 	ArrayList<T> list = new ArrayList<T>();
-	HashMap<T, Integer> indices = new HashMap<T, Integer>();
-	Random rand = new Random();
+	LinkedHashMap<T, Integer> indices = new LinkedHashMap<T, Integer>();
+	Random rand = SeededRandom.getInstance();
 	
 	public int size = 0;
 	

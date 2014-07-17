@@ -7,21 +7,22 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import tuffy.infer.MRF;
 import tuffy.util.Config;
 import tuffy.util.Enumerator;
+import tuffy.util.SeededRandom;
 import tuffy.util.UIMan;
 import tuffy.worker.ds.MLEWorld;
 
 public class MLEWorker_gibbsSampler extends MLEWorker{
 
 	int nSamples = 0;
-	HashMap<BitSet, MLEWorld> worlds = new HashMap<BitSet, MLEWorld>();
+	LinkedHashMap<BitSet, MLEWorld> worlds = new LinkedHashMap<BitSet, MLEWorld>();
 	
 	public MLEWorker_gibbsSampler(MRF _mrf, int _nSamples) {
 		super(_mrf);
@@ -60,12 +61,12 @@ public class MLEWorker_gibbsSampler extends MLEWorker{
 	}
 
 	
-	HashMap<Integer, Double> flipDelta = 
-			new HashMap<Integer, Double>();
+	LinkedHashMap<Integer, Double> flipDelta = 
+			new LinkedHashMap<Integer, Double>();
 	
 	public void updateDelta(BitSet currentWorld, int flipped){
 		
-		HashSet<Integer> impactedAtoms = new HashSet<Integer>();
+		LinkedHashSet<Integer> impactedAtoms = new LinkedHashSet<Integer>();
 		for(Integer impactedClause : this.mrf.localAtom2Clause.get(flipped)){
 			for(Integer impactedAtom : this.mrf.localClause2Atom.get(impactedClause)){
 				impactedAtoms.add(impactedAtom);
@@ -103,7 +104,7 @@ public class MLEWorker_gibbsSampler extends MLEWorker{
 			currentWorld.flip(atom);
 		}
 		
-		double rand = Math.random();
+		double rand = SeededRandom.getInstance().nextDouble();
 		double agg = 0;
 		
 		Integer toFlip = -1;
@@ -148,7 +149,7 @@ public class MLEWorker_gibbsSampler extends MLEWorker{
 		
 		double alpha = Math.min(1, pi_wp*q_w_wp/pi_w/q_wp_w);
 		
-		if(Math.random() < alpha){
+		if(SeededRandom.getInstance().nextDouble() < alpha){
 			return toFlip;
 		}
 		
@@ -166,7 +167,7 @@ public class MLEWorker_gibbsSampler extends MLEWorker{
 		// init world
 		BitSet currentWorld = new BitSet();
 		for(int i=1;i<lengthOfBitMap+1;i++){
-			if(Math.random() > 0.5){
+			if(SeededRandom.getInstance().nextDouble() > 0.5){
 				currentWorld.set(i);
 			}
 		}

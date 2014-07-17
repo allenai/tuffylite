@@ -3,7 +3,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.LinkedHashMap;
 
 /**
  * Container of time related utilities.
@@ -11,7 +11,7 @@ import java.util.Hashtable;
 public class Timer {
 
 	private static long birth = now();
-	private static Hashtable<String, Long> points = new Hashtable<String, Long>();
+	private static LinkedHashMap<String, Long> points = new LinkedHashMap<String, Long>();
 	
 	private static long secondInMillis = 1000;
 	private static long minuteInMillis = secondInMillis * 60;

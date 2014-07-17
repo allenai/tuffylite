@@ -43,7 +43,7 @@ public class Literal implements Cloneable {
 	/**
 	 * The name set of all variables in this literal.
 	 */
-	private HashSet<String> vars = new HashSet<String>();
+	private LinkedHashSet<String> vars = new LinkedHashSet<String>();
 	
 	
 	@SuppressWarnings("unchecked")
@@ -58,7 +58,7 @@ public class Literal implements Cloneable {
 	    clone.sense = sense;
 	    clone.terms = (ArrayList<Term>) terms.clone();
 	    clone.tuple = tuple;
-	    clone.vars = (HashSet<String>) vars.clone();
+	    clone.vars = (LinkedHashSet<String>) vars.clone();
 	    return clone;
 
 	  }
@@ -85,7 +85,7 @@ public class Literal implements Cloneable {
 	/**
 	 * Return the set of variable names in this literal.
 	 */
-	public HashSet<String> getVars(){
+	public LinkedHashSet<String> getVars(){
 		return vars;
 	}
 	
@@ -138,7 +138,7 @@ public class Literal implements Cloneable {
 		/**
 		 * The set of variable names in this clique.
 		 */
-		HashSet<String> vars = new HashSet<String>();
+		LinkedHashSet<String> vars = new LinkedHashSet<String>();
 		
 		/**
 		 * The constant of this clique.
@@ -196,8 +196,8 @@ public class Literal implements Cloneable {
 	 * @return the MGU in the form of a mapping from 
 	 * variables to variables/constants
 	 */
-	public HashMap<String, Term> mostGeneralUnification(Tuple atuple){
-		Hashtable<String, VarClique> cliques = new Hashtable<String, VarClique>();
+	public LinkedHashMap<String, Term> mostGeneralUnification(Tuple atuple){
+		LinkedHashMap<String, VarClique> cliques = new LinkedHashMap<String, VarClique>();
 		int[] tuple = atuple.list;
 		for(int i=0; i<terms.size(); i++) {
 			Term t = terms.get(i);
@@ -256,7 +256,7 @@ public class Literal implements Cloneable {
 			}
 		}
 
-		HashMap<String, Term> lmap = new HashMap<String, Term>();
+		LinkedHashMap<String, Term> lmap = new LinkedHashMap<String, Term>();
 		for(String v : vars) {
 			VarClique clique = cliques.get(v);
 			Term t;
@@ -307,7 +307,7 @@ public class Literal implements Cloneable {
 	public Tuple toTuple() {
 		if(tuple != null) return tuple;
 		ArrayList<Integer> tlist = new ArrayList<Integer>();
-		Hashtable<String, Integer> varIDMap = new Hashtable<String, Integer>();
+		LinkedHashMap<String, Integer> varIDMap = new LinkedHashMap<String, Integer>();
 		for(Term t : terms) {
 			if(t.isConstant()) {
 				if (Config.constants_as_raw_string) {
@@ -361,7 +361,7 @@ public class Literal implements Cloneable {
 	 * @param vmap the substitution
 	 * @return the new literal
 	 */
-	public Literal substitute(HashMap<String, Term> vmap) {
+	public Literal substitute(LinkedHashMap<String, Term> vmap) {
 		Literal copy = new Literal(pred, sense);
 		copy.coversAllMaterializedTuples = coversAllMaterializedTuples;
 		for(Term t : terms) {

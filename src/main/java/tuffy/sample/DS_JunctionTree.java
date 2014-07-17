@@ -2,8 +2,8 @@ package tuffy.sample;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 
 import tuffy.infer.MRF;
 import tuffy.infer.ds.GAtom;
@@ -81,8 +81,8 @@ public class DS_JunctionTree {
 	}
 	
 	
-	public HashSet<GAtom> getNeighbors(GAtom atom){
-		HashSet<GAtom> rs = new HashSet<GAtom>();
+	public LinkedHashSet<GAtom> getNeighbors(GAtom atom){
+		LinkedHashSet<GAtom> rs = new LinkedHashSet<GAtom>();
 		for(GClause gc : this.mrf.adj.get(atom)){
 			for(int lid : gc.lits){
 				rs.add(this.mrf.atoms.get(Math.abs(lid)));
@@ -94,7 +94,7 @@ public class DS_JunctionTree {
 	public class Node<E>{
 		
 		public E content;
-		public HashSet<Node<E>> neighbors = new HashSet<Node<E>>();
+		public LinkedHashSet<Node<E>> neighbors = new LinkedHashSet<Node<E>>();
 		
 		public int label = 0;
 		
@@ -110,7 +110,7 @@ public class DS_JunctionTree {
 			return "N:" + content;
 		}
 		
-		HashSet<Node<E>> children = new HashSet<Node<E>>();
+		LinkedHashSet<Node<E>> children = new LinkedHashSet<Node<E>>();
 		Node<E> parent = null;
 		
 	}
@@ -156,12 +156,12 @@ public class DS_JunctionTree {
 	}
 	
 	public class Clique<E> implements Cloneable{
-		HashSet<E> nodes = new HashSet<E>();
+		LinkedHashSet<E> nodes = new LinkedHashSet<E>();
 		
 		public ArrayList<GAtom> atoms = null;
 		
 		//TODO: change to a faster version
-		public HashMap<BitSet, Double> logPotentials = new HashMap<BitSet, Double>();
+		public LinkedHashMap<BitSet, Double> logPotentials = new LinkedHashMap<BitSet, Double>();
 		
 		
 		
@@ -177,8 +177,8 @@ public class DS_JunctionTree {
 	
 	public class Graph<E> implements Cloneable{
 		
-		public HashSet<Node<E>> nodes = new HashSet<Node<E>>();
-		public HashMap<E, Node<E>> content2nodes = new HashMap<E, Node<E>>();
+		public LinkedHashSet<Node<E>> nodes = new LinkedHashSet<Node<E>>();
+		public LinkedHashMap<E, Node<E>> content2nodes = new LinkedHashMap<E, Node<E>>();
 		
 		public Graph<Clique<Node<E>>> getCliques(){
 			
@@ -187,11 +187,11 @@ public class DS_JunctionTree {
 			ArrayList<Clique<Node<E>>> cliques = new ArrayList<Clique<Node<E>>>();
 			int prev_card = 0;
 			int s = -1;
-			HashSet<Node<E>> L = new HashSet<Node<E>>();
-			HashSet<Node<E>> remains = new HashSet<Node<E>>();
+			LinkedHashSet<Node<E>> L = new LinkedHashSet<Node<E>>();
+			LinkedHashSet<Node<E>> remains = new LinkedHashSet<Node<E>>();
 			
-			HashMap<Node<E>, Clique<Node<E>>> node2cliques = 
-					new HashMap<Node<E>, Clique<Node<E>>>();
+			LinkedHashMap<Node<E>, Clique<Node<E>>> node2cliques = 
+					new LinkedHashMap<Node<E>, Clique<Node<E>>>();
 			
 			remains.addAll(nodes);
 			
@@ -281,7 +281,7 @@ public class DS_JunctionTree {
 			node2.addNeighbor(node1);
 		}
 		
-		public HashSet<Node<E>> getNeighbors(Node<E> node1){
+		public LinkedHashSet<Node<E>> getNeighbors(Node<E> node1){
 			return node1.neighbors;
 		}
 		
@@ -317,7 +317,7 @@ public class DS_JunctionTree {
 		public Graph<E> triangulate(CORDAL_STRATEGY strategy){
 			Graph<E> rs = this.getSameGraph();
 				
-			HashSet<Node<E>> remains = (HashSet<Node<E>>) rs.nodes.clone();
+			LinkedHashSet<Node<E>> remains = (LinkedHashSet<Node<E>>) rs.nodes.clone();
 			while(! remains.isEmpty()){
 			
 				Double min = Double.MAX_VALUE;
@@ -327,7 +327,7 @@ public class DS_JunctionTree {
 				for(Node<E> node : remains){
 					double cost = -1;
 					if(strategy == CORDAL_STRATEGY.MIN_NEIGHBOR){
-						HashSet<Node<E>> neighbors = (HashSet<Node<E>>) node.neighbors.clone();
+						LinkedHashSet<Node<E>> neighbors = (LinkedHashSet<Node<E>>) node.neighbors.clone();
 						neighbors.retainAll(remains);
 						cost = neighbors.size();
 					}else{
