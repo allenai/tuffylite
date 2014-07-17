@@ -61,6 +61,9 @@ public class CommandOptions {
     @Option(name="-pgSeed", usage="Seed for Postgres random number generator between 0.0 and 1.0 (Default = 0, which picks a random seed")
     public float pgSeed = 0.0f;
 
+    @Option(name="-writeClauses", usage="File to write the grounded MLN")
+    public String writeClausesFile = null;
+
     //@Option(name="-psec", usage="Dump MCSAT results every [psec] seconds.")
     public int mcsatDumpPeriodSec = 0;
     

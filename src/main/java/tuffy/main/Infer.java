@@ -81,6 +81,10 @@ public abstract class Infer {
 
 		mln.materializeTables();
 		
+		if (Config.savePredicateNamesToDB) {
+			savePredicateTable(mln);
+		}
+		
 		KBMC kbmc = new KBMC(mln);
 		kbmc.run();
 		mln.executeAllDatalogRules();
@@ -108,6 +112,21 @@ public abstract class Infer {
 		UIMan.println(">>> Connecting to RDBMS at " + Config.db_url);
 		db = RDB.getRDBbyConfig();
 		
+	}
+	
+	protected void savePredicateTable(MarkovLogicNetwork mln) {
+		db.dropTable(Config.relPreds);
+		db.dropView(Config.relPreds);
+		String sql = "CREATE TABLE " + Config.relPreds + "(\n";
+		sql += "predid INT,\n";
+		sql += "name VARCHAR(32));";
+		db.update(sql);
+		
+		for(Predicate p : mln.getAllPredOrderByName()){			
+			sql = "INSERT INTO " + Config.relPreds + " VALUES (";
+			sql += p.getID() + ", '" + p.getRelName() + "');";
+			db.update(sql);
+		}
 	}
 	
 	/**

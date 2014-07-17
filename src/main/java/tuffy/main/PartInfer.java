@@ -16,8 +16,14 @@ public class PartInfer extends Infer{
 	public void run(CommandOptions opt){
 		UIMan.println(">>> Running partition-aware inference.");
 		setUp(opt);
-
+		
 		ground();
+		
+		if (Config.writeClausesFile != null) {
+			dmover.createAtomDescTable(mln.relAtoms, Config.relAtomDesc);
+			dmover.createClauseDescTable(mln.relClauses, Config.relClauseDesc);
+			dmover.dumpClauseDescToFile(Config.relClauseDesc, Config.writeClausesFile);
+		}
 		
 		InferPartitioned ip = new InferPartitioned(grounding, dmover);
 		
