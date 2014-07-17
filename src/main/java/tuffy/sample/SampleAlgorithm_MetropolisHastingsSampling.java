@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Random;
-import java.util.LinkedHashMap;
+//formerly also imported java.util.concurrent.ConcurrentHashMap
 
 import tuffy.infer.MRF;
 import tuffy.util.Config;

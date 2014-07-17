@@ -1,7 +1,7 @@
 package tuffy.sample;
 
 import java.util.Set;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashMap; // formerly java.util.concurrent.ConcurrentHashMap
 
 import tuffy.sample.MRFSampleStatistic.StatisticType;
 import tuffy.util.DeterministicMapHelper;

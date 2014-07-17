@@ -2,7 +2,7 @@ package tuffy.sample;
 
 import java.util.BitSet;
 import java.util.Set;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashMap; // formerly java.util.concurrent.ConcurrentHashMap
 
 import tuffy.util.DeterministicMapHelper;
 import tuffy.util.myDouble;

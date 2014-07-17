@@ -9,7 +9,7 @@ import java.util.LinkedHashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashMap; // formerly java.util.concurrent.ConcurrentHashMap
 
 import tuffy.infer.ds.GAtom;
 import tuffy.infer.ds.GClause;

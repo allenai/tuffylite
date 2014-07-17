@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashMap; // formerly java.util.concurrent.ConcurrentHashMap
 
 import org.postgresql.PGConnection;
 

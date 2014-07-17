@@ -3,7 +3,7 @@ package tuffy.sample;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Properties;
-import java.util.LinkedHashMap;
+// formerly also imported java.util.concurrent.ConcurrentHashMap
 
 import tuffy.infer.MRF;
 
