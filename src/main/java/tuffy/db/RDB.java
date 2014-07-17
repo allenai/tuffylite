@@ -713,6 +713,10 @@ public class RDB {
      * @see Config#db_schema
      */
     public void resetSchema(String schema) {
+    	if (Config.pgSeed > 0) {
+        	UIMan.println("### Setting Postgres seed to " + Config.pgSeed);
+        	execute("SELECT setseed(" + Config.pgSeed + ");");
+    	}
         UIMan.verbose(3, "### Checking existence of " + schema);
         if (countTuples("(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '" + schema + "') SC") > 0) {
             try {

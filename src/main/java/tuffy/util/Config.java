@@ -39,6 +39,10 @@ public class Config {
 
 	public static boolean log_trace = true;
 	
+	public static long seed = 0;
+	
+	public static float pgSeed = 0.0f;
+	
 	/**
 	 * Runtime
 	 */

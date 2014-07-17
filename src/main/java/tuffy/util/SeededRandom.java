@@ -11,7 +11,11 @@ public class SeededRandom {
 
 	public static Random getInstance() {
 		if (instance == null) {
-			instance = new Random(1);
+			if (Config.seed != 0) {
+				instance = new Random(Config.seed);
+			} else {
+				instance = new Random();
+			}
 		}
 		return instance;
 	}
