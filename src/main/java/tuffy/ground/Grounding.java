@@ -1,9 +1,11 @@
 package tuffy.ground;
 
 
+import java.io.BufferedWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
 import tuffy.db.RDB;
@@ -16,6 +18,7 @@ import tuffy.mln.Predicate;
 import tuffy.mln.Term;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
+import tuffy.util.FileMan;
 import tuffy.util.StringMan;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
@@ -278,8 +281,7 @@ public class Grounding {
 		db.update(sql);
 		 */
 	}
-
-
+	
 	/**
 	 * Construct the MRF. First compute the closure of active atoms,
 	 * then active clauses.

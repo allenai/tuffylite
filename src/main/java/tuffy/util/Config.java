@@ -55,6 +55,13 @@ public class Config {
 	 * DB
 	 */
 	public static String relConstants = "constants";
+	public static String relPreds = "predicates";
+	public static String relAtomDesc = "atoms";
+	public static String relClauseDesc = "clauses";
+	
+	public static boolean savePredicateNamesToDB = true;
+	
+	public static String writeClausesFile = null;
 
 	public static String db_url = "jdbc:postgresql://localhost:5432/postgres";
 	public static String db_username = "tuffer";

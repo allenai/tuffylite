@@ -157,6 +157,7 @@ public class UIMan {
 		
 		Config.seed = opt.seed;
 		Config.pgSeed = opt.pgSeed;
+		Config.writeClausesFile = opt.writeClausesFile;
 		
 		Config.evidDBSchema = opt.evidDBSchema;
 		Config.dbNeedTranslate = opt.dbNeedTranslate;

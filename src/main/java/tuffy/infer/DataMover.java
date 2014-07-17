@@ -1022,7 +1022,90 @@ public class DataMover {
 			db.update(sql);
 		}
 	}
+	
+	/**
+	 * Create MLN atom table with original predicate and constant names
+	 */
+	public void createAtomDescTable(String relAtoms, String relAtomDesc){
+		LinkedHashMap<Long,String> cmap = db.loadIdSymbolMapFromTable();
+		
+		db.dropTable(relAtomDesc);
+		db.dropView(relAtomDesc);
+		String createSql = "CREATE TABLE " + relAtomDesc + "(\n";
+		createSql += "atomId BIGINT,\n";
+		createSql += "atomDesc CHARACTER VARYING);";
+		db.update(createSql);
 
+		String sql;
+		try {
+			for(Predicate p : mln.getAllPredOrderByName()){			
+				if(p.isImmutable()) continue;
+
+				String orderBy = " ORDER BY ";
+				orderBy += StringMan.commaList(p.getArgs());				
+
+				sql = "SELECT pt.*, ra.* FROM " + p.getRelName() + " pt, " + relAtoms + " ra " +
+						" WHERE pt.id = ra.tupleID AND ra.predID = " + p.getID() +  
+						orderBy;
+				ResultSet rs = db.query(sql);
+				while(rs.next()) {
+					long atomId = rs.getLong("atomId");
+					String satom = atomToString(p, rs, cmap);
+					String line = atomId + "\t" + satom;
+					UIMan.verbose(3, line);
+
+					String insertSql;
+					insertSql = "INSERT INTO " + relAtomDesc + " VALUES (";
+					insertSql += atomId + ", '" + satom + "');";
+					db.update(insertSql);
+				}
+				rs.close();
+			}
+		} catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+	}
+	
+	/**
+	 * Create MLN clause table with original predicate and constant names
+	 */
+	public void createClauseDescTable(String relClauses, String relClauseDesc){
+		db.dropTable(relClauseDesc);
+		db.dropView(relClauseDesc);
+		String sql = "CREATE TABLE " + relClauseDesc + "(\n";
+		sql += "clauseId BIGINT,\n";
+		sql += "clauseDesc CHARACTER VARYING);";
+		db.update(sql);
+		
+		sql = "INSERT INTO " + relClauseDesc + " ";
+		sql += "SELECT cid, string_agg(CASE WHEN litid > 0 THEN atomdesc ELSE CONCAT('!', atomdesc) END, ' v ') ";
+		sql += "FROM " + Config.relAtomDesc + " a, (SELECT cid, UNNEST(lits) AS litid FROM " + relClauses + ") c ";
+		sql += "WHERE ABS(c.litid) = a.atomid GROUP BY cid;";
+		db.update(sql);
+	}
+	
+	/**
+	 * Dump MLN clause description table to a file
+	 * @param relAtoms
+	 * @param fout
+	 */
+	public void dumpClauseDescToFile(String relClauseDesc, String fout){
+		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
+		String sql;
+		try {
+			sql = "SELECT clauseDesc FROM " + relClauseDesc;
+			ResultSet rs = db.query(sql);
+			while(rs.next()) {
+				String clauseDesc = rs.getString("clauseDesc");
+				UIMan.verbose(3, clauseDesc);
+				bufferedWriter.append(clauseDesc + "\n");
+			}
+			rs.close();
+			bufferedWriter.close();
+		}catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+	}
 
 	/**
 	 * Dump marginal inference results to a file
