@@ -1089,16 +1089,19 @@ public class DataMover {
 	 * @param relAtoms
 	 * @param fout
 	 */
-	public void dumpClauseDescToFile(String relClauseDesc, String fout){
+	public void dumpClauseDescToFile(String relClauses, String relClauseDesc, String fout){
 		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
+		int digits = 4;
 		String sql;
 		try {
-			sql = "SELECT clauseDesc FROM " + relClauseDesc;
+			sql = "SELECT c.weight, d.clauseDesc FROM " + relClauseDesc + " d, ";
+			sql += relClauses + " c  WHERE c.cid = d.clauseId";
 			ResultSet rs = db.query(sql);
 			while(rs.next()) {
 				String clauseDesc = rs.getString("clauseDesc");
-				UIMan.verbose(3, clauseDesc);
-				bufferedWriter.append(clauseDesc + "\n");
+				double weight = rs.getDouble("weight");
+				UIMan.verbose(3, UIMan.decimalRound(digits, weight) + "\t" + clauseDesc);
+				bufferedWriter.append(UIMan.decimalRound(digits, weight) + "\t" + clauseDesc + "\n");
 			}
 			rs.close();
 			bufferedWriter.close();
