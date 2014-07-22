@@ -61,6 +61,8 @@ public class Config {
 	
 	public static boolean savePredicateNamesToDB = true;
 	
+	public static boolean unitPropagate = false;
+	
 	public static String writeClausesFile = null;
 
 	public static String db_url = "jdbc:postgresql://localhost:5432/postgres";

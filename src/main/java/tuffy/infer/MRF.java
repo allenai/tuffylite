@@ -3644,29 +3644,21 @@ public class MRF {
 
 
 	public MRF unitPropagateAndGetNewMRF() {
-		
 		unitPropagateGround();
 		
 		MRF mrf = new MRF(mln);
 		mrf.ownsAllAtoms = true;
-		
 		for (int i : coreAtoms) {
 			GAtom n = atoms.get(i);
-			//if (!n.fixed) {
-				mrf.atoms.put(n.id, n);
-				mrf.addAtom(n.id);
-			//}
+			mrf.atoms.put(n.id, n);
+			mrf.addAtom(n.id);
 		}
 		for (GClause cee : clauses) {
-			if (cee.weight == -0.9232) {
-				UIMan.println(cee + "");
-			}
 			if ((cee.isUnitClause() && cee.isHardClause()) || 
 					!cee.ignoreAfterUnitPropagation) {
 				mrf.clauses.add(cee);
 			}
 		}
-		
 		mrf.buildIndices();
 		return mrf;
 	}
@@ -3685,14 +3677,14 @@ public class MRF {
 						if (!QIds.contains(Math.abs(lit))) {
 							Q.add(lit);
 							QIds.add(Math.abs(lit));
-							UIMan.println("From " + cee + ", Adding to Q1: " + lit);
+							UIMan.verbose(3, "From " + cee + ", Adding to Q1: " + lit);
 						}
 						fixAtom(lit, true);
 					} else {
 						if (!QIds.contains(Math.abs(lit))) {
 							Q.add(-lit);
 							QIds.add(Math.abs(lit));
-							UIMan.println("From " + cee + ", Adding to Q2: " + -lit);
+							UIMan.verbose(3, "From " + cee + ", Adding to Q2: " + -lit);
 						}
 						fixAtom(lit, false);
 					}
@@ -3701,14 +3693,14 @@ public class MRF {
 						if (!QIds.contains(Math.abs(lit))) {
 							Q.add(lit);
 							QIds.add(Math.abs(lit));
-							UIMan.println("From " + cee + ", Adding to Q3: " + lit);
+							UIMan.verbose(3, "From " + cee + ", Adding to Q3: " + lit);
 						}
 						fixAtom(-lit, false);
 					} else {
 						if (!QIds.contains(Math.abs(lit))) {
 							Q.add(-lit);
 							QIds.add(Math.abs(lit));
-							UIMan.println("From " + cee + ", Adding to Q4: " + -lit);
+							UIMan.verbose(3, "From " + cee + ", Adding to Q4: " + -lit);
 						}
 						fixAtom(-lit, true);
 					}
@@ -3717,45 +3709,34 @@ public class MRF {
 		}
 		while (!Q.isEmpty()) {
 			lit = Q.pop();
-			UIMan.println("Popped from Q: " + lit + "");
+			UIMan.verbose(3, "Popped from Q: " + lit + "");
 			QIds.remove(Math.abs(lit));
 			ArrayList<GClause> tmp = adj.get(lit);
 			if (adj.get(lit) != null) {
 				for (GClause cee : adj.get(lit)) {
-					if (!cee.isHardClause()) {
-						continue; // incorrect to ignore these, as they change the probability of the resulting world(s)
-					}
 					for (int k : cee.lits) {
 							if (k != lit) {
 								adj.get(k).remove(cee);
 							}
 					}
-					UIMan.println("Ignoring clause " + cee);
+					UIMan.verbose(3, "Removing clause (unless hard unit clause) " + cee);
 					cee.ignoreAfterUnitPropagation = true;
 				}
 			}
 			ArrayList<Integer> aidToDelete = new ArrayList<Integer>(); 
 			if (adj.get(-lit) != null) {
 				for (GClause cee : adj.get(-lit)) {
-
-//					if (!cee.isHardClause()) {
-//						continue; 
-//					}
-					
-					//UIMan.println("lit: " + -lit + " cee: " + cee);
 					if (cee.ignoreAfterUnitPropagation) {
 						continue;
 					}
 					if (cee.lits.length == 1) {
-						UIMan.println("Clause " + cee + " is unsatisfiable");
+						UIMan.verbose(3, "Clause " + cee + " is unsatisfiable");
 						continue;
 					}
 					int tmpLit[] = new int[cee.lits.length-1];
 					int index = 0;
 					for (int t : cee.lits) {
 						if (t != -lit) {
-							UIMan.println("cee: " + cee);
-							UIMan.println("tmpLit length: " + tmpLit.length + " index: " + index + " t: " + t + " -lit: " + -lit);
 					    	tmpLit[index] = t;
 					    	index++;
 						}
@@ -3765,11 +3746,8 @@ public class MRF {
 					for (int i = 1; i < tmpLit.length; i++) {
 						clauseStr.append(", ").append(tmpLit[i]);
 					}
-					UIMan.println("Clause " + cee + " becomes: " + clauseStr);
+					UIMan.verbose(3, "Clause " + cee + " becomes: " + clauseStr);
 					cee.lits = tmpLit;
-//					if (cee.lits.length == 0) {
-//						adj.get(-lit).remove(cee);
-//					}
 					if (cee.isUnitClause() && cee.isHardClause()) {
 						int k = cee.lits[0];
 						if (k != -lit) {
@@ -3778,14 +3756,14 @@ public class MRF {
 									if (!QIds.contains(Math.abs(k))) {
 										Q.add(k);
 										QIds.add(Math.abs(k));
-										UIMan.println("Adding to Q1: " + k);
+										UIMan.verbose(3, "Adding to Q1: " + k);
 									}
 									fixAtom(k, true);
 								} else {
 									if (!QIds.contains(Math.abs(k))) {
 										Q.add(-k);
 										QIds.add(Math.abs(k));
-										UIMan.println("Adding to Q2: " + -k);
+										UIMan.verbose(3, "Adding to Q2: " + -k);
 									}
 									fixAtom(k, false);
 								}
@@ -3794,14 +3772,14 @@ public class MRF {
 									if (!QIds.contains(Math.abs(k))) {
 										Q.add(k);
 										QIds.add(Math.abs(k));
-										UIMan.println("Adding to Q3: " + k);
+										UIMan.verbose(3, "Adding to Q3: " + k);
 									}
 									fixAtom(-k, false);
 								} else {
 									if (!QIds.contains(Math.abs(k))) {
 										Q.add(-k);
 										QIds.add(Math.abs(k));
-										UIMan.println("Adding to Q4: " + -k);
+										UIMan.verbose(3, "Adding to Q4: " + -k);
 									}
 									fixAtom(-k, true);
 								}

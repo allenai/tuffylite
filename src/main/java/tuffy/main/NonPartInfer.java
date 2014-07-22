@@ -6,6 +6,7 @@ import tuffy.infer.MRF;
 import tuffy.parse.CommandOptions;
 import tuffy.util.BitSetIntPair;
 import tuffy.util.Config;
+import tuffy.util.Timer;
 import tuffy.util.UIMan;
 /**
  * Non-parition-aware inference.
@@ -49,28 +50,20 @@ public class NonPartInfer extends Infer{
 				mrf = new MRF(mln);
 				dmover.loadMrfFromDb(mrf, mln.relAtoms, mln.relClauses);
 			}
+						
+			if (Config.unitPropagate) {
+				mrf = mrf.unitPropagateAndGetNewMRF();
+				if (Config.writeClausesFile != null) {
+					dmover.writeMRFClausesToTable(mrf, mln.relClauses);
+					dmover.createClauseDescTable(mln.relClauses, Config.relClauseDesc);
+					dmover.dumpClauseDescToFile(mln.relClauses, Config.relClauseDesc, Config.writeClausesFile);
+				}
+				UIMan.println("### MRF Size After Unit Prop: atoms = " + mrf.atoms.size() + "; clauses = " + mrf.clauses.size());
+			}
 			
-			UIMan.println("### MRF After Grounding = \n" + mrf.clauses);
-			
-			double sumCost;
-			
-//			sumCost = mrf.mcsat(options.mcsatSamples, options.maxFlips);
-//			dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
-//	
-//			UIMan.println("### Average Cost = " + UIMan.decimalRound(2,sumCost/options.mcsatSamples));
-//			
-//			UIMan.println(">>> Writing answer to file: " + mfout);
-//			dmover.dumpProbsToFile(mln.relAtoms, mfout);
-			
-			
-			mrf = mrf.unitPropagateAndGetNewMRF();
-			dmover.writeMRFClausesToTable(mrf, "new");
-			dmover.createClauseDescTable("new", "new2");
-			dmover.dumpClauseDescToFile("new", "new2", "clausesUnitProp.txt");
-			
-			UIMan.println("### MRF After Unit Prop = \n" + mrf.clauses);
-			
-			sumCost = mrf.mcsat(options.mcsatSamples, options.maxFlips);
+			Timer.start("mcsat");
+			double sumCost = mrf.mcsat(options.mcsatSamples, options.maxFlips);
+			UIMan.println("### total mcsat = " + Timer.elapsed("mcsat"));
 			dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
 	
 			UIMan.println("### Average Cost = " + UIMan.decimalRound(2,sumCost/options.mcsatSamples));

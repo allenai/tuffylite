@@ -63,6 +63,9 @@ public class CommandOptions {
 
     @Option(name="-writeClauses", usage="File to write the grounded MLN")
     public String writeClausesFile = null;
+    
+    @Option(name="-unitPropagate", usage="Run unit propagation on the grounded MLN")
+    public boolean unitPropagate = false;
 
     //@Option(name="-psec", usage="Dump MCSAT results every [psec] seconds.")
     public int mcsatDumpPeriodSec = 0;
