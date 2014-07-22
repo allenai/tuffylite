@@ -58,6 +58,11 @@ public class GClause {
 	 */
 	public boolean dead = false;
 	
+	/**
+	 * Whether this clause should be ignored after unit propagation
+	 */
+	public boolean ignoreAfterUnitPropagation = false;
+	
 	
 	/**
 	 * The largest fcid seen when parsing the database for all GClause.
@@ -70,6 +75,10 @@ public class GClause {
 	 */
 	public boolean isPositiveClause(){
 		return weight >= 0;
+	}
+	
+	public boolean isUnitClause(){
+		return lits.length == 1;
 	}
 	
 	/**

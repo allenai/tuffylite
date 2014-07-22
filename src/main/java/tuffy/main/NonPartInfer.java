@@ -50,7 +50,27 @@ public class NonPartInfer extends Infer{
 				dmover.loadMrfFromDb(mrf, mln.relAtoms, mln.relClauses);
 			}
 			
-			double sumCost = mrf.mcsat(options.mcsatSamples, options.maxFlips);
+			UIMan.println("### MRF After Grounding = \n" + mrf.clauses);
+			
+			double sumCost;
+			
+//			sumCost = mrf.mcsat(options.mcsatSamples, options.maxFlips);
+//			dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
+//	
+//			UIMan.println("### Average Cost = " + UIMan.decimalRound(2,sumCost/options.mcsatSamples));
+//			
+//			UIMan.println(">>> Writing answer to file: " + mfout);
+//			dmover.dumpProbsToFile(mln.relAtoms, mfout);
+			
+			
+			mrf = mrf.unitPropagateAndGetNewMRF();
+			dmover.writeMRFClausesToTable(mrf, "new");
+			dmover.createClauseDescTable("new", "new2");
+			dmover.dumpClauseDescToFile("new", "new2", "clausesUnitProp.txt");
+			
+			UIMan.println("### MRF After Unit Prop = \n" + mrf.clauses);
+			
+			sumCost = mrf.mcsat(options.mcsatSamples, options.maxFlips);
 			dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
 	
 			UIMan.println("### Average Cost = " + UIMan.decimalRound(2,sumCost/options.mcsatSamples));

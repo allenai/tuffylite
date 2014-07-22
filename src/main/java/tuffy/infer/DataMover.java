@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.postgresql.PGConnection;
 
 import tuffy.db.RDB;
@@ -1109,6 +1110,29 @@ public class DataMover {
 			ExceptionMan.handle(e);
 		}
 	}
+	
+	public void writeMRFClausesToTable(MRF mrf, String relClauses){
+		db.dropTable(relClauses);
+		db.dropView(relClauses);
+		String sql = "CREATE TABLE " + relClauses + "(\n";
+		sql += "cid INT,\n";
+		sql += "lits INT[],\n";
+		sql += "weight FLOAT8);";
+		db.update(sql);
+		
+		for (GClause cee : mrf.clauses) {
+			StringBuilder clauseStr = new StringBuilder();
+			clauseStr.append(cee.lits[0]);
+			for (int i = 1; i < cee.lits.length; i++) {
+				clauseStr.append(", ").append(cee.lits[i]);
+			}
+			String iql = "INSERT INTO " + relClauses + " (cid, lits, weight) " +
+					" VALUES (" + cee.id +
+					", array[ " + clauseStr + "], " +
+					cee.weight + ");";
+			db.update(iql);
+		}
+	}
 
 	/**
 	 * Dump marginal inference results to a file
@@ -1156,7 +1180,8 @@ public class DataMover {
 						line += " // prior = " + UIMan.decimalRound(digits, prior);
 						line += " ; delta = " + UIMan.decimalRound(digits, prob - prior);
 					}
-					UIMan.verbose(3, line);
+					//UIMan.verbose(3, line);
+					UIMan.println(line);
 					bufferedWriter.append(line + "\n");
 				}
 				rs.close();
