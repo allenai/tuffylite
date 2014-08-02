@@ -1117,7 +1117,9 @@ public class DataMover {
 		String sql = "CREATE TABLE " + relClauses + "(\n";
 		sql += "cid INT,\n";
 		sql += "lits INT[],\n";
-		sql += "weight FLOAT8);";
+		sql += "weight FLOAT8,\n";
+		sql += "fcid INT[],\n";
+		sql += "ffcid TEXT[]);";
 		db.update(sql);
 		
 		for (GClause cee : mrf.clauses) {

@@ -6,6 +6,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Iterator;
@@ -3653,9 +3654,31 @@ public class MRF {
 			mrf.atoms.put(n.id, n);
 			mrf.addAtom(n.id);
 		}
+		LinkedHashSet<Integer> hardUnitClauses = new LinkedHashSet<Integer>();
+//		if (cee.isUnitClause() && cee.isHardClause()) {
+//			//if (!hardUnitClauses.contains(cee.lits[0])) {
+//			//	hardUnitClauses.add(cee.lits[0]);
+//				mrf.clauses.add(cee);
+//			//}
+//		}
+//		else if (!cee.ignoreAfterUnitPropagation) {
+//			mrf.clauses.add(cee);
+//		}
 		for (GClause cee : clauses) {
-			if ((cee.isUnitClause() && cee.isHardClause()) || 
-					!cee.ignoreAfterUnitPropagation) {
+//			if ((cee.isUnitClause() && cee.isHardClause()) || 
+//					!cee.ignoreAfterUnitPropagation) {
+//				mrf.clauses.add(cee);
+//			}
+			if (cee.isUnitClause() && cee.isHardClause()) {
+				if (!hardUnitClauses.contains(Math.abs(cee.lits[0]))) {
+					hardUnitClauses.add(Math.abs(cee.lits[0]));
+					mrf.clauses.add(cee);
+				    UIMan.verbose(3, "Adding " + cee);
+				} else {
+				    UIMan.verbose(3, "Adding " + cee + " (not already added?)");
+				}
+			}
+			else if (!cee.ignoreAfterUnitPropagation) {
 				mrf.clauses.add(cee);
 			}
 		}
@@ -3713,6 +3736,7 @@ public class MRF {
 			QIds.remove(Math.abs(lit));
 			ArrayList<GClause> tmp = adj.get(lit);
 			if (adj.get(lit) != null) {
+				//TODO(ericgribkoff) Make any difference to inference if cee has negative weight and is removed?
 				for (GClause cee : adj.get(lit)) {
 					for (int k : cee.lits) {
 							if (k != lit) {

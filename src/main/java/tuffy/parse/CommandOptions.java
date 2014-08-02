@@ -221,7 +221,7 @@ public class CommandOptions {
     @Option(name="-small", usage="[DEFAULT=FALSE] Do optimization on samll components.")
     public boolean mle_optimize_small_component = false;
     
-    @Option(name="-log", usage="[DEFAULT=FALSE] Partition Component into different chunks while sampling.")
+    @Option(name="-log", usage="[DEFAULT=FALSE] Write samples to log file.")
     public boolean sampleLog = false;
     
     @Option(name="-sa", usage="[DEFAULT=10] SA.")

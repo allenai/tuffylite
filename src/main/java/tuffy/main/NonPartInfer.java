@@ -53,8 +53,8 @@ public class NonPartInfer extends Infer{
 						
 			if (Config.unitPropagate) {
 				mrf = mrf.unitPropagateAndGetNewMRF();
+				dmover.writeMRFClausesToTable(mrf, mln.relClauses);
 				if (Config.writeClausesFile != null) {
-					dmover.writeMRFClausesToTable(mrf, mln.relClauses);
 					dmover.createClauseDescTable(mln.relClauses, Config.relClauseDesc);
 					dmover.dumpClauseDescToFile(mln.relClauses, Config.relClauseDesc, Config.writeClausesFile);
 				}
