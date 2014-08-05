@@ -235,7 +235,7 @@ public class RDB {
 	public Statement createStatementWithTimeout() throws SQLException  {
 		Statement stm = con.createStatement();
 		int secondsLeft = Timer.secondsToTimeOut();
-		UIMan.println("Creating statement with " + secondsLeft + " second timeout...");
+		UIMan.verbose(3, "Creating statement with " + secondsLeft + " second timeout...");
 		stm.setQueryTimeout(secondsLeft);
 		return stm;
 	}
