@@ -178,14 +178,14 @@ public class Config {
 
 	public static boolean output_prolog_format = false;
 	public static boolean output_prior_with_marginals = true;
-	public static boolean throw_exception_when_dying = false;
+	public static boolean throw_exception_when_dying = true;
 
 	public static boolean keep_db_data = false;
 
 	public static boolean track_clause_provenance = false;
 	public static boolean reorder_literals = false;
 
-	public static double timeout = Double.MAX_VALUE;
+	public static int timeout = Integer.MAX_VALUE;
 	public static int num_tries_per_periodic_flush = 0;
 
 

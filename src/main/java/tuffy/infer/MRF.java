@@ -3079,7 +3079,9 @@ public class MRF {
 
 		// sample
 		for(int i=1; i<=numSamples; i++){
-
+			if (Timer.hasTimedOut()) {
+				ExceptionMan.die("Tuffy timed out");
+			}
 
 			if(Config.sampleLog != null){
 				Timer.start(this + "aaa");
@@ -3692,6 +3694,9 @@ public class MRF {
 		int lit;
 		// adj gives literal to clause map
 		for (GClause cee : clauses) {
+			if (Timer.hasTimedOut()) {
+				ExceptionMan.die("Tuffy timed out");
+			}
 			if (cee.isUnitClause() && cee.isHardClause()) {
 				lit = cee.lits[0];
 				cee.ignoreAfterUnitPropagation = true;
@@ -3731,6 +3736,9 @@ public class MRF {
 			}
 		}
 		while (!Q.isEmpty()) {
+			if (Timer.hasTimedOut()) {
+				ExceptionMan.die("Tuffy timed out");
+			}
 			lit = Q.pop();
 			UIMan.verbose(3, "Popped from Q: " + lit + "");
 			QIds.remove(Math.abs(lit));

@@ -21,7 +21,7 @@ resolvers ++= Seq("scala-tools.org" at "http://scala-tools.org/repo-releases",
                 )
 
 libraryDependencies ++= Seq(
-    "postgresql" % "postgresql" % "8.4-701.jdbc4",
+    "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
     "org.antlr" % "antlr" % "3.2",
     "args4j" % "args4j" % "2.0.12",
     "org.apache.commons" % "commons-lang3" % "3.0",

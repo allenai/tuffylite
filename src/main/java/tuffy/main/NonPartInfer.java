@@ -6,6 +6,7 @@ import tuffy.infer.MRF;
 import tuffy.parse.CommandOptions;
 import tuffy.util.BitSetIntPair;
 import tuffy.util.Config;
+import tuffy.util.ExceptionMan;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
 /**
@@ -16,6 +17,10 @@ public class NonPartInfer extends Infer{
 		UIMan.println(">>> Running non-partition inference.");
 		setUp(opt);
 		ground();
+		
+		if (Timer.hasTimedOut()) {
+			ExceptionMan.die("Tuffy timed out");
+		}
 
 		if(options.maxFlips == 0){
 			options.maxFlips = 100 * grounding.getNumAtoms();

@@ -232,6 +232,19 @@ public class RDB {
 		return con;
 	}
 
+	public Statement createStatementWithTimeout() throws SQLException  {
+		Statement stm = con.createStatement();
+		int secondsLeft = Timer.secondsToTimeOut();
+		UIMan.println("Creating statement with " + secondsLeft + " second timeout...");
+		stm.setQueryTimeout(secondsLeft);
+		return stm;
+	}
+	
+	public Statement createStatementWithTimeout(int resultSetType, int resultSetConcurrency) throws SQLException  {
+		Statement stm = con.createStatement(resultSetType, resultSetConcurrency);
+		stm.setQueryTimeout(Timer.secondsToTimeOut());
+		return stm;
+	}
 
 	/**
 	 * Dump a MAP world produced by MAP inference.
@@ -345,7 +358,7 @@ public class RDB {
 	public int update(String sql){
 		if(Config.exiting_mode) ExceptionMan.die("");
 		try {
-			Statement stmt = con.createStatement();
+			Statement stmt = createStatementWithTimeout();
 			currentlyRunningQuery = stmt;
 			lastUpdateRowCount = stmt.executeUpdate(sql);
 			stmt.close();
@@ -365,7 +378,7 @@ public class RDB {
 		//if(sql.contains("DELETE") || sql.contains("delete")) System.out.println(sql);
 		if(Config.exiting_mode) ExceptionMan.die("");
 		try {
-			Statement stmt = con.createStatement();
+			Statement stmt = createStatementWithTimeout();
 			currentlyRunningQuery = stmt;
 			stmt.execute(sql);
 			stmt.close();
@@ -380,7 +393,7 @@ public class RDB {
 
 	public void executeWhatever(String sql) {
 		try {
-			Statement stmt = con.createStatement();
+			Statement stmt = createStatementWithTimeout();
 			stmt.execute(sql);
 			stmt.close();
 		} catch (SQLException e) {
@@ -389,7 +402,7 @@ public class RDB {
 	}
 
 	private void executeRaw(String sql) throws SQLException{
-		Statement stmt = con.createStatement();
+		Statement stmt = createStatementWithTimeout();
 		stmt.execute(sql);
 		stmt.close();
 	}
@@ -397,7 +410,7 @@ public class RDB {
 	private void updateRaw(String sql) throws SQLException{
 		this.commit();
 		this.setAutoCommit(true);
-		Statement stmt = con.createStatement();
+		Statement stmt = createStatementWithTimeout();
 		currentlyRunningQuery = stmt;
 		stmt.executeUpdate(sql);
 		stmt.close();
@@ -411,7 +424,7 @@ public class RDB {
 	 */
 	public boolean updateBatch(ArrayList<String> sqls) {
 		try {
-			Statement st = con.createStatement();
+			Statement st = createStatementWithTimeout();
 			currentlyRunningQuery = st;
 			for(String s : sqls) {
 				st.addBatch(s);
@@ -435,7 +448,7 @@ public class RDB {
 	public ResultSet query(String sql){
 		if(Config.exiting_mode) ExceptionMan.die("");
 		try {
-			Statement stmt = con.createStatement(ResultSet.HOLD_CURSORS_OVER_COMMIT, 1);
+			Statement stmt = createStatementWithTimeout(ResultSet.HOLD_CURSORS_OVER_COMMIT, 1);
 			currentlyRunningQuery = stmt;
 			stmt.setFetchSize(100000);
 			ResultSet rs = stmt.executeQuery(sql);
@@ -795,11 +808,11 @@ public class RDB {
 	 * Useless when AutoCommit is on, which is so by default.
 	 */
 	public void commit() {
-		try {
-			con.commit();
-		} catch (SQLException e) {
-			ExceptionMan.handle(e);
-		}
+//		try {
+//			con.commit();
+//		} catch (SQLException e) {
+//			ExceptionMan.handle(e);
+//		}
 	}
 
 	/**
