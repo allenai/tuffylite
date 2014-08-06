@@ -90,7 +90,7 @@ public class CommandOptions {
     public boolean showHelp = false;
 
     @Option(name="-timeout", usage="Timeout in seconds.")
-    public int timeout = Integer.MAX_VALUE;
+    public int timeout = 0;
 
     @Option(name="-rawString", usage="Store constants as raw strings instead of normalizing them into integer IDs.")
     public boolean constantAsRawString = false;

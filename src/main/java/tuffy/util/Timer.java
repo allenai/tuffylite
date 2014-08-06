@@ -84,7 +84,7 @@ public class Timer {
 	}
 	
 	public static boolean hasTimedOut() {
-			return elapsedSeconds() > Config.timeout;
+			return Config.timeout != 0 && elapsedSeconds() > Config.timeout;
 	}
 
 	/**

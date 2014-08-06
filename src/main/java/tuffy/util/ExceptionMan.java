@@ -29,6 +29,7 @@ public class ExceptionMan {
 		UIMan.print("removing temporary dir '" + Config.getWorkingDir() + "'...");
 		UIMan.println(FileMan.removeDirectory(new File(Config.getWorkingDir()))?"OK" : "FAILED");
 		if(Config.throw_exception_when_dying){
+			Config.exiting_mode = false;
 			throw new TuffyThrownError(msg);
 		}else{
 			System.exit(2);

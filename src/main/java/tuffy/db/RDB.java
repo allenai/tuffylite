@@ -234,15 +234,19 @@ public class RDB {
 
 	public Statement createStatementWithTimeout() throws SQLException  {
 		Statement stm = con.createStatement();
-		int secondsLeft = Timer.secondsToTimeOut();
-		UIMan.verbose(3, "Creating statement with " + secondsLeft + " second timeout...");
-		stm.setQueryTimeout(secondsLeft);
+		if (Config.timeout > 0) {
+			int secondsLeft = Timer.secondsToTimeOut();
+			UIMan.verbose(3, "Creating statement with " + secondsLeft + " second timeout...");
+			stm.setQueryTimeout(secondsLeft);
+		}
 		return stm;
 	}
 	
 	public Statement createStatementWithTimeout(int resultSetType, int resultSetConcurrency) throws SQLException  {
 		Statement stm = con.createStatement(resultSetType, resultSetConcurrency);
-		stm.setQueryTimeout(Timer.secondsToTimeOut());
+		if (Config.timeout > 0) {
+			stm.setQueryTimeout(Timer.secondsToTimeOut());
+		}
 		return stm;
 	}
 
