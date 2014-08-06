@@ -10,7 +10,10 @@ import tuffy.db.RDB;
  */
 public class ExceptionMan {
 	public static void handle(Exception e) {
-		if(Config.exiting_mode) return;
+		if(Config.exiting_mode) {
+			UIMan.println("Config.exiting_mode = true");
+			return;
+		}
 		e.printStackTrace(System.err);
 		die(e.getMessage());
 	}

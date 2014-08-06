@@ -236,7 +236,7 @@ public class RDB {
 		Statement stm = con.createStatement();
 		if (Config.timeout > 0) {
 			int secondsLeft = Timer.secondsToTimeOut();
-			UIMan.verbose(3, "Creating statement with " + secondsLeft + " second timeout...");
+			//UIMan.verbose(3, "Creating statement with " + secondsLeft + " second timeout...");
 			stm.setQueryTimeout(secondsLeft);
 		}
 		return stm;
