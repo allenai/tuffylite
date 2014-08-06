@@ -8,6 +8,10 @@ public class SeededRandom {
 	protected SeededRandom() {
 		// Exists only to defeat instantiation.
 	}
+	
+	public static void reset() {
+		instance = null;
+	}
 
 	public static Random getInstance() {
 		if (instance == null) {

@@ -250,6 +250,11 @@ public class Config {
 		return ManagementFactory.getRuntimeMXBean().getName();
 	}
 	
+	public static void reset() {
+		Config.exiting_mode = false;
+	    SeededRandom.reset();
+	}
+	
 	public static double logAdd(double logX, double logY) {
 
 	       if (logY > logX) {
