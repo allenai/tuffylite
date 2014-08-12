@@ -1242,6 +1242,7 @@ public class Grounding {
 				}
 			}
 		}
+		
 		if(longestClause != null){
 			UIMan.verbose(3, "### Longest per-clause grounding time = " + longestSec + " sec, by");
 			UIMan.verbose(3, longestClause.toString());

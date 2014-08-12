@@ -260,7 +260,7 @@ public class InferPartitioned {
 				int endTime = (int) Timer.elapsedSeconds();
 				beginTime += endTime - curTime;
 				
-				if(beginTime > Config.timeout){
+				if(Config.timeout > 0 && beginTime > Config.timeout){
 					UIMan.println("!!! TIME OUT AT " + (beginTime) + " sec.");
 					break;
 				}
@@ -344,7 +344,7 @@ public class InferPartitioned {
 				int endTime = (int) Timer.elapsedSeconds();
 				beginTime += endTime - curTime;
 				
-				if(beginTime > Config.timeout){
+				if(Config.timeout > 0 && beginTime > Config.timeout){
 					UIMan.println("!!! TIME OUT AT " + (beginTime) + " sec.");
 					break;
 				}
