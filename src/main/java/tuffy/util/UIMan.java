@@ -171,14 +171,14 @@ public class UIMan {
 		}
 		Config.mcsat_cumulative = opt.mcsatCumulative;
 		Config.mcsatDumpPeriodSeconds = opt.mcsatDumpPeriodSec;
-		Config.timeout = opt.timeout;
+		//Config.timeout = opt.timeout;
 		Config.mcsat_dump_interval = opt.mcsatDumpInt;
 		Config.marginal_output_min_prob = opt.minProb;
-		/*
+		
 		if(opt.timeout > 0){
 			Config.timeout = opt.timeout;
 		}
-		*/
+		
 		Config.dir_out = FileMan.getParentDir(opt.fout);
 		Config.file_stats = opt.fout + ".stats";
 		//Config.file_stats = Config.dir_out + "/tuffy_stats.txt";
