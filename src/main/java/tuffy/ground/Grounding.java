@@ -10,6 +10,8 @@ import java.util.LinkedHashSet;
 
 import tuffy.db.RDB;
 import tuffy.db.SQLMan;
+import tuffy.ground.partition.Component;
+import tuffy.infer.ds.GAtom;
 import tuffy.infer.ds.GClause;
 import tuffy.mln.Clause;
 import tuffy.mln.Literal;
@@ -794,7 +796,10 @@ public class Grounding {
 		String sql;
 		int totalclauses = 0;
 		ArrayList<Clause> relevantClauses = new ArrayList<Clause>(mln.getRelevantClauses());
-
+		
+		db.dropTable("mln0_cbufferTmp");
+		db.execute("CREATE TABLE mln0_cbufferTmp(list INT[], weight FLOAT8, fcid INT, ffcid text);");
+		
 		int clsidx = 1;
 		int clstotal = relevantClauses.size();
 		for(Clause c : relevantClauses) {
@@ -848,6 +853,9 @@ public class Grounding {
 					}
 					String fc = (lit.getSense()?"FALSE" : "TRUE");
 	
+					
+					String notFc = (lit.getSense()?"TRUE":"FALSE");
+					
 					ArrayList<String> iconds = new ArrayList<String>();
 					String rp = r;
 					
@@ -869,21 +877,41 @@ public class Grounding {
 						if(lit.getPred().isClosedWorld()){
 							//TODO: double check!!!!!!!!!!!!!!
 							if(lit.getPred().hasSoftEvidence()){
-								iconds.add(r + ".atomID IS NOT NULL");
+								String condition = r + ".atomID IS NOT NULL";
+								if (Config.iterativeUnitPropagate) {
+									iconds.add(rp + ".truth IS NOT " + notFc + " AND " + condition);
+								} else {
+									iconds.add(condition);
+								}
 							}
 							
 						}else{
 							if(Config.learning_mode){
 								iconds.add(rp + ".club < 2 OR " + rp + ".club = 3");
 							}else{
-								iconds.add(rp + ".club < 2 OR " + rp + ".prior IS NOT NULL"); // unknown truth
+								String condition = "(" + rp + ".club < 2 OR " + rp + ".prior IS NOT NULL)"; // unknown truth
+								if (Config.iterativeUnitPropagate) {
+									iconds.add(rp + ".truth IS NOT " + notFc + " AND " + condition);
+								} else {
+									iconds.add(condition);
+								}
 							}
 						}
 						if(!posClause) {
-							negActConds.add(r + ".atomID IS NOT NULL"); // active atom
+							String condition = r + ".atomID IS NOT NULL";  // active atom
+							if (Config.iterativeUnitPropagate) {
+								negActConds.add(rp + ".truth IS NOT " + notFc + " AND " + condition);
+							} else {
+								negActConds.add(condition);
+							}
 						}
 					}else {
-						iconds.add(r + ".atomID IS NOT NULL"); // active atoms
+						String condition = r + ".atomID IS NOT NULL";  // active atom
+						if (Config.iterativeUnitPropagate) {
+							iconds.add(rp + ".truth IS NOT " + notFc + " AND " + condition);
+						} else {
+							iconds.add(condition);
+						}
 					}
 	
 					if(!posClause && !lit.getSense()) { // negative clause, negative literal
@@ -1151,6 +1179,67 @@ public class Grounding {
 				UIMan.verbose(2, "### new clauses = " + 
 						UIMan.comma(db.getLastUpdateRowCount()) +
 						"; total = " + UIMan.comma(totalclauses) + "\n");
+				
+				if (Config.iterativeUnitPropagate) {
+					// prune:
+					// find hard clauses
+					String findHardClauses = "select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal " +
+							"from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= " +
+							Config.hard_weight + " OR weight <= -" + Config.hard_weight + ");";
+					String hardLitsToPreds = "with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal " +
+							"from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= 52000000 OR weight <= -52000000)) " +
+							"select ABS(hc.literal) as atomid, (CASE WHEN hc.literal > 0 THEN true ELSE false END) as truth, p.name as pred_table " + 
+							"from mln0_atoms a JOIN hard_unit_clauses hc ON ABS(hc.literal) = a.atomid " +
+							"JOIN predicates p ON p.predid = a.predid;";
+					try {
+						UIMan.verbose(3, findHardClauses);
+						ResultSet rs = db.query(findHardClauses);
+						while(rs.next()){
+							int literal = rs.getInt("literal");
+							String insertCbufferTmp = "insert into mln0_cbufferTmp (select array_remove(list," + -literal + "), weight, " +
+									"fcid, ffcid from mln0_cbuffer where (" + -literal + " = ANY (list) AND weight > 0) )"; // OR " +
+									//"(" + literal + " = ANY( list) AND weight < 0) );";
+							UIMan.verbose(3, insertCbufferTmp);
+							db.execute(insertCbufferTmp);
+							String deleteCbuffer = "delete from mln0_cbuffer where (" + literal + " = ANY(list) AND array_length(list,1) > 1) " +
+									"OR ("+ -literal + " = ANY (list) AND weight > 0);";
+							UIMan.verbose(3, deleteCbuffer);
+							db.execute(deleteCbuffer);
+							db.execute("insert into mln0_cbuffer (select * from mln0_cbufferTmp);");
+							db.execute("delete from mln0_cbufferTmp;");
+							
+							// Update truth vals
+							db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "+
+									"from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= 52000000 OR weight <= -52000000)) "+
+									"UPDATE mln0_atoms SET truth = TRUE WHERE atomid IN (SELECT literal from hard_unit_clauses WHERE literal > 0);");
+							db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "+ 
+									"from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= 52000000 OR weight <= -52000000)) " +
+									"UPDATE mln0_atoms SET truth = FALSE WHERE atomid IN (SELECT -literal from hard_unit_clauses WHERE literal < 0);");
+							UIMan.verbose(3, hardLitsToPreds);
+							ResultSet rsPred = db.query(hardLitsToPreds);
+							while (rsPred.next()) {
+								int atomid = rsPred.getInt("atomid");
+								String pred_table = rsPred.getString("pred_table");
+								boolean truth_val = rsPred.getBoolean("truth");
+								db.execute("update "+pred_table+" SET truth = "+truth_val+" WHERE atomid = "+atomid);
+							}
+						}
+						rs.close();
+					} catch (SQLException e) {
+						ExceptionMan.handle(e);
+					}
+				
+					// report stats after pruning
+					//totalclauses += db.getLastUpdateRowCount();
+					if(Timer.elapsedSeconds("gnd") > longestSec){
+						longestClause = c;
+						longestSec = Timer.elapsedSeconds("gnd");
+					}
+					UIMan.verbose(2, "### took " + Timer.elapsed("gnd"));
+					UIMan.verbose(2, "### new clauses = " + 
+							UIMan.comma(db.getLastUpdateRowCount()) +
+							"; total = " + UIMan.comma(totalclauses) + "\n");
+				}
 			}
 		}
 		if(longestClause != null){

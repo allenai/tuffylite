@@ -22,6 +22,8 @@ public class Config {
 	public static boolean snapshoting_so_do_not_do_init_flip = false;
 	public static int currentSampledNumber = 0;
 
+	public static boolean iterativeUnitPropagate = false;
+	
 	public static boolean no_pushdown = false;
 	
 	public static boolean using_greenplum = false;

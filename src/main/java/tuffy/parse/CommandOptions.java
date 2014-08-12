@@ -66,6 +66,9 @@ public class CommandOptions {
     
     @Option(name="-unitPropagate", usage="Run unit propagation on the grounded MLN")
     public boolean unitPropagate = false;
+    
+    @Option(name="-iterativeUnitPropagate", usage="Run iterative unit propagation during grounding")
+    public boolean iterativeUnitPropagate = false;
 
     //@Option(name="-psec", usage="Dump MCSAT results every [psec] seconds.")
     public int mcsatDumpPeriodSec = 0;
