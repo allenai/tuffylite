@@ -850,7 +850,7 @@ public class Grounding {
 				String notFc = (lit.getSense() ? "TRUE" : "FALSE");
 				if (!p.isImmutable()) {
 					ids.add((lit.getSense() ? "" : "-") + "(CASE WHEN " + r
-							+ ".truth IS " + notFc + " THEN -1 WHEN " + r // Somewhat ugly hack to get existential quantifiers working correctly with evidence
+							+ ".truth IS " + notFc + " THEN -999999999 WHEN " + r // Somewhat ugly hack to get existential quantifiers working correctly with evidence
 							+ ".id IS NULL THEN 0 WHEN " + r
 							+ ".atomID IS NULL THEN 0 ELSE " + r
 							+ ".atomID END)");
@@ -1002,7 +1002,7 @@ public class Grounding {
 					sql += " GROUP BY " + c.sqlPivotAttrsList + " , ffid";
 				}
 				sql = "SELECT list2, weight2, ffid FROM " + "(" + sql
-						+ ") tpivoted WHERE NOT -1 = ANY(list2)";
+						+ ") tpivoted WHERE NOT -999999999 = ANY(list2) AND NOT 999999999 = ANY(list2)";
 			}
 
 			boolean unifySoftUnitClauses = true;
@@ -1063,7 +1063,7 @@ public class Grounding {
 						+ " OR weight <= -"
 						+ Config.hard_weight + ");";
 				String hardLitsToPreds = "with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-						+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= 52000000 OR weight <= -52000000)) "
+						+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
 						+ "select ABS(hc.literal) as atomid, (CASE WHEN hc.literal > 0 THEN true ELSE false END) as truth, p.name as pred_table "
 						+ "from mln0_atoms a JOIN hard_unit_clauses hc ON ABS(hc.literal) = a.atomid "
 						+ "JOIN predicates p ON p.predid = a.predid;";
@@ -1100,10 +1100,10 @@ public class Grounding {
 
 						// Update truth vals
 						db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-								+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= 52000000 OR weight <= -52000000)) "
+								+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
 								+ "UPDATE mln0_atoms SET truth = TRUE WHERE atomid IN (SELECT literal from hard_unit_clauses WHERE literal > 0);");
 						db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-								+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= 52000000 OR weight <= -52000000)) "
+								+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
 								+ "UPDATE mln0_atoms SET truth = FALSE WHERE atomid IN (SELECT -literal from hard_unit_clauses WHERE literal < 0);");
 						UIMan.verbose(3, hardLitsToPreds);
 						ResultSet rsPred = db.query(hardLitsToPreds);
