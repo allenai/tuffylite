@@ -296,8 +296,10 @@ public class Grounding {
 
 		db.dropTable(cbuffer);
 		db.update(sql);
+		UIMan.verbose(1, ">>> Creating cbuffer table " + sql);
+		
 		if (Config.computeSimpleActiveClauses) {
-			this.simpleComputeActiveClauses(cbuffer);
+			this.simpleComputeActiveClauses(cbuffer,mln.relAtoms);
 		} else {
 			this.computeActiveClauses(cbuffer);
 		}
@@ -790,9 +792,9 @@ public class Grounding {
 	}
 
 	// Simplifying
-	private void simpleComputeActiveClauses(String cbuffer) {
+	private void simpleComputeActiveClauses(String cbuffer, String atoms) {
  		Timer.start("totalgrounding");
-		UIMan.verboseInline(1, ">>> Grounding clauses...");
+		UIMan.verboseInline(1, ">>> Grounding clauses (simplified)...");
 		UIMan.verbose(2, "");
 		double longestSec = 0;
 		Clause longestClause = null;
@@ -822,13 +824,15 @@ public class Grounding {
 			}
 		});
 
-		db.dropTable("mln0_cbufferTmp");
-		db.execute("CREATE TABLE mln0_cbufferTmp(list INT[], weight FLOAT8, fcid INT, ffcid text);");
+		db.dropTable(cbuffer + "Tmp");
+		db.execute("CREATE TABLE " + cbuffer + "Tmp (list INT[], weight FLOAT8, fcid INT, ffcid text);");
 
 		int clsidx = 1;
 		int clstotal = relevantClauses.size();
 		for (Clause c : relevantClauses) {
-
+//			if (clsidx > 1) {
+//				ExceptionMan.die("second clause");
+//			}
 			if (!c.isHardClause()) {
 				UIMan.verbose(3, "here");
 			}
@@ -1043,10 +1047,7 @@ public class Grounding {
 
 			// report stats
 			totalclauses += db.getLastUpdateRowCount();
-			if (Timer.elapsedSeconds("gnd") > longestSec) {
-				longestClause = c;
-				longestSec = Timer.elapsedSeconds("gnd");
-			}
+			
 			UIMan.verbose(2, "### took " + Timer.elapsed("gnd"));
 			UIMan.verbose(
 					2,
@@ -1057,62 +1058,82 @@ public class Grounding {
 			if (c.isHardClause() && Config.iterativeUnitPropagate) {
 				// prune:
 				// find hard clauses
+				Timer.start("iterativeUP");
 				String findHardClauses = "select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-						+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= "
+						+ "from "+cbuffer+" where array_length(list,1) = 1 AND (weight >= "
 						+ Config.hard_weight
 						+ " OR weight <= -"
 						+ Config.hard_weight + ");";
 				String hardLitsToPreds = "with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-						+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
+						+ "from "+cbuffer+" where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
 						+ "select ABS(hc.literal) as atomid, (CASE WHEN hc.literal > 0 THEN true ELSE false END) as truth, p.name as pred_table "
-						+ "from mln0_atoms a JOIN hard_unit_clauses hc ON ABS(hc.literal) = a.atomid "
+						+ "from "+atoms+" a JOIN hard_unit_clauses hc ON ABS(hc.literal) = a.atomid "
 						+ "JOIN predicates p ON p.predid = a.predid;";
+				double sqlTime = 0;
 				try {
-					UIMan.verbose(3, findHardClauses);
+//					Timer.start("iupSQL");
 					ResultSet rs = db.query(findHardClauses);
+//					sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+//					UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + findHardClauses);
 					while (rs.next()) {
 						int literal = rs.getInt("literal");
-						String insertCbufferTmp = "insert into mln0_cbufferTmp (select array_remove(list,"
+						String insertCbufferTmp = "insert into "+cbuffer+"Tmp (select array_remove(list,"
 								+ -literal
 								+ "), weight, "
-								+ "fcid, ffcid from mln0_cbuffer where ("
+								+ "fcid, ffcid from "+cbuffer+" where ("
 								+ -literal + " = ANY (list) AND weight > 0) )"; // OR
 																				// "
 																				// +
 						// "(" + literal + " = ANY( list) AND weight < 0) );";
-						UIMan.verbose(3, insertCbufferTmp);
+//						Timer.start("iupSQL");
 						db.execute(insertCbufferTmp);
+//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");						
+//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + insertCbufferTmp);
+//						Timer.start("iupSQL");
 						ResultSet test = db
-								.query("select * from mln0_cbufferTmp where list = '{}';");
+								.query("select * from "+cbuffer+"Tmp where list = '{}';");
+//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");						
+//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "select * from mln0_cbufferTmp where list = '{}';");
 						if (test.next()) {
-							ExceptionMan.die("stopping here");
+							ExceptionMan.die("stopping here with an unsatisfiable hard clause");
 						}
-						String deleteCbuffer = "delete from mln0_cbuffer where ("
+						String deleteCbuffer = "delete from "+cbuffer+" where ("
 								+ literal
 								+ " = ANY(list) AND array_length(list,1) > 1 and weight > 0) "
 								+ "OR ("
 								+ -literal
 								+ " = ANY (list) AND weight > 0);";
-						UIMan.verbose(3, deleteCbuffer);
+						//UIMan.verbose(3, deleteCbuffer);
+
+//						Timer.start("iupSQL");
 						db.execute(deleteCbuffer);
-						db.execute("insert into mln0_cbuffer (select * from mln0_cbufferTmp);");
-						db.execute("delete from mln0_cbufferTmp;");
+//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + deleteCbuffer);
+//						Timer.start("iupSQL");
+						db.execute("insert into "+cbuffer+" (select * from mln0_cbufferTmp);");
+//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "insert into mln0_cbuffer (select * from mln0_cbufferTmp);");
+//						Timer.start("iupSQL");
+						db.execute("delete from "+cbuffer+"Tmp;");
+//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "delete from mln0_cbufferTmp;");
 
 						// Update truth vals
-						db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-								+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
-								+ "UPDATE mln0_atoms SET truth = TRUE WHERE atomid IN (SELECT literal from hard_unit_clauses WHERE literal > 0);");
-						db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-								+ "from mln0_cbuffer where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
-								+ "UPDATE mln0_atoms SET truth = FALSE WHERE atomid IN (SELECT -literal from hard_unit_clauses WHERE literal < 0);");
-						UIMan.verbose(3, hardLitsToPreds);
+						//UIMan.verbose(3, hardLitsToPreds);
+//						Timer.start("iupSQL");
 						ResultSet rsPred = db.query(hardLitsToPreds);
+//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + hardLitsToPreds);
 						while (rsPred.next()) {
 							int atomid = rsPred.getInt("atomid");
 							String pred_table = rsPred.getString("pred_table");
 							boolean truth_val = rsPred.getBoolean("truth");
+//							Timer.start("iupSQL");
 							db.execute("update " + pred_table + " SET truth = "
 									+ truth_val + " WHERE atomid = " + atomid);
+//							sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+//							UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "update " + pred_table + " SET truth = "
+//									+ truth_val + " WHERE atomid = " + atomid);
 						}
 					}
 					rs.close();
@@ -1121,22 +1142,23 @@ public class Grounding {
 				}
 
 				// report stats after pruning
-				// totalclauses += db.getLastUpdateRowCount();
-				if (Timer.elapsedSeconds("gnd") > longestSec) {
-					longestClause = c;
-					longestSec = Timer.elapsedSeconds("gnd");
-				}
-				UIMan.verbose(2, "### took " + Timer.elapsed("gnd"));
-				UIMan.verbose(
-						2,
-						"### new clauses = "
-								+ UIMan.comma(db.getLastUpdateRowCount())
-								+ "; total = " + UIMan.comma(totalclauses)
-								+ "\n");
+				UIMan.verbose(2, "### iterative UP took " + Timer.elapsed("iterativeUP"));
+				UIMan.verbose(2, "### iterative UP SQL took " + sqlTime);
+			}
+			// totalclauses += db.getLastUpdateRowCount();
+			if (Timer.elapsedSeconds("gnd") > longestSec) {
+				longestClause = c;
+				longestSec = Timer.elapsedSeconds("gnd");
 			}
 
 		}
-
+		db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
+				+ "from "+cbuffer+" where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
+				+ "UPDATE "+atoms+" SET truth = TRUE WHERE atomid IN (SELECT literal from hard_unit_clauses WHERE literal > 0);");
+		db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
+				+ "from "+cbuffer+" where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
+				+ "UPDATE "+atoms+" SET truth = FALSE WHERE atomid IN (SELECT -literal from hard_unit_clauses WHERE literal < 0);");
+		
 		if (longestClause != null) {
 			UIMan.verbose(3, "### Longest per-clause grounding time = "
 					+ longestSec + " sec, by");
@@ -1203,8 +1225,8 @@ public class Grounding {
 			}
 		});
 
-		db.dropTable("mln0_cbufferTmp");
-		db.execute("CREATE TABLE mln0_cbufferTmp(list INT[], weight FLOAT8, fcid INT, ffcid text);");
+		db.dropTable(cbuffer+"Tmp");
+		db.execute("CREATE TABLE "+cbuffer+"Tmp(list INT[], weight FLOAT8, fcid INT, ffcid text);");
 
 		int clsidx = 1;
 		int clstotal = relevantClauses.size();

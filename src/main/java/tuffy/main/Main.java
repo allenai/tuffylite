@@ -18,6 +18,7 @@ public class Main {
 		CommandOptions options = UIMan.parseCommand(args);
 		
 		UIMan.println("*** Welcome to " + Config.product_name + "!");
+		UIMan.verbose(1, "Running with options: \n" + options);
 		if(options == null){
 			return;
 		}

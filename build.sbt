@@ -30,12 +30,12 @@ libraryDependencies ++= Seq(
     "junit" % "junit" % "4.9"
 )
 
-autoScalaLibrary := false
+//autoScalaLibrary := false
 
-crossPaths := false
+//crossPaths := false
 
 EclipseKeys.projectFlavor := EclipseProjectFlavor.Java
 
-//compileOrder := CompileOrder.JavaThenScala
+compileOrder := CompileOrder.JavaThenScala
 
 javaOptions += "-Xmx4G"

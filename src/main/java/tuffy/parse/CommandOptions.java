@@ -1,10 +1,17 @@
 package tuffy.parse;
 import org.kohsuke.args4j.Option;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 /**
  * Parser for command line options.
  */
 public class CommandOptions {
-
+	
+	public String toString()
+	{
+		return ReflectionToStringBuilder.toString(this, ToStringStyle.MULTI_LINE_STYLE);
+	}
+	
 	public enum MAPInferAlgo {WALK, SWEEP};
 	public enum InferDataStore {RAM, DISK};
 	
