@@ -791,7 +791,7 @@ public class Grounding {
 		UIMan.println("### pins = " + db.getLastUpdateRowCount());
 	}
 
-	// Simplifying
+	// Simplifying (some bug fixes/improvements, no learning/parameterized weights)
 	private void simpleComputeActiveClauses(String cbuffer, String atoms) {
  		Timer.start("totalgrounding");
 		UIMan.verboseInline(1, ">>> Grounding clauses (simplified)...");
@@ -853,11 +853,18 @@ public class Grounding {
 				String fc = (lit.getSense() ? "FALSE" : "TRUE");
 				String notFc = (lit.getSense() ? "TRUE" : "FALSE");
 				if (!p.isImmutable()) {
-					ids.add((lit.getSense() ? "" : "-") + "(CASE WHEN " + r
-							+ ".truth IS " + notFc + " THEN -999999999 WHEN " + r // Somewhat ugly hack to get existential quantifiers working correctly with evidence
-							+ ".id IS NULL THEN 0 WHEN " + r
-							+ ".atomID IS NULL THEN 0 ELSE " + r
-							+ ".atomID END)");
+					if (Config.iterativeUnitPropagate) {
+						ids.add((lit.getSense() ? "" : "-") + "(CASE WHEN " + r
+								+ ".truth IS " + notFc + " THEN -999999999 WHEN " + r // Somewhat ugly hack to get existential quantifiers working correctly with evidence
+								+ ".id IS NULL THEN 0 WHEN " + r
+								+ ".atomID IS NULL THEN 0 ELSE " + r
+								+ ".atomID END)");
+					} else {
+						ids.add((lit.getSense() ? "" : "-") + "(CASE WHEN " + r
+								+ ".id IS NULL THEN 0 WHEN " + r
+								+ ".atomID IS NULL THEN 0 ELSE " + r
+								+ ".atomID END)");
+					}
 				}
 
 				ArrayList<String> iconds = new ArrayList<String>();
@@ -1006,7 +1013,10 @@ public class Grounding {
 					sql += " GROUP BY " + c.sqlPivotAttrsList + " , ffid";
 				}
 				sql = "SELECT list2, weight2, ffid FROM " + "(" + sql
-						+ ") tpivoted WHERE NOT -999999999 = ANY(list2) AND NOT 999999999 = ANY(list2)";
+						+ ") tpivoted";
+				if (Config.iterativeUnitPropagate) {
+					sql += " WHERE NOT -999999999 = ANY(list2) AND NOT 999999999 = ANY(list2)";
+				}
 			}
 
 			boolean unifySoftUnitClauses = true;
@@ -1088,7 +1098,7 @@ public class Grounding {
 //						Timer.start("iupSQL");
 						db.execute(insertCbufferTmp);
 //						sqlTime += Timer.elapsedMilliSeconds("iupSQL");						
-//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + insertCbufferTmp);
+						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + insertCbufferTmp);
 //						Timer.start("iupSQL");
 						ResultSet test = db
 								.query("select * from "+cbuffer+"Tmp where list = '{}';");
@@ -1110,7 +1120,7 @@ public class Grounding {
 //						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
 //						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + deleteCbuffer);
 //						Timer.start("iupSQL");
-						db.execute("insert into "+cbuffer+" (select * from mln0_cbufferTmp);");
+						db.execute("insert into "+cbuffer+" (select * from "+cbuffer+"Tmp);");
 //						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
 //						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "insert into mln0_cbuffer (select * from mln0_cbufferTmp);");
 //						Timer.start("iupSQL");

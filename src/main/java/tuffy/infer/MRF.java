@@ -3080,7 +3080,10 @@ public class MRF {
 		// sample
 		for(int i=1; i<=numSamples; i++){
 			if (Timer.hasTimedOut()) {
-				ExceptionMan.die("Tuffy timed out");
+				Config.mcsatTimedOut = true;
+				numSamples = i;
+				UIMan.print(">>>> Tuffy timed out, stopping MC-SAT");
+				break;
 			}
 
 			if(Config.sampleLog != null){

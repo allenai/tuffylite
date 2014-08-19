@@ -190,6 +190,7 @@ public class Config {
 	public static boolean reorder_literals = false;
 
 	public static int timeout = Integer.MAX_VALUE;
+	public static boolean mcsatTimedOut = false;
 	public static int num_tries_per_periodic_flush = 0;
 
 

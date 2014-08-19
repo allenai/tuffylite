@@ -234,7 +234,7 @@ public class RDB {
 
 	public Statement createStatementWithTimeout() throws SQLException  {
 		Statement stm = con.createStatement();
-		if (Config.timeout > 0) {
+		if (Config.timeout > 0 && !Config.mcsatTimedOut) {
 			int secondsLeft = Timer.secondsToTimeOut();
 			//UIMan.verbose(3, "Creating statement with " + secondsLeft + " second timeout...");
 			stm.setQueryTimeout(secondsLeft);
@@ -244,7 +244,7 @@ public class RDB {
 	
 	public Statement createStatementWithTimeout(int resultSetType, int resultSetConcurrency) throws SQLException  {
 		Statement stm = con.createStatement(resultSetType, resultSetConcurrency);
-		if (Config.timeout > 0) {
+		if (Config.timeout > 0 && !Config.mcsatTimedOut) {
 			stm.setQueryTimeout(Timer.secondsToTimeOut());
 		}
 		return stm;
