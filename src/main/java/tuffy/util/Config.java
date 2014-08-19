@@ -257,6 +257,7 @@ public class Config {
 	
 	public static void reset() {
 		Config.exiting_mode = false;
+		Config.mcsatTimedOut = false;
 	    SeededRandom.reset();
 	}
 	
