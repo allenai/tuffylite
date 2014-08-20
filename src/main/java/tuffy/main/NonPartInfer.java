@@ -16,7 +16,10 @@ public class NonPartInfer extends Infer{
 	public void run(CommandOptions opt){
 		UIMan.println(">>> Running non-partition inference.");
 		setUp(opt);
+		Timer.start("groundOverall");
+		UIMan.println(">>> Starting grounding...");
 		ground();
+		UIMan.println("### total grounding = " + Timer.elapsed("groundOverall"));
 		
 		if (Timer.hasTimedOut()) {
 			ExceptionMan.die("Tuffy timed out");
@@ -57,16 +60,18 @@ public class NonPartInfer extends Infer{
 			}
 						
 			if (Config.unitPropagate) {
+				Timer.start("fullUnitPropagate");
+				UIMan.println(">>> Starting unit propagation...");
 				mrf = mrf.unitPropagateAndGetNewMRF();
 				dmover.writeMRFClausesToTable(mrf, mln.relClauses);
-				if (Config.writeClausesFile != null) {
-					dmover.createClauseDescTable(mln.relClauses, Config.relClauseDesc);
-					dmover.dumpClauseDescToFile(mln.relClauses, Config.relClauseDesc, Config.writeClausesFile);
-				}
+				writeClausesToFile();
+				writeCNFToFile();
 				UIMan.println("### MRF Size After Unit Prop: atoms = " + mrf.atoms.size() + "; clauses = " + mrf.clauses.size());
+				UIMan.println("### total unit propagation = " + Timer.elapsed("fullUnitPropagate"));
 			}
 			
 			Timer.start("mcsat");
+			UIMan.println(">>>Starting MC-Sat...");
 			double sumCost = mrf.mcsat(options.mcsatSamples, options.maxFlips);
 			UIMan.println("### total mcsat = " + Timer.elapsed("mcsat"));
 			dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);

@@ -68,6 +68,7 @@ public class Config {
 	public static boolean unitPropagate = false;
 	
 	public static String writeClausesFile = null;
+	public static String writeCNFFile = null;
 
 	public static String db_url = "jdbc:postgresql://localhost:5432/postgres";
 	public static String db_username = "tuffer";

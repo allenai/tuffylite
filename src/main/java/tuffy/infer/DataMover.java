@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -1079,7 +1080,7 @@ public class DataMover {
 		db.update(sql);
 		
 		sql = "INSERT INTO " + relClauseDesc + " ";
-		sql += "SELECT cid, string_agg(CASE WHEN litid > 0 THEN atomdesc ELSE CONCAT('!', atomdesc) END, ' v ') ";
+		sql += "SELECT cid, string_agg(CASE WHEN litid > 0 THEN atomdesc ELSE CONCAT('!', atomdesc) END, ' v ' ORDER BY atomdesc) ";
 		sql += "FROM " + Config.relAtomDesc + " a, (SELECT cid, UNNEST(lits) AS litid FROM " + relClauses + ") c ";
 		sql += "WHERE ABS(c.litid) = a.atomid GROUP BY cid;";
 		db.update(sql);
@@ -1096,13 +1097,55 @@ public class DataMover {
 		String sql;
 		try {
 			sql = "SELECT c.weight, d.clauseDesc FROM " + relClauseDesc + " d, ";
-			sql += relClauses + " c  WHERE c.cid = d.clauseId";
+			sql += relClauses + " c  WHERE c.cid = d.clauseId ORDER BY c.weight, d.clauseDesc";
 			ResultSet rs = db.query(sql);
 			while(rs.next()) {
 				String clauseDesc = rs.getString("clauseDesc");
 				double weight = rs.getDouble("weight");
 				UIMan.verbose(3, UIMan.decimalRound(digits, weight) + "\t" + clauseDesc);
 				bufferedWriter.append(UIMan.decimalRound(digits, weight) + "\t" + clauseDesc + "\n");
+			}
+			rs.close();
+			bufferedWriter.close();
+		}catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+	}
+	
+	public void dumpCNFToFile(String relAtoms, String relClauses, String fout){
+		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
+		int digits = 4;
+		String sql;
+		try {
+			sql = "SELECT count(*) as count FROM " + relClauses;
+			ResultSet rs = db.query(sql);
+			rs.next();
+			int numClauses = rs.getInt("count");
+			sql = "SELECT count(*) as count FROM " + relAtoms;
+			rs = db.query(sql);
+			rs.next();
+			int numAtoms = rs.getInt("count");
+			UIMan.verbose(3, "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight));
+			bufferedWriter.append( "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight) + "\n");
+			
+			sql = "SELECT weight, array_length(lits, 1) as len, array_to_string(lits, ' ') as lits FROM " + relClauses;
+			rs = db.query(sql);
+			while(rs.next()) {
+				String lits = rs.getString("lits");
+				int len = rs.getInt("len");
+				double weight = rs.getDouble("weight");
+				if (weight > Config.hard_weight) {
+					weight = Config.hard_weight;
+				} else if (weight <= Config.hard_weight && len == 1) {
+					weight = Config.hard_weight;
+					if (lits.charAt(0) == '-') {
+						lits = lits.substring(1);
+					} else {
+						lits = "-" + lits;
+					}
+				}
+				UIMan.verbose(3, UIMan.decimalRound(digits, weight) + " " + lits);
+				bufferedWriter.append(UIMan.decimalRound(digits, weight) + " " + lits + " 0\n");
 			}
 			rs.close();
 			bufferedWriter.close();

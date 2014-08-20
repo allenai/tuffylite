@@ -52,10 +52,21 @@ public abstract class Infer {
 		grounding = new Grounding(mln);
 		grounding.constructMRF();
 		
+		writeClausesToFile();
+		writeCNFToFile();
+	}
+	
+	protected void writeClausesToFile() {
 		if (Config.writeClausesFile != null) {
 			dmover.createAtomDescTable(mln.relAtoms, Config.relAtomDesc);
 			dmover.createClauseDescTable(mln.relClauses, Config.relClauseDesc);
 			dmover.dumpClauseDescToFile(mln.relClauses, Config.relClauseDesc, Config.writeClausesFile);
+		}
+	}
+	
+	protected void writeCNFToFile() {
+		if (Config.writeCNFFile != null) {
+			dmover.dumpCNFToFile(mln.relAtoms, mln.relClauses, Config.writeCNFFile);
 		}
 	}
 

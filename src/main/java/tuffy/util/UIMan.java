@@ -158,6 +158,7 @@ public class UIMan {
 		Config.seed = opt.seed;
 		Config.pgSeed = opt.pgSeed;
 		Config.writeClausesFile = opt.writeClausesFile;
+		Config.writeCNFFile = opt.writeCNFFile;
 		Config.unitPropagate = opt.unitPropagate;
 		Config.iterativeUnitPropagate = opt.iterativeUnitPropagate;
 		
