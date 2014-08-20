@@ -3663,7 +3663,7 @@ public class MRF {
 			mrf.atoms.put(n.id, n);
 			mrf.addAtom(n.id);
 		}
-		LinkedHashSet<Integer> hardUnitClauses = new LinkedHashSet<Integer>();
+		LinkedHashMap<Integer, Boolean> hardUnitClauses = new LinkedHashMap<Integer,Boolean>();
 //		if (cee.isUnitClause() && cee.isHardClause()) {
 //			//if (!hardUnitClauses.contains(cee.lits[0])) {
 //			//	hardUnitClauses.add(cee.lits[0]);
@@ -3679,12 +3679,17 @@ public class MRF {
 //				mrf.clauses.add(cee);
 //			}
 			if (cee.isUnitClause() && cee.isHardClause()) {
-				if (!hardUnitClauses.contains(Math.abs(cee.lits[0]))) {
-					hardUnitClauses.add(Math.abs(cee.lits[0]));
+				if (!hardUnitClauses.containsKey(Math.abs(cee.lits[0]))) {
+					hardUnitClauses.put(Math.abs(cee.lits[0]), (cee.lits[0] * cee.weight > 0));
 					mrf.clauses.add(cee);
 				    UIMan.verbose(3, "Adding " + cee);
 				} else {
-				    UIMan.verbose(3, "Adding " + cee + " (not already added?)");
+					if (hardUnitClauses.get(Math.abs(cee.lits[0])) == (cee.lits[0] * cee.weight > 0)) {
+						UIMan.verbose(3, "Skipping " + cee + " (already added)");
+					} else {
+						ExceptionMan.die("stopping here with an unsatisfiable hard clause\n" + 
+								"trying to add " + cee + " but already had its negation as a hard clause");
+					}
 				}
 			}
 			else if (!cee.ignoreAfterUnitPropagation) {

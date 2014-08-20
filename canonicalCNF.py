@@ -34,11 +34,11 @@ def reduceClause(clause, backbones):
 class WCNF:
   def __init__(self, hard_weight):
     self.hard_weight = hard_weight
-    self.clauses = set()
+    self.clauses = [] #set()
   def setClauses(self, clauses):
     self.clauses = clauses
   def addClause(self,clause):
-    self.clauses.add(clause)
+    self.clauses.append(clause) #add(clause)
   def applyBackbones(self, backbones):
     print backbones
     usefulClauses = filter(lambda c: not any([l in c.lits for l in backbones]), self.clauses)
@@ -57,9 +57,9 @@ class WCNF:
 class Clause:
   def __init__(self,weight):
     self.weight=weight
-    self.lits=set()
+    self.lits=[] #set()
   def addLiteral(self,lit):
-    self.lits.add(lit)
+    self.lits.append(lit) #add(lit)
   def __repr__(self):
     return "[" + " ".join([str(l) for l in self.lits]) + "]"
   def __str__(self):
@@ -98,8 +98,12 @@ def writeHardClausesToFile(wcnf, filename):
   f = open(filename, 'w')
   f.write("p cnf %d %d\n" % (1, len(wcnf.clauses)))
   for c in wcnf.clauses:
-    if c.weight >= wcnf.hard_weight or c.weight <= -wcnf.hard_weight:
+    if c.weight >= wcnf.hard_weight: 
       f.write("%s 0\n" % (" ".join([str(l) for l in c.lits])))
+    if c.weight <= -wcnf.hard_weight:
+      print "uh oh"
+      exit
+
   f.close()
 
 def reduceClauses(clauses, backbones):

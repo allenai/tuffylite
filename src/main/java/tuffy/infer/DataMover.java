@@ -1128,7 +1128,8 @@ public class DataMover {
 			UIMan.verbose(3, "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight));
 			bufferedWriter.append( "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight) + "\n");
 			
-			sql = "SELECT weight, array_length(lits, 1) as len, array_to_string(lits, ' ') as lits FROM " + relClauses;
+			sql = "SELECT weight, array_length(lits, 1) as len, array_to_string(lits, ' ') as lits FROM " + relClauses +
+					" ORDER BY cid";
 			rs = db.query(sql);
 			while(rs.next()) {
 				String lits = rs.getString("lits");
