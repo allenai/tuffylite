@@ -1136,7 +1136,7 @@ public class DataMover {
 				double weight = rs.getDouble("weight");
 				if (weight > Config.hard_weight) {
 					weight = Config.hard_weight;
-				} else if (weight <= Config.hard_weight && len == 1) {
+				} else if (weight <= -Config.hard_weight && len == 1) {
 					weight = Config.hard_weight;
 					if (lits.charAt(0) == '-') {
 						lits = lits.substring(1);

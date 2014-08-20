@@ -735,7 +735,7 @@ public class RDB {
         	execute("SELECT setseed(" + Config.pgSeed + ");");
     	}
         UIMan.verbose(3, "### Checking existence of " + schema);
-        if (countTuples("(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '" + schema + "') SC") > 0) {
+        if (Config.reuseSchema && countTuples("(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '" + schema + "') SC") > 0) {
             try {
                 updateRaw("SET search_path = " + schema);
                 UIMan.verbose(3, "### Reusing schema " + schema);
