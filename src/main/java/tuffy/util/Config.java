@@ -22,8 +22,11 @@ public class Config {
 	public static boolean snapshoting_so_do_not_do_init_flip = false;
 	public static int currentSampledNumber = 0;
 	
-	public static boolean reuseSchema = false;
-
+	public static boolean reuseSchema = false; // whether to reuse schema if it exists (false is useful for debugging
+											   // db state across runs, as atom/clause ids get reset to start at 1
+	public static float minPercentMcSatSamples = 0.7f; // if Tuffy times out before MC-SAT finishes, 
+													  // return an answer is we've gotten at least this
+													  // fraction of the request samples
 	public static boolean iterativeUnitPropagate = false;
 	
 	public static boolean computeSimpleActiveClauses = true; // not compatible with parameterized weights or learning
