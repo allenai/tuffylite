@@ -804,25 +804,25 @@ public class Grounding {
 		ArrayList<Clause> relevantClauses = new ArrayList<Clause>(
 				mln.getRelevantClauses());
 
-//		Collections.sort(relevantClauses, new Comparator<Clause>() {
-//			@Override
-//			public int compare(Clause c1, Clause c2) {
-//
-//				if (c1.isHardClause()) {
-//					if (c2.isHardClause()) {
-//						return 0;
-//					} else {
-//						return -1;
-//					}
-//				} else {
-//					if (c2.isHardClause()) {
-//						return 1;
-//					} else {
-//						return 0;
-//					}
-//				}
-//			}
-//		});
+		Collections.sort(relevantClauses, new Comparator<Clause>() {
+			@Override
+			public int compare(Clause c1, Clause c2) {
+
+				if (c1.isHardClause()) {
+					if (c2.isHardClause()) {
+						return 0;
+					} else {
+						return -1;
+					}
+				} else {
+					if (c2.isHardClause()) {
+						return 1;
+					} else {
+						return 0;
+					}
+				}
+			}
+		});
 
 		db.dropTable(cbuffer + "Tmp");
 		db.execute("CREATE TABLE " + cbuffer + "Tmp (list INT[], weight FLOAT8, fcid INT, ffcid text);");
@@ -1786,8 +1786,6 @@ public class Grounding {
 		sql = "INSERT INTO " + relClauses + StringMan.commaListParen(args)
 				+ " SELECT " + StringMan.commaList(sels) + "FROM " + cbuffer
 				+ " GROUP BY list";
-//		sql = "INSERT INTO " + relClauses + StringMan.commaListParen(args)
-//				+ " SELECT list, weight FROM " + cbuffer;
 		Timer.start("gnd");
 		db.update(sql);
 		UIMan.verbose(1, "### took " + Timer.elapsed("gnd"));
