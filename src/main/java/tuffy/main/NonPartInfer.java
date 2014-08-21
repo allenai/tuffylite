@@ -42,7 +42,7 @@ public class NonPartInfer extends Infer{
 			UIMan.println("    Loading MRF from DB to RAM...");
 			mrf = dmover.loadMrfFromDb(mln.relAtoms, mln.relClauses);
 			mrf.inferWalkSAT(options.maxTries, options.maxFlips);
-			dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
+			dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms, true);
 			
 			UIMan.println("### Best answer has cost " + UIMan.decimalRound(2,mrf.lowCost));
 			UIMan.println(">>> Writing answer to file: " + mapfout);
