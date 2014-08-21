@@ -853,9 +853,16 @@ public class Grounding {
 				String fc = (lit.getSense() ? "FALSE" : "TRUE");
 				String notFc = (lit.getSense() ? "TRUE" : "FALSE");
 				if (!p.isImmutable()) {
-					if (Config.iterativeUnitPropagate) {
+//					if (Config.iterativeUnitPropagate) {
+					if (c.hasExistentialQuantifiers()) {
+						// Somewhat ugly hack to get existential quantifiers working correctly with evidence
+						// - without this -9999999 case, we can end up grounding a clause that says
+						// \exists x R(x) into R(a) v R(b) v R(d), when we have evidence that R(c) is
+						// true, and therefore shouldn't be generating the clause at all (further, if
+						// we have another rule saying at most one R(x) can be true, then this grounding
+						// error can lead to unsatisfiable sets of hard formula)
 						ids.add((lit.getSense() ? "" : "-") + "(CASE WHEN " + r
-								+ ".truth IS " + notFc + " THEN -999999999 WHEN " + r // Somewhat ugly hack to get existential quantifiers working correctly with evidence
+								+ ".truth IS " + notFc + " THEN -999999999 WHEN " + r 
 								+ ".id IS NULL THEN 0 WHEN " + r
 								+ ".atomID IS NULL THEN 0 ELSE " + r
 								+ ".atomID END)");
@@ -886,12 +893,13 @@ public class Grounding {
 						// TODO: double check!!!!!!!!!!!!!!
 						if (lit.getPred().hasSoftEvidence()) {
 							String condition = r + ".atomID IS NOT NULL";
-							if (Config.iterativeUnitPropagate) {
-								iconds.add(rp + ".truth IS NOT " + notFc
-										+ " AND " + condition);
-							} else {
+							// TODO(ericgribkoff) Understand why commenting this out is the right thing to do :)
+//							if (Config.iterativeUnitPropagate) {
+//								iconds.add(rp + ".truth IS NOT " + notFc
+//										+ " AND " + condition);
+//							} else {
 								iconds.add(condition);
-							}
+//							}
 						}
 
 					} else {
@@ -1014,9 +1022,9 @@ public class Grounding {
 				}
 				sql = "SELECT list2, weight2, ffid FROM " + "(" + sql
 						+ ") tpivoted";
-				if (Config.iterativeUnitPropagate) {
+//				if (Config.iterativeUnitPropagate) {
 					sql += " WHERE NOT -999999999 = ANY(list2) AND NOT 999999999 = ANY(list2)";
-				}
+//				}
 			}
 
 			boolean unifySoftUnitClauses = true;
