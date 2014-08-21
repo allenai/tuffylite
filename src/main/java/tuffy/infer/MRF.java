@@ -3797,6 +3797,12 @@ public class MRF {
 						if (k != -lit) {
 							if(k > 0){
 								if (cee.isPositiveClause()) {
+									// TODO(ericgribkoff): Moving away from this code anyways, but
+									// this shouldn't check for abs(k) - we can have -l and l
+									// and here we should catch this and return that the formulas
+									// are unsatisfiable. Currently this is not caught till after
+									// this unit prop routine finishes and the new MRF is being generated
+									// in unitPropagateAndGetNewMRF()
 									if (!QIds.contains(Math.abs(k))) {
 										Q.add(k);
 										QIds.add(Math.abs(k));
