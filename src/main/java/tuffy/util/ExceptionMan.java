@@ -28,6 +28,7 @@ public class ExceptionMan {
 			UIMan.print("removing database schema '" + Config.db_schema + "'...");
 			UIMan.println(db.dropSchema(Config.db_schema)?"OK" : "FAILED");
 		}
+		db.close();
 		
 		UIMan.print("removing temporary dir '" + Config.getWorkingDir() + "'...");
 		UIMan.println(FileMan.removeDirectory(new File(Config.getWorkingDir()))?"OK" : "FAILED");
