@@ -361,8 +361,8 @@ public class RDB {
 	 */
 	public int update(String sql){
 		if(Config.exiting_mode) ExceptionMan.die("");
-		try {
-			Statement stmt = createStatementWithTimeout();
+		try (Statement stmt = createStatementWithTimeout()) {
+//			Statement stmt = createStatementWithTimeout();
 			currentlyRunningQuery = stmt;
 			lastUpdateRowCount = stmt.executeUpdate(sql);
 			stmt.close();
@@ -381,8 +381,8 @@ public class RDB {
 	public void execute(String sql) {		
 		//if(sql.contains("DELETE") || sql.contains("delete")) System.out.println(sql);
 		if(Config.exiting_mode) ExceptionMan.die("");
-		try {
-			Statement stmt = createStatementWithTimeout();
+		try (Statement stmt = createStatementWithTimeout()) {
+//			Statement stmt = createStatementWithTimeout();
 			currentlyRunningQuery = stmt;
 			stmt.execute(sql);
 			stmt.close();
@@ -396,8 +396,8 @@ public class RDB {
 	}
 
 	public void executeWhatever(String sql) {
-		try {
-			Statement stmt = createStatementWithTimeout();
+		try (Statement stmt = createStatementWithTimeout()) {
+//			Statement stmt = createStatementWithTimeout();
 			stmt.execute(sql);
 			stmt.close();
 		} catch (SQLException e) {
@@ -427,8 +427,8 @@ public class RDB {
 	 * @return true on success
 	 */
 	public boolean updateBatch(ArrayList<String> sqls) {
-		try {
-			Statement st = createStatementWithTimeout();
+		try (Statement st = createStatementWithTimeout()) {
+//			Statement st = createStatementWithTimeout();
 			currentlyRunningQuery = st;
 			for(String s : sqls) {
 				st.addBatch(s);
