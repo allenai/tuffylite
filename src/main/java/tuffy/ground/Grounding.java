@@ -1088,9 +1088,9 @@ public class Grounding {
 						+ "from "+atoms+" a JOIN hard_unit_clauses hc ON ABS(hc.literal) = a.atomid "
 						+ "JOIN predicates p ON p.predid = a.predid;";
 				double sqlTime = 0;
-				try {
+				try (ResultSet rs = db.query(findHardClauses)) {
 //					Timer.start("iupSQL");
-					ResultSet rs = db.query(findHardClauses);
+//					ResultSet rs = db.query(findHardClauses);
 //					sqlTime += Timer.elapsedMilliSeconds("iupSQL");
 //					UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + findHardClauses);
 					while (rs.next()) {
@@ -1690,9 +1690,9 @@ public class Grounding {
 							+ "select ABS(hc.literal) as atomid, (CASE WHEN hc.literal > 0 THEN true ELSE false END) as truth, p.name as pred_table "
 							+ "from mln0_atoms a JOIN hard_unit_clauses hc ON ABS(hc.literal) = a.atomid "
 							+ "JOIN predicates p ON p.predid = a.predid;";
-					try {
+					try (ResultSet rs = db.query(findHardClauses)) {
 						UIMan.verbose(3, findHardClauses);
-						ResultSet rs = db.query(findHardClauses);
+//						ResultSet rs = db.query(findHardClauses);
 						while (rs.next()) {
 							int literal = rs.getInt("literal");
 							String insertCbufferTmp = "insert into mln0_cbufferTmp (select array_remove(list,"
