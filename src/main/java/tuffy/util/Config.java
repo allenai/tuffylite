@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.util.LinkedHashSet;
 
+import tuffy.db.RDB;
+
 
 /**
  * Container for global configuration parameters.
@@ -265,6 +267,11 @@ public class Config {
 		Config.exiting_mode = false;
 		Config.mcsatTimedOut = false;
 	    SeededRandom.reset();
+		Timer.resetClock();
+		RDB db = RDB.getRDBbyConfig();
+		if (db != null) {
+			db.close();
+		}
 	}
 	
 	public static double logAdd(double logX, double logY) {
