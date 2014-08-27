@@ -29,9 +29,7 @@ public class Main {
 				
 				new PartInfer().run(options);
 			}else{
-				
 				new NonPartInfer().run(options);
-				
 			}
 		}else{
 			

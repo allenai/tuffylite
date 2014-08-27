@@ -1157,6 +1157,8 @@ public class Grounding {
 					rs.close();
 				} catch (SQLException e) {
 					ExceptionMan.handle(e);
+				} catch (Exception e) {
+					UIMan.println("here2...");
 				}
 
 				// report stats after pruning
