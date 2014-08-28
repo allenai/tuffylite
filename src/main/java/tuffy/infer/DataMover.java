@@ -1112,7 +1112,7 @@ public class DataMover {
 		}
 	}
 	
-	public void dumpCNFToFile(String relAtoms, String relClauses, String fout){
+	public void dumpWCNFToFile(String relAtoms, String relClauses, String fout){
 		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
 		int digits = 4;
 		String sql;

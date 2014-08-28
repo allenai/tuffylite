@@ -53,7 +53,7 @@ public abstract class Infer {
 		grounding.constructMRF();
 		
 		writeClausesToFile();
-		writeCNFToFile();
+		writeWCNFToFile();
 	}
 	
 	protected void writeClausesToFile() {
@@ -64,9 +64,9 @@ public abstract class Infer {
 		}
 	}
 	
-	protected void writeCNFToFile() {
-		if (Config.writeCNFFile != null) {
-			dmover.dumpCNFToFile(mln.relAtoms, mln.relClauses, Config.writeCNFFile);
+	protected void writeWCNFToFile() {
+		if (Config.writeWCNFFile != null) {
+			dmover.dumpWCNFToFile(mln.relAtoms, mln.relClauses, Config.writeWCNFFile);
 		}
 	}
 

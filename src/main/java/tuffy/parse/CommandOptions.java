@@ -71,8 +71,8 @@ public class CommandOptions {
     @Option(name="-writeClauses", usage="File to write the grounded MLN")
     public String writeClausesFile = null;
     
-    @Option(name="-writeCNF", usage="File to write the grounded CNF")
-    public String writeCNFFile = null;
+    @Option(name="-writeWCNF", usage="File to write the grounded WCNF")
+    public String writeWCNFFile = null;
     
     @Option(name="-unitPropagate", usage="Run unit propagation on the grounded MLN")
     public boolean unitPropagate = false;
