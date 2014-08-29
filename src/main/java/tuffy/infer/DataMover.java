@@ -1120,6 +1120,9 @@ public class DataMover {
 			ResultSet rs = db.query(sql);
 			rs.next();
 			int numClauses = rs.getInt("count");
+			if (numClauses > Config.maxClausesToCNF) {
+				ExceptionMan.die("Too many clauses in grounded CNF for unit prop");
+			}
 			sql = "SELECT count(*) as count FROM " + relAtoms;
 			rs = db.query(sql);
 			rs.next();

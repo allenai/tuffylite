@@ -35,6 +35,8 @@ public class Config {
 	
 	public static String glucosePath = null;
 	
+	public static int maxClausesToCNF = 500000;
+	
 	public static boolean no_pushdown = false;
 	
 	public static boolean using_greenplum = false;
