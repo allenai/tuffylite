@@ -822,14 +822,14 @@ public class Grounding {
 			@Override
 			public int compare(Clause c1, Clause c2) {
 
-				if (c1.isHardClauseOrTemplate()) {
-					if (c2.isHardClauseOrTemplate()) {
+				if (c1.isHardClause()) {
+					if (c2.isHardClause()) {
 						return 0;
 					} else {
 						return -1;
 					}
 				} else {
-					if (c2.isHardClauseOrTemplate()) {
+					if (c2.isHardClause()) {
 						return 1;
 					} else {
 						return 0;
@@ -850,7 +850,7 @@ public class Grounding {
 		boolean firstSoftClause = true;
 		for (Clause c : relevantClauses) {
 
-			if (!c.isHardClause() && !c.isHardTemplate() && firstSoftClause) {
+			if (!c.isHardClause() && firstSoftClause) {
 				firstSoftClause = false;
 				
 				String tmpClauseTable = cbuffer + "_tmp";
@@ -1109,7 +1109,7 @@ public class Grounding {
 							+ UIMan.comma(db.getLastUpdateRowCount())
 							+ "; total = " + UIMan.comma(totalclauses) + "\n");
 
-			if ( Config.iterativeUnitPropagate && (c.isHardClause() || c.isHardTemplate()) ) {
+			if ( Config.iterativeUnitPropagate && c.isHardClause() ) {
 				// prune:
 				// find hard clauses
 				Timer.start("iterativeUP");
