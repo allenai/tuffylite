@@ -1112,6 +1112,45 @@ public class DataMover {
 		}
 	}
 	
+	public void dumpCNFToFile(String relAtoms, String relClauses, String fout){
+		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
+		String sql;
+		try {
+			sql = "SELECT count(*) as count FROM " + relClauses;
+			ResultSet rs = db.query(sql);
+			rs.next();
+			int numClauses = rs.getInt("count");
+			sql = "SELECT count(*) as count FROM " + relAtoms;
+			rs = db.query(sql);
+			rs.next();
+			int numAtoms = rs.getInt("count");
+//			UIMan.verbose(3, "p cnf " + numAtoms + " " + numClauses);
+			bufferedWriter.append( "p cnf " + numAtoms + " " + numClauses + "\n");
+			
+			sql = "SELECT weight, array_length(list, 1) as len, array_to_string(list, ' ') as lits FROM " + relClauses +
+					" WHERE abs(weight) >= " + Config.hard_weight;
+			rs = db.query(sql);
+			while(rs.next()) {
+				String lits = rs.getString("lits");
+				int len = rs.getInt("len");
+				double weight = rs.getDouble("weight");
+				if (weight <= -Config.hard_weight && len == 1) {
+					if (lits.charAt(0) == '-') {
+						lits = lits.substring(1);
+					} else {
+						lits = "-" + lits;
+					}
+				}
+//				UIMan.verbose(3, lits + " 0");
+				bufferedWriter.append(lits + " 0\n");
+			}
+			rs.close();
+			bufferedWriter.close();
+		}catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+	}
+	
 	public void dumpWCNFToFile(String relAtoms, String relClauses, String fout){
 		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
 		int digits = 4;
@@ -1125,7 +1164,7 @@ public class DataMover {
 			rs = db.query(sql);
 			rs.next();
 			int numAtoms = rs.getInt("count");
-			UIMan.verbose(3, "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight));
+//			UIMan.verbose(3, "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight));
 			bufferedWriter.append( "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight) + "\n");
 			
 			sql = "SELECT weight, array_length(lits, 1) as len, array_to_string(lits, ' ') as lits FROM " + relClauses +
@@ -1145,13 +1184,33 @@ public class DataMover {
 						lits = "-" + lits;
 					}
 				}
-				UIMan.verbose(3, UIMan.decimalRound(digits, weight) + " " + lits);
+//				UIMan.verbose(3, UIMan.decimalRound(digits, weight) + " " + lits);
 				bufferedWriter.append(UIMan.decimalRound(digits, weight) + " " + lits + " 0\n");
 			}
 			rs.close();
 			bufferedWriter.close();
 		}catch (Exception e) {
 			ExceptionMan.handle(e);
+		}
+	}
+	
+	public void writeMRFClausesToBuffer(MRF mrf, String cbuffer){
+		db.dropTable(cbuffer);
+		db.dropView(cbuffer);
+		String sql = "CREATE TABLE " + cbuffer + "(list INT[], weight FLOAT8, "
+				+ "fcid INT, ffcid text)";
+		db.update(sql);
+		
+		for (GClause cee : mrf.clauses) {
+			StringBuilder clauseStr = new StringBuilder();
+			clauseStr.append(cee.lits[0]);
+			for (int i = 1; i < cee.lits.length; i++) {
+				clauseStr.append(", ").append(cee.lits[i]);
+			}
+			String iql = "INSERT INTO " + cbuffer + " (list, weight) " +
+					" VALUES (array[ " + clauseStr + "], " +
+					cee.weight + ");";
+			db.update(iql);
 		}
 	}
 	

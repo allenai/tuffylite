@@ -161,6 +161,7 @@ public class UIMan {
 		Config.writeWCNFFile = opt.writeWCNFFile;
 		Config.unitPropagate = opt.unitPropagate;
 		Config.iterativeUnitPropagate = opt.iterativeUnitPropagate;
+		Config.glucosePath = opt.glucosePath;
 		
 		Config.evidDBSchema = opt.evidDBSchema;
 		Config.dbNeedTranslate = opt.dbNeedTranslate;

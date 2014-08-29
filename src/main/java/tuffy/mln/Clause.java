@@ -693,6 +693,10 @@ public class Clause implements Cloneable{
 		return isTemplate && weightOfTemplate >= Config.hard_weight;
 	}
 	
+	public boolean isHardClauseOrTemplate(){
+		return isHardClause() || isHardTemplate();
+	}
+	
 	/**
 	 * Set the weight of this clause.
 	 */

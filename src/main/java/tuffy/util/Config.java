@@ -33,6 +33,8 @@ public class Config {
 	
 	public static boolean computeSimpleActiveClauses = true; // not compatible with parameterized weights or learning
 	
+	public static String glucosePath = null;
+	
 	public static boolean no_pushdown = false;
 	
 	public static boolean using_greenplum = false;

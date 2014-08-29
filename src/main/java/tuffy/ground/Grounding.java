@@ -1,6 +1,8 @@
 package tuffy.ground;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.InputStreamReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -12,6 +14,8 @@ import java.util.LinkedHashSet;
 import tuffy.db.RDB;
 import tuffy.db.SQLMan;
 import tuffy.ground.partition.Component;
+import tuffy.infer.DataMover;
+import tuffy.infer.MRF;
 import tuffy.infer.ds.GAtom;
 import tuffy.infer.ds.GClause;
 import tuffy.mln.Clause;
@@ -61,6 +65,11 @@ public class Grounding {
 	 */
 	private int numClauses;
 
+	/**
+	 * Used for iterative unit propagation (write CNF to file to call external SAT solver)
+	 */
+	public DataMover dmover = null;
+	
 	/**
 	 * Get the MLN object used for grounding.
 	 */
@@ -297,9 +306,13 @@ public class Grounding {
 		db.dropTable(cbuffer);
 		db.update(sql);
 		UIMan.verbose(1, ">>> Creating cbuffer table " + sql);
-		
+
 		if (Config.computeSimpleActiveClauses) {
-			this.simpleComputeActiveClauses(cbuffer,mln.relAtoms);
+			if (Config.glucosePath != null) {
+				this.simpleComputeActiveClausesWithExternalIterativeUnitProp(cbuffer, mln.relAtoms);
+			} else {
+				this.simpleComputeActiveClauses(cbuffer, mln.relAtoms);
+			}
 		} else {
 			this.computeActiveClauses(cbuffer);
 		}
@@ -791,9 +804,10 @@ public class Grounding {
 		UIMan.println("### pins = " + db.getLastUpdateRowCount());
 	}
 
-	// Simplifying (some bug fixes/improvements, no learning/parameterized weights)
-	private void simpleComputeActiveClauses(String cbuffer, String atoms) {
- 		Timer.start("totalgrounding");
+	// Simplifying (some bug fixes/improvements, no learning/parameterized
+	// weights)
+	private void simpleComputeActiveClausesWithExternalIterativeUnitProp(String cbuffer, String atoms) {
+		Timer.start("totalgrounding");
 		UIMan.verboseInline(1, ">>> Grounding clauses (simplified)...");
 		UIMan.verbose(2, "");
 		double longestSec = 0;
@@ -808,14 +822,14 @@ public class Grounding {
 			@Override
 			public int compare(Clause c1, Clause c2) {
 
-				if (c1.isHardClause()) {
-					if (c2.isHardClause()) {
+				if (c1.isHardClauseOrTemplate()) {
+					if (c2.isHardClauseOrTemplate()) {
 						return 0;
 					} else {
 						return -1;
 					}
 				} else {
-					if (c2.isHardClause()) {
+					if (c2.isHardClauseOrTemplate()) {
 						return 1;
 					} else {
 						return 0;
@@ -825,16 +839,31 @@ public class Grounding {
 		});
 
 		db.dropTable(cbuffer + "Tmp");
-		db.execute("CREATE TABLE " + cbuffer + "Tmp (list INT[], weight FLOAT8, fcid INT, ffcid text);");
+		db.execute("CREATE TABLE " + cbuffer
+				+ "Tmp (list INT[], weight FLOAT8, fcid INT, ffcid text);");
 
+		
+		LinkedHashSet<Integer> hardUnits = new LinkedHashSet<Integer>();
+		
 		int clsidx = 1;
 		int clstotal = relevantClauses.size();
+		boolean firstSoftClause = true;
 		for (Clause c : relevantClauses) {
-//			if (clsidx > 1) {
-//				ExceptionMan.die("second clause");
-//			}
-			if (!c.isHardClause()) {
-				UIMan.verbose(3, "here");
+
+			if (!c.isHardClause() && !c.isHardTemplate() && firstSoftClause) {
+				firstSoftClause = false;
+				
+				String tmpClauseTable = cbuffer + "_tmp";
+				createClauseTable(tmpClauseTable);
+				sql = "INSERT INTO " + tmpClauseTable + " (lits, weight) "
+						+ " SELECT  list, weight FROM " + cbuffer;
+				db.update(sql);
+				
+				MRF mrf = new MRF(mln);
+				dmover.loadMrfFromDb(mrf, atoms, tmpClauseTable);
+				mrf = mrf.simplifyWithHardUnits(hardUnits);
+				dmover.writeMRFClausesToBuffer(mrf, cbuffer);
+				db.dropTable(tmpClauseTable);
 			}
 
 			LinkedHashSet<Boolean> possibleClausePos = new LinkedHashSet<Boolean>();
@@ -853,16 +882,22 @@ public class Grounding {
 				String fc = (lit.getSense() ? "FALSE" : "TRUE");
 				String notFc = (lit.getSense() ? "TRUE" : "FALSE");
 				if (!p.isImmutable()) {
-//					if (Config.iterativeUnitPropagate) {
+					// if (Config.iterativeUnitPropagate) {
 					if (c.hasExistentialQuantifiers()) {
-						// Somewhat ugly hack to get existential quantifiers working correctly with evidence
-						// - without this -9999999 case, we can end up grounding a clause that says
-						// \exists x R(x) into R(a) v R(b) v R(d), when we have evidence that R(c) is
-						// true, and therefore shouldn't be generating the clause at all (further, if
-						// we have another rule saying at most one R(x) can be true, then this grounding
+						// Somewhat ugly hack to get existential quantifiers
+						// working correctly with evidence
+						// - without this -9999999 case, we can end up grounding
+						// a clause that says
+						// \exists x R(x) into R(a) v R(b) v R(d), when we have
+						// evidence that R(c) is
+						// true, and therefore shouldn't be generating the
+						// clause at all (further, if
+						// we have another rule saying at most one R(x) can be
+						// true, then this grounding
 						// error can lead to unsatisfiable sets of hard formula)
 						ids.add((lit.getSense() ? "" : "-") + "(CASE WHEN " + r
-								+ ".truth IS " + notFc + " THEN -999999999 WHEN " + r 
+								+ ".truth IS " + notFc
+								+ " THEN -999999999 WHEN " + r
 								+ ".id IS NULL THEN 0 WHEN " + r
 								+ ".atomID IS NULL THEN 0 ELSE " + r
 								+ ".atomID END)");
@@ -893,13 +928,14 @@ public class Grounding {
 						// TODO: double check!!!!!!!!!!!!!!
 						if (lit.getPred().hasSoftEvidence()) {
 							String condition = r + ".atomID IS NOT NULL";
-							// TODO(ericgribkoff) Understand why commenting this out is the right thing to do :)
-//							if (Config.iterativeUnitPropagate) {
-//								iconds.add(rp + ".truth IS NOT " + notFc
-//										+ " AND " + condition);
-//							} else {
-								iconds.add(condition);
-//							}
+							// TODO(ericgribkoff) Understand why commenting this
+							// out is the right thing to do :)
+							// if (Config.iterativeUnitPropagate) {
+							// iconds.add(rp + ".truth IS NOT " + notFc
+							// + " AND " + condition);
+							// } else {
+							iconds.add(condition);
+							// }
 						}
 
 					} else {
@@ -1014,17 +1050,17 @@ public class Grounding {
 				} else {
 					sql += " AND " + c.getWeightExp() + " < 0 ";
 				}
-//				if (!conds.isEmpty()) {
-//					sql += " AND " + SQLMan.andSelCond(conds);
-//				}
+				// if (!conds.isEmpty()) {
+				// sql += " AND " + SQLMan.andSelCond(conds);
+				// }
 				if (c.sqlPivotAttrsList.length() > 0) {
 					sql += " GROUP BY " + c.sqlPivotAttrsList + " , ffid";
 				}
 				sql = "SELECT list2, weight2, ffid FROM " + "(" + sql
 						+ ") tpivoted";
-//				if (Config.iterativeUnitPropagate) {
-					sql += " WHERE NOT -999999999 = ANY(list2) AND NOT 999999999 = ANY(list2)";
-//				}
+				// if (Config.iterativeUnitPropagate) {
+				sql += " WHERE NOT -999999999 = ANY(list2) AND NOT 999999999 = ANY(list2)";
+				// }
 			}
 
 			boolean unifySoftUnitClauses = true;
@@ -1065,7 +1101,392 @@ public class Grounding {
 
 			// report stats
 			totalclauses += db.getLastUpdateRowCount();
-			
+
+			UIMan.verbose(2, "### took " + Timer.elapsed("gnd"));
+			UIMan.verbose(
+					2,
+					"### new clauses = "
+							+ UIMan.comma(db.getLastUpdateRowCount())
+							+ "; total = " + UIMan.comma(totalclauses) + "\n");
+
+			if ( Config.iterativeUnitPropagate && (c.isHardClause() || c.isHardTemplate()) ) {
+				// prune:
+				// find hard clauses
+				Timer.start("iterativeUP");
+				dmover.dumpCNFToFile(atoms, cbuffer, "temp.cnf");
+				try {
+					Process p = Runtime.getRuntime().exec(
+							new String[]{"/bin/sh",
+									"-c", 
+									Config.glucosePath + " -printunits temp.cnf | grep UNITS"});
+					p.waitFor();
+					BufferedReader reader = 
+					         new BufferedReader(new InputStreamReader(p.getInputStream()));
+					String line = "";			
+					line = reader.readLine();
+					UIMan.verbose(3, line);
+					String[] parts = line.split(" ");
+					for (int i = 1; i < parts.length; i++) {
+						int literal = Integer.parseInt(parts[i]);
+						
+						if (hardUnits.contains(literal)) {
+							continue;
+						}
+
+						hardUnits.add(literal);
+						
+						boolean truth_val = literal > 0;
+						int atomid = Math.abs(literal);
+						
+						ResultSet rsPred = db.query("select name as pred_table from " + atoms + 
+								" a, predicates p where a.predid = p.predid and a.atomid = " +
+								atomid + ";");
+						rsPred.next();
+						String pred_table = rsPred.getString("pred_table");
+						db.execute("update " + pred_table + " SET truth = "
+								+ truth_val + " WHERE atomid = " + atomid);
+					}
+				} catch (Exception e) {
+					ExceptionMan.handle(e);
+				}
+//						while (false) {
+//							int atomid = rsPred.getInt("atomid");
+//							String pred_table = rsPred.getString("pred_table");
+//							boolean truth_val = rsPred.getBoolean("truth");
+//							db.execute("update " + pred_table + " SET truth = "
+//									+ truth_val + " WHERE atomid = " + atomid);
+//						}
+
+
+				// report stats after pruning
+				UIMan.verbose(2,
+						"### iterative UP took " + Timer.elapsed("iterativeUP"));
+			}
+			// totalclauses += db.getLastUpdateRowCount();
+			if (Timer.elapsedSeconds("gnd") > longestSec) {
+				longestClause = c;
+				longestSec = Timer.elapsedSeconds("gnd");
+			}
+
+		}
+		db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
+				+ "from "
+				+ cbuffer
+				+ " where array_length(list,1) = 1 AND (weight >= "
+				+ Config.hard_weight
+				+ " OR weight <= -"
+				+ Config.hard_weight
+				+ ")) "
+				+ "UPDATE "
+				+ atoms
+				+ " SET truth = TRUE WHERE atomid IN (SELECT literal from hard_unit_clauses WHERE literal > 0);");
+		db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
+				+ "from "
+				+ cbuffer
+				+ " where array_length(list,1) = 1 AND (weight >= "
+				+ Config.hard_weight
+				+ " OR weight <= -"
+				+ Config.hard_weight
+				+ ")) "
+				+ "UPDATE "
+				+ atoms
+				+ " SET truth = FALSE WHERE atomid IN (SELECT -literal from hard_unit_clauses WHERE literal < 0);");
+
+		if (longestClause != null) {
+			UIMan.verbose(3, "### Longest per-clause grounding time = "
+					+ longestSec + " sec, by");
+			UIMan.verbose(3, longestClause.toString());
+		}
+		if (Config.verbose_level == 1)
+			UIMan.println(".");
+		UIMan.verbose(1,
+				"### total grounding = " + Timer.elapsed("totalgrounding"));
+	}
+
+	// Simplifying (some bug fixes/improvements, no learning/parameterized
+	// weights)
+	private void simpleComputeActiveClauses(String cbuffer, String atoms) {
+		Timer.start("totalgrounding");
+		UIMan.verboseInline(1, ">>> Grounding clauses (simplified)...");
+		UIMan.verbose(2, "");
+		double longestSec = 0;
+		Clause longestClause = null;
+
+		String sql;
+		int totalclauses = 0;
+		ArrayList<Clause> relevantClauses = new ArrayList<Clause>(
+				mln.getRelevantClauses());
+
+		Collections.sort(relevantClauses, new Comparator<Clause>() {
+			@Override
+			public int compare(Clause c1, Clause c2) {
+
+				if (c1.isHardClause()) {
+					if (c2.isHardClause()) {
+						return 0;
+					} else {
+						return -1;
+					}
+				} else {
+					if (c2.isHardClause()) {
+						return 1;
+					} else {
+						return 0;
+					}
+				}
+			}
+		});
+
+		db.dropTable(cbuffer + "Tmp");
+		db.execute("CREATE TABLE " + cbuffer
+				+ "Tmp (list INT[], weight FLOAT8, fcid INT, ffcid text);");
+
+		int clsidx = 1;
+		int clstotal = relevantClauses.size();
+		for (Clause c : relevantClauses) {
+			// if (clsidx > 1) {
+			// ExceptionMan.die("second clause");
+			// }
+			if (!c.isHardClause()) {
+				UIMan.verbose(3, "here");
+			}
+
+			LinkedHashSet<Boolean> possibleClausePos = new LinkedHashSet<Boolean>();
+			possibleClausePos.add(c.isPositiveClause());
+
+			boolean posClause = c.isPositiveClause();
+			ArrayList<String> ids = new ArrayList<String>();
+			ArrayList<String> conds = new ArrayList<String>();
+			ArrayList<String> negActConds = new ArrayList<String>();
+
+			// discard irrelevant variables
+			for (Literal lit : c.getRegLiterals()) {
+
+				Predicate p = lit.getPred();
+				String r = "t" + lit.getIdx();
+				String fc = (lit.getSense() ? "FALSE" : "TRUE");
+				String notFc = (lit.getSense() ? "TRUE" : "FALSE");
+				if (!p.isImmutable()) {
+					// if (Config.iterativeUnitPropagate) {
+					if (c.hasExistentialQuantifiers()) {
+						// Somewhat ugly hack to get existential quantifiers
+						// working correctly with evidence
+						// - without this -9999999 case, we can end up grounding
+						// a clause that says
+						// \exists x R(x) into R(a) v R(b) v R(d), when we have
+						// evidence that R(c) is
+						// true, and therefore shouldn't be generating the
+						// clause at all (further, if
+						// we have another rule saying at most one R(x) can be
+						// true, then this grounding
+						// error can lead to unsatisfiable sets of hard formula)
+						ids.add((lit.getSense() ? "" : "-") + "(CASE WHEN " + r
+								+ ".truth IS " + notFc
+								+ " THEN -999999999 WHEN " + r
+								+ ".id IS NULL THEN 0 WHEN " + r
+								+ ".atomID IS NULL THEN 0 ELSE " + r
+								+ ".atomID END)");
+					} else {
+						ids.add((lit.getSense() ? "" : "-") + "(CASE WHEN " + r
+								+ ".id IS NULL THEN 0 WHEN " + r
+								+ ".atomID IS NULL THEN 0 ELSE " + r
+								+ ".atomID END)");
+					}
+				}
+
+				ArrayList<String> iconds = new ArrayList<String>();
+				String rp = r;
+
+				iconds.add(rp + ".truth=" + fc); // explicit evidence
+
+				if (lit.getSense()) {
+					// TODO: double check
+					if (!lit.getPred().isCompletelySepcified()) {
+						iconds.add(rp + ".id IS NULL"); // implicit false
+														// evidence
+					}
+				}
+
+				if (lit.getSense() || !posClause) {
+
+					if (lit.getPred().isClosedWorld()) {
+						// TODO: double check!!!!!!!!!!!!!!
+						if (lit.getPred().hasSoftEvidence()) {
+							String condition = r + ".atomID IS NOT NULL";
+							// TODO(ericgribkoff) Understand why commenting this
+							// out is the right thing to do :)
+							// if (Config.iterativeUnitPropagate) {
+							// iconds.add(rp + ".truth IS NOT " + notFc
+							// + " AND " + condition);
+							// } else {
+							iconds.add(condition);
+							// }
+						}
+
+					} else {
+
+						String condition = "(" + rp + ".club < 2 OR " + rp
+								+ ".prior IS NOT NULL)"; // unknown truth
+						if (Config.iterativeUnitPropagate) {
+							iconds.add(rp + ".truth IS NOT " + notFc + " AND "
+									+ condition);
+						} else {
+							iconds.add(condition);
+						}
+
+					}
+					if (!posClause) {
+						String condition = r + ".atomID IS NOT NULL"; // active
+																		// atom
+						if (Config.iterativeUnitPropagate) {
+							negActConds.add(rp + ".truth IS NOT " + notFc
+									+ " AND " + condition);
+						} else {
+							negActConds.add(condition);
+						}
+					}
+				} else {
+					String condition = r + ".atomID IS NOT NULL"; // active atom
+					if (Config.iterativeUnitPropagate) {
+						iconds.add(rp + ".truth IS NOT " + notFc + " AND "
+								+ condition);
+					} else {
+						iconds.add(condition);
+					}
+				}
+
+				if (!posClause && !lit.getSense()) { // negative clause,
+														// negative literal
+					if (lit.getPred().isClosedWorld()) {
+
+					} else {
+
+						negActConds.add("(" + rp + ".club < 2" + ")");
+
+					}
+
+				}
+
+				if (c.hasExistentialQuantifiers()) {
+					// conds.add("NOT EXISTS (SELECT * from " + rp + ".truth=" +
+					// notFc + ")");
+				}
+				conds.add(SQLMan.orSelCond(iconds));
+
+			}
+			if (ids.isEmpty())
+				continue;
+			if (!posClause) {
+				if (negActConds.isEmpty())
+					continue;
+				conds.add(SQLMan.orSelCond(negActConds));
+			}
+
+			String ffid = "0";
+			String signature = "";
+
+			if (c.getWeightExp().contains("metaTable")) {
+				signature = "metaTable.myid::TEXT";
+
+				// TODO: bug -- consider clause instances
+				// if(c.isFixedWeight){
+				signature += "|| metaTable.myisfixed";
+				// }
+			} else {
+				signature = "CAST('0' as TEXT)";
+				if (c.isFixedWeight && c.isHardClause()) {
+					signature += "|| 'hardfixed'";
+				} else if (c.isFixedWeight) {
+					signature += "|| 'fixed'";
+				}
+			}
+
+			if (!c.hasExistentialQuantifiers()) {
+				sql = "SELECT " + "UNIQ(SORT(ARRAY[" + StringMan.commaList(ids)
+						+ "]-0)) as list2, " + c.getWeightExp()
+						+ " as weight2 " + "," + signature + " as ffid "
+						+ " FROM " + c.sqlFromList + " WHERE "
+						+ c.sqlWhereBindings;
+				if (!conds.isEmpty()) {
+					sql += " AND " + SQLMan.andSelCond(conds);
+				}
+
+				if (posClause == true) {
+					sql = sql + " AND " + c.getWeightExp() + " > 0 ";
+				} else {
+					sql = sql + " AND " + c.getWeightExp() + " < 0 ";
+				}
+
+			} else {
+				ArrayList<String> aggs = new ArrayList<String>();
+				for (String ide : ids) {
+					aggs.add("array_agg(" + ide + ")");
+				}
+				sql = "SELECT " + c.sqlPivotAttrsList
+						+ (c.sqlPivotAttrsList.length() > 0 ? "," : "")
+						+ " UNIQ(SORT(" + StringMan.join("+", aggs)
+						+ "-0)) as list2, " + c.getWeightExp() + " as weight2 "
+						+ "," + signature + " as ffid " + " FROM "
+						+ c.sqlFromList
+
+						+ " WHERE " + c.sqlWhereBindings;
+				if (posClause) {
+					sql += " AND " + c.getWeightExp() + " > 0 ";
+				} else {
+					sql += " AND " + c.getWeightExp() + " < 0 ";
+				}
+				// if (!conds.isEmpty()) {
+				// sql += " AND " + SQLMan.andSelCond(conds);
+				// }
+				if (c.sqlPivotAttrsList.length() > 0) {
+					sql += " GROUP BY " + c.sqlPivotAttrsList + " , ffid";
+				}
+				sql = "SELECT list2, weight2, ffid FROM " + "(" + sql
+						+ ") tpivoted";
+				// if (Config.iterativeUnitPropagate) {
+				sql += " WHERE NOT -999999999 = ANY(list2) AND NOT 999999999 = ANY(list2)";
+				// }
+			}
+
+			boolean unifySoftUnitClauses = true;
+			if (unifySoftUnitClauses) {
+				sql = "SELECT (CASE WHEN unitNegativeClause(list2)>=0 THEN "
+						+ "list2 ELSE array[-list2[1]] END) AS list, "
+						+ "(CASE WHEN unitNegativeClause(list2)>=0 THEN weight2 "
+						+ "ELSE -weight2 END) AS weight, "
+						+ "(CASE WHEN unitNegativeClause(list2)>=0 THEN "
+						+ c.getId() + " "
+						+ "ELSE -"
+						+ c.getId()
+						+ " END) AS fcid "
+						+
+						// ffcid, for learning
+						", (CASE WHEN unitNegativeClause(list2)>=0 THEN ('"
+						+ c.getId() + ".' || ffid) " + "ELSE ('-" + c.getId()
+						+ ".' || ffid) END) AS ffcid "
+						+
+						//
+						"FROM (" + sql + ") as " + c.getName()
+						+ " WHERE array_upper(list2,1)>=1";
+			} else {
+				sql = "SELECT list2 AS list, " + "weight2 AS weight, "
+						+ c.getId() + " AS fcid, '" + c.getId()
+						+ ".' || ffid as ffcid " + "FROM (" + sql + ") as "
+						+ c.getName() + " WHERE array_upper(list2,1)>=1";
+			}
+			if (Config.verbose_level == 1)
+				UIMan.print(".");
+			UIMan.verbose(2, ">>> Grounding clause " + (clsidx++) + " / "
+					+ clstotal + "\n" + c.toString());
+			UIMan.verbose(3, sql);
+			sql = "INSERT INTO " + cbuffer + "\n" + sql;
+			Timer.start("gnd");
+
+			db.update(sql);
+
+			// report stats
+			totalclauses += db.getLastUpdateRowCount();
+
 			UIMan.verbose(2, "### took " + Timer.elapsed("gnd"));
 			UIMan.verbose(
 					2,
@@ -1078,80 +1499,109 @@ public class Grounding {
 				// find hard clauses
 				Timer.start("iterativeUP");
 				String findHardClauses = "select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-						+ "from "+cbuffer+" where array_length(list,1) = 1 AND (weight >= "
+						+ "from "
+						+ cbuffer
+						+ " where array_length(list,1) = 1 AND (weight >= "
 						+ Config.hard_weight
 						+ " OR weight <= -"
 						+ Config.hard_weight + ");";
 				String hardLitsToPreds = "with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-						+ "from "+cbuffer+" where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
+						+ "from "
+						+ cbuffer
+						+ " where array_length(list,1) = 1 AND (weight >= "
+						+ Config.hard_weight
+						+ " OR weight <= -"
+						+ Config.hard_weight
+						+ ")) "
 						+ "select ABS(hc.literal) as atomid, (CASE WHEN hc.literal > 0 THEN true ELSE false END) as truth, p.name as pred_table "
-						+ "from "+atoms+" a JOIN hard_unit_clauses hc ON ABS(hc.literal) = a.atomid "
+						+ "from "
+						+ atoms
+						+ " a JOIN hard_unit_clauses hc ON ABS(hc.literal) = a.atomid "
 						+ "JOIN predicates p ON p.predid = a.predid;";
 				double sqlTime = 0;
 				try (ResultSet rs = db.query(findHardClauses)) {
-//					Timer.start("iupSQL");
-//					ResultSet rs = db.query(findHardClauses);
-//					sqlTime += Timer.elapsedMilliSeconds("iupSQL");
-//					UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + findHardClauses);
+					// Timer.start("iupSQL");
+					// ResultSet rs = db.query(findHardClauses);
+					// sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+					// UIMan.verbose(3, "Ran in " +
+					// Timer.elapsedMilliSeconds("iupSQL") + ": " +
+					// findHardClauses);
 					while (rs.next()) {
 						int literal = rs.getInt("literal");
-						String insertCbufferTmp = "insert into "+cbuffer+"Tmp (select array_remove(list,"
-								+ -literal
-								+ "), weight, "
-								+ "fcid, ffcid from "+cbuffer+" where ("
-								+ -literal + " = ANY (list) AND weight > 0) )"; // OR
-																				// "
-																				// +
+						String insertCbufferTmp = "insert into " + cbuffer
+								+ "Tmp (select array_remove(list," + -literal
+								+ "), weight, " + "fcid, ffcid from " + cbuffer
+								+ " where (" + -literal
+								+ " = ANY (list) AND weight > 0) )"; // OR
+																		// "
+																		// +
 						// "(" + literal + " = ANY( list) AND weight < 0) );";
-//						Timer.start("iupSQL");
+						// Timer.start("iupSQL");
 						db.execute(insertCbufferTmp);
-//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");						
-						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + insertCbufferTmp);
-//						Timer.start("iupSQL");
-						ResultSet test = db
-								.query("select * from "+cbuffer+"Tmp where list = '{}';");
-//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");						
-//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "select * from mln0_cbufferTmp where list = '{}';");
+						// sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+//						UIMan.verbose(3,
+//								"Ran in " + Timer.elapsedMilliSeconds("iupSQL")
+//										+ ": " + insertCbufferTmp);
+						// Timer.start("iupSQL");
+						ResultSet test = db.query("select * from " + cbuffer
+								+ "Tmp where list = '{}';");
+						// sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+						// UIMan.verbose(3, "Ran in " +
+						// Timer.elapsedMilliSeconds("iupSQL") + ": " +
+						// "select * from mln0_cbufferTmp where list = '{}';");
 						if (test.next()) {
-							ExceptionMan.die("stopping here with an unsatisfiable hard clause");
+							ExceptionMan
+									.die("stopping here with an unsatisfiable hard clause");
 						}
-						String deleteCbuffer = "delete from "+cbuffer+" where ("
+						String deleteCbuffer = "delete from "
+								+ cbuffer
+								+ " where ("
 								+ literal
 								+ " = ANY(list) AND array_length(list,1) > 1 and weight > 0) "
-								+ "OR ("
-								+ -literal
+								+ "OR (" + -literal
 								+ " = ANY (list) AND weight > 0);";
-						//UIMan.verbose(3, deleteCbuffer);
+						// UIMan.verbose(3, deleteCbuffer);
 
-//						Timer.start("iupSQL");
+						// Timer.start("iupSQL");
 						db.execute(deleteCbuffer);
-//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
-//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + deleteCbuffer);
-//						Timer.start("iupSQL");
-						db.execute("insert into "+cbuffer+" (select * from "+cbuffer+"Tmp);");
-//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
-//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "insert into mln0_cbuffer (select * from mln0_cbufferTmp);");
-//						Timer.start("iupSQL");
-						db.execute("delete from "+cbuffer+"Tmp;");
-//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
-//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "delete from mln0_cbufferTmp;");
+						// sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+						// UIMan.verbose(3, "Ran in " +
+						// Timer.elapsedMilliSeconds("iupSQL") + ": " +
+						// deleteCbuffer);
+						// Timer.start("iupSQL");
+						db.execute("insert into " + cbuffer
+								+ " (select * from " + cbuffer + "Tmp);");
+						// sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+						// UIMan.verbose(3, "Ran in " +
+						// Timer.elapsedMilliSeconds("iupSQL") + ": " +
+						// "insert into mln0_cbuffer (select * from mln0_cbufferTmp);");
+						// Timer.start("iupSQL");
+						db.execute("delete from " + cbuffer + "Tmp;");
+						// sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+						// UIMan.verbose(3, "Ran in " +
+						// Timer.elapsedMilliSeconds("iupSQL") + ": " +
+						// "delete from mln0_cbufferTmp;");
 
 						// Update truth vals
-						//UIMan.verbose(3, hardLitsToPreds);
-//						Timer.start("iupSQL");
+						// UIMan.verbose(3, hardLitsToPreds);
+						// Timer.start("iupSQL");
 						ResultSet rsPred = db.query(hardLitsToPreds);
-//						sqlTime += Timer.elapsedMilliSeconds("iupSQL");
-//						UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + hardLitsToPreds);
+						// sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+						// UIMan.verbose(3, "Ran in " +
+						// Timer.elapsedMilliSeconds("iupSQL") + ": " +
+						// hardLitsToPreds);
 						while (rsPred.next()) {
 							int atomid = rsPred.getInt("atomid");
 							String pred_table = rsPred.getString("pred_table");
 							boolean truth_val = rsPred.getBoolean("truth");
-//							Timer.start("iupSQL");
+							// Timer.start("iupSQL");
 							db.execute("update " + pred_table + " SET truth = "
 									+ truth_val + " WHERE atomid = " + atomid);
-//							sqlTime += Timer.elapsedMilliSeconds("iupSQL");
-//							UIMan.verbose(3, "Ran in " + Timer.elapsedMilliSeconds("iupSQL") + ": " + "update " + pred_table + " SET truth = "
-//									+ truth_val + " WHERE atomid = " + atomid);
+							// sqlTime += Timer.elapsedMilliSeconds("iupSQL");
+							// UIMan.verbose(3, "Ran in " +
+							// Timer.elapsedMilliSeconds("iupSQL") + ": " +
+							// "update " + pred_table + " SET truth = "
+							// + truth_val + " WHERE atomid = " + atomid);
 						}
 					}
 					rs.close();
@@ -1162,7 +1612,8 @@ public class Grounding {
 				}
 
 				// report stats after pruning
-				UIMan.verbose(2, "### iterative UP took " + Timer.elapsed("iterativeUP"));
+				UIMan.verbose(2,
+						"### iterative UP took " + Timer.elapsed("iterativeUP"));
 				UIMan.verbose(2, "### iterative UP SQL took " + sqlTime);
 			}
 			// totalclauses += db.getLastUpdateRowCount();
@@ -1173,12 +1624,28 @@ public class Grounding {
 
 		}
 		db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-				+ "from "+cbuffer+" where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
-				+ "UPDATE "+atoms+" SET truth = TRUE WHERE atomid IN (SELECT literal from hard_unit_clauses WHERE literal > 0);");
+				+ "from "
+				+ cbuffer
+				+ " where array_length(list,1) = 1 AND (weight >= "
+				+ Config.hard_weight
+				+ " OR weight <= -"
+				+ Config.hard_weight
+				+ ")) "
+				+ "UPDATE "
+				+ atoms
+				+ " SET truth = TRUE WHERE atomid IN (SELECT literal from hard_unit_clauses WHERE literal > 0);");
 		db.execute("with hard_unit_clauses AS (select (CASE WHEN weight > 0 THEN list[1] ELSE -list[1] END) as literal "
-				+ "from "+cbuffer+" where array_length(list,1) = 1 AND (weight >= " + Config.hard_weight + " OR weight <= -" + Config.hard_weight + ")) "
-				+ "UPDATE "+atoms+" SET truth = FALSE WHERE atomid IN (SELECT -literal from hard_unit_clauses WHERE literal < 0);");
-		
+				+ "from "
+				+ cbuffer
+				+ " where array_length(list,1) = 1 AND (weight >= "
+				+ Config.hard_weight
+				+ " OR weight <= -"
+				+ Config.hard_weight
+				+ ")) "
+				+ "UPDATE "
+				+ atoms
+				+ " SET truth = FALSE WHERE atomid IN (SELECT -literal from hard_unit_clauses WHERE literal < 0);");
+
 		if (longestClause != null) {
 			UIMan.verbose(3, "### Longest per-clause grounding time = "
 					+ longestSec + " sec, by");
@@ -1245,8 +1712,9 @@ public class Grounding {
 			}
 		});
 
-		db.dropTable(cbuffer+"Tmp");
-		db.execute("CREATE TABLE "+cbuffer+"Tmp(list INT[], weight FLOAT8, fcid INT, ffcid text);");
+		db.dropTable(cbuffer + "Tmp");
+		db.execute("CREATE TABLE " + cbuffer
+				+ "Tmp(list INT[], weight FLOAT8, fcid INT, ffcid text);");
 
 		int clsidx = 1;
 		int clstotal = relevantClauses.size();
@@ -1694,7 +2162,7 @@ public class Grounding {
 							+ "JOIN predicates p ON p.predid = a.predid;";
 					try (ResultSet rs = db.query(findHardClauses)) {
 						UIMan.verbose(3, findHardClauses);
-//						ResultSet rs = db.query(findHardClauses);
+						// ResultSet rs = db.query(findHardClauses);
 						while (rs.next()) {
 							int literal = rs.getInt("literal");
 							String insertCbufferTmp = "insert into mln0_cbufferTmp (select array_remove(list,"

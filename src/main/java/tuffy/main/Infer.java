@@ -50,6 +50,7 @@ public abstract class Infer {
 	 */
 	protected void ground(){
 		grounding = new Grounding(mln);
+		grounding.dmover = dmover;
 		grounding.constructMRF();
 		
 		writeClausesToFile();

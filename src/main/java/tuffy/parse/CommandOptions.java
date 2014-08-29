@@ -79,6 +79,9 @@ public class CommandOptions {
     
     @Option(name="-iterativeUnitPropagate", usage="Run iterative unit propagation during grounding")
     public boolean iterativeUnitPropagate = false;
+    
+    @Option(name="-glucosePath", usage="Use Glucose for iterative unit propagation")
+    public String glucosePath = null;
 
     //@Option(name="-psec", usage="Dump MCSAT results every [psec] seconds.")
     public int mcsatDumpPeriodSec = 0;

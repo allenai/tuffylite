@@ -3653,6 +3653,57 @@ public class MRF {
 	}
 
 
+	public MRF simplifyWithHardUnits(LinkedHashSet<Integer> hardUnits) {
+		// adj gives literal to clause map
+		for (Integer lit: hardUnits) {
+			if (adj.get(lit) != null) {
+				for (GClause cee : adj.get(lit)) {
+					if (cee.weight < 0) {
+						continue;
+					}
+					if (!cee.isUnitClause()) {
+						cee.ignoreAfterUnitPropagation = true;
+					}
+				}
+			}
+			if (adj.get(-lit) != null) {
+				if (-lit == 3) {
+					UIMan.println("here");
+				}
+				for (GClause cee : adj.get(-lit)) {
+					if (cee.weight < 0) {
+						continue;
+					}
+					int tmpLit[] = new int[cee.lits.length-1];
+					int index = 0;
+					for (int t : cee.lits) {
+						if (t != -lit) {
+					    	tmpLit[index] = t;
+					    	index++;
+						}
+					}
+					cee.lits = tmpLit;
+				}
+			}
+		}
+		
+		MRF mrf = new MRF(mln);
+		mrf.ownsAllAtoms = true;
+		for (int i : coreAtoms) {
+			GAtom n = atoms.get(i);
+			mrf.atoms.put(n.id, n);
+			mrf.addAtom(n.id);
+		}
+		
+		for (GClause cee : clauses) {
+		    if (!cee.ignoreAfterUnitPropagation) {
+				mrf.clauses.add(cee);
+			}
+		}
+		mrf.buildIndices();
+		return mrf;
+	}
+	
 	public MRF unitPropagateAndGetNewMRF() {
 		unitPropagateGround();
 		
