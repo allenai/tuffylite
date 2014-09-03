@@ -1,5 +1,6 @@
 package tuffy.infer;
 
+import java.sql.ResultSet;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -3697,6 +3698,10 @@ public class MRF {
 		
 		for (GClause cee : clauses) {
 		    if (!cee.ignoreAfterUnitPropagation) {
+				if (cee.lits.length == 0 && cee.isHardClause()) {
+					ExceptionMan
+							.die("stopping here with an unsatisfiable hard clause");
+				}
 				mrf.clauses.add(cee);
 			}
 		}

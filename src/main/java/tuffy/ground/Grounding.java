@@ -1125,26 +1125,28 @@ public class Grounding {
 					String line = "";			
 					line = reader.readLine();
 					UIMan.verbose(3, line);
-					String[] parts = line.split(" ");
-					for (int i = 1; i < parts.length; i++) {
-						int literal = Integer.parseInt(parts[i]);
-						
-						if (hardUnits.contains(literal)) {
-							continue;
+					if (line != null) {
+						String[] parts = line.split(" ");
+						for (int i = 1; i < parts.length; i++) {
+							int literal = Integer.parseInt(parts[i]);
+							
+							if (hardUnits.contains(literal)) {
+								continue;
+							}
+	
+							hardUnits.add(literal);
+							
+							boolean truth_val = literal > 0;
+							int atomid = Math.abs(literal);
+							
+							ResultSet rsPred = db.query("select name as pred_table from " + atoms + 
+									" a, predicates p where a.predid = p.predid and a.atomid = " +
+									atomid + ";");
+							rsPred.next();
+							String pred_table = rsPred.getString("pred_table");
+							db.execute("update " + pred_table + " SET truth = "
+									+ truth_val + " WHERE atomid = " + atomid);
 						}
-
-						hardUnits.add(literal);
-						
-						boolean truth_val = literal > 0;
-						int atomid = Math.abs(literal);
-						
-						ResultSet rsPred = db.query("select name as pred_table from " + atoms + 
-								" a, predicates p where a.predid = p.predid and a.atomid = " +
-								atomid + ";");
-						rsPred.next();
-						String pred_table = rsPred.getString("pred_table");
-						db.execute("update " + pred_table + " SET truth = "
-								+ truth_val + " WHERE atomid = " + atomid);
 					}
 				} catch (Exception e) {
 					ExceptionMan.handle(e);
@@ -1192,6 +1194,7 @@ public class Grounding {
 				+ atoms
 				+ " SET truth = FALSE WHERE atomid IN (SELECT -literal from hard_unit_clauses WHERE literal < 0);");
 
+		
 		if (longestClause != null) {
 			UIMan.verbose(3, "### Longest per-clause grounding time = "
 					+ longestSec + " sec, by");
