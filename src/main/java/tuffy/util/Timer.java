@@ -86,6 +86,10 @@ public class Timer {
 	public static boolean hasTimedOut() {
 			return Config.timeout != 0 && elapsedSeconds() > Config.timeout;
 	}
+	
+	public static int secondsToGroundingTimeOut() {
+			return Config.groundingTimeout - (int) elapsedSeconds();
+	}
 
 	/**
 	 * Prints the elapsed time since last clock reset.

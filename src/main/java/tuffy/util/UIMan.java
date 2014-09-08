@@ -174,6 +174,11 @@ public class UIMan {
 		Config.mcsat_cumulative = opt.mcsatCumulative;
 		Config.mcsatDumpPeriodSeconds = opt.mcsatDumpPeriodSec;
 		Config.timeout = opt.timeout;
+		if (opt.groundingTimeout > 0) {
+			Config.groundingTimeout = opt.groundingTimeout;
+		} else {
+			Config.groundingTimeout = opt.timeout;
+		}
 		Config.mcsat_dump_interval = opt.mcsatDumpInt;
 		Config.marginal_output_min_prob = opt.minProb;
 		/*

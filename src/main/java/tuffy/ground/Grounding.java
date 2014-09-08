@@ -278,6 +278,7 @@ public class Grounding {
 	 */
 	public void constructMRF() {
 		UIMan.println(">>> Grounding...");
+		Config.inGroundingPhase = true;
 
 		UIMan.verbose(1, ">>> Computing closure of active atoms...");
 		String sql;
@@ -328,6 +329,8 @@ public class Grounding {
 			db.dropTable(cbuffer);
 		}
 		destroyActTables();
+		
+		Config.inGroundingPhase = false;
 
 		UIMan.println("### atoms = " + UIMan.comma(numAtoms) + "; clauses = "
 				+ UIMan.comma(numClauses));

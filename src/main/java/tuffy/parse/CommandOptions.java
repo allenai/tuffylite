@@ -107,6 +107,9 @@ public class CommandOptions {
 
     @Option(name="-timeout", usage="Timeout in seconds.")
     public int timeout = 0;
+    
+    @Option(name="-groundingTimeout", usage="Grounding timeout in seconds.")
+    public int groundingTimeout = 0;
 
     @Option(name="-rawString", usage="Store constants as raw strings instead of normalizing them into integer IDs.")
     public boolean constantAsRawString = false;

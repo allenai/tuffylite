@@ -235,7 +235,13 @@ public class RDB {
 	public Statement createStatementWithTimeout() throws SQLException  {
 		Statement stm = con.createStatement();
 		if (Config.timeout > 0 && !Config.mcsatTimedOut && !Config.exiting_mode) {
-			int secondsLeft = Timer.secondsToTimeOut();
+			int secondsLeft;
+			if (Config.inGroundingPhase) {
+				secondsLeft = Timer.secondsToGroundingTimeOut();
+				UIMan.verbose(3, "Seconds left: " + secondsLeft);
+			} else {
+				secondsLeft = Timer.secondsToTimeOut();
+			}
 			if (secondsLeft <= 0) {
 				ExceptionMan.die("Trying to set query timeout to value <= 0");
 			}
@@ -248,8 +254,13 @@ public class RDB {
 	public Statement createStatementWithTimeout(int resultSetType, int resultSetConcurrency) throws SQLException  {
 		Statement stm = con.createStatement(resultSetType, resultSetConcurrency);
 		if (Config.timeout > 0 && !Config.mcsatTimedOut && !Config.exiting_mode) {
-			int secondsLeft = Timer.secondsToTimeOut();
-			if (secondsLeft <= 0) {
+			int secondsLeft;
+			if (Config.inGroundingPhase) {
+				secondsLeft = Timer.secondsToGroundingTimeOut();
+				UIMan.verbose(3, "Seconds left: " + secondsLeft);
+			} else {
+				secondsLeft = Timer.secondsToTimeOut();
+			}			if (secondsLeft <= 0) {
 				ExceptionMan.die("Trying to set query timeout to value <= 0");
 			}
 			stm.setQueryTimeout(secondsLeft);

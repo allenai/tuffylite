@@ -26,10 +26,12 @@ public class Config {
 	
 	public static boolean reuseSchema = false; // whether to reuse schema if it exists (false is useful for debugging
 											   // db state across runs, as atom/clause ids get reset to start at 1
-	public static float minPercentMcSatSamples = 0.7f; // if Tuffy times out before MC-SAT finishes, 
-													  // return an answer is we've gotten at least this
-													  // fraction of the request samples
+	public static float minPercentMcSatSamples = 0.5f; // if Tuffy times out before MC-SAT finishes, 
+													  // return an answer if we've gotten at least this
+													  // fraction of the requested samples
 	public static boolean iterativeUnitPropagate = false;
+	
+	public static boolean inGroundingPhase = false; // used with separate grounding/overall timeouts
 	
 	public static boolean computeSimpleActiveClauses = true; // not compatible with parameterized weights or learning
 	
@@ -202,6 +204,7 @@ public class Config {
 	public static boolean reorder_literals = false;
 
 	public static int timeout = Integer.MAX_VALUE;
+	public static int groundingTimeout = Integer.MAX_VALUE;
 	public static boolean mcsatTimedOut = false;
 	public static int num_tries_per_periodic_flush = 0;
 
