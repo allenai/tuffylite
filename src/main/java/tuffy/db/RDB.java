@@ -238,7 +238,6 @@ public class RDB {
 			int secondsLeft;
 			if (Config.inGroundingPhase) {
 				secondsLeft = Timer.secondsToGroundingTimeOut();
-				UIMan.verbose(3, "Seconds left: " + secondsLeft);
 			} else {
 				secondsLeft = Timer.secondsToTimeOut();
 			}
@@ -257,7 +256,6 @@ public class RDB {
 			int secondsLeft;
 			if (Config.inGroundingPhase) {
 				secondsLeft = Timer.secondsToGroundingTimeOut();
-				UIMan.verbose(3, "Seconds left: " + secondsLeft);
 			} else {
 				secondsLeft = Timer.secondsToTimeOut();
 			}			if (secondsLeft <= 0) {
