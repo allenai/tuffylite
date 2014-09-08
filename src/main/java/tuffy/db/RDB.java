@@ -238,6 +238,9 @@ public class RDB {
 			int secondsLeft;
 			if (Config.inGroundingPhase) {
 				secondsLeft = Timer.secondsToGroundingTimeOut();
+				if (secondsLeft <= 0) {
+					ExceptionMan.die("Timeout during grounding");
+				}
 			} else {
 				secondsLeft = Timer.secondsToTimeOut();
 			}
@@ -256,9 +259,13 @@ public class RDB {
 			int secondsLeft;
 			if (Config.inGroundingPhase) {
 				secondsLeft = Timer.secondsToGroundingTimeOut();
+				if (secondsLeft <= 0) {
+					ExceptionMan.die("Timeout during grounding");
+				}
 			} else {
 				secondsLeft = Timer.secondsToTimeOut();
-			}			if (secondsLeft <= 0) {
+			}			
+			if (secondsLeft <= 0) {
 				ExceptionMan.die("Trying to set query timeout to value <= 0");
 			}
 			stm.setQueryTimeout(secondsLeft);
