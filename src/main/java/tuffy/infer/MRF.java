@@ -1376,7 +1376,14 @@ public class MRF {
 	 * @param aid id of the atom
 	 * @param t truth value to be fixed
 	 */
+	
+	private ArrayList<Integer> fixedAtomList = new ArrayList<Integer>();
 	protected void fixAtom(int aid, boolean t){
+		if (aid == 10 || aid == 78 || aid == 17 || aid == 124 || aid == 122) {
+			UIMan.verbose(3, "here");
+		}
+		fixedAtomList.add(t ? aid : -aid);
+		UIMan.verbose(3, fixedAtomList.toString());
 		GAtom a = atoms.get(aid);
 		a.truth = t;
 		a.fixed = true;
@@ -2688,11 +2695,19 @@ public class MRF {
 	public int retainOnlyHardClauses(){
 		int numHard = 0;
 		for(GClause c : clauses){
-			if(c.isHardClause() == c.dead){
-				c.dead = !c.dead;
-			}
-			if(!c.dead){
-				++ numHard;
+//			if(c.isHardClause() == c.dead){
+//				c.dead = !c.dead;
+//			}
+//			if(!c.dead){
+//				++ numHard;
+//			}
+			// Eric: Rewriting for clarity, under assumption a hard clause should never be dead
+			// after this function returns
+			if (c.isHardClause()) {
+				c.dead = false;
+				numHard++;
+			} else {
+				c.dead = true;
 			}
 		}
 		totalAlive = numHard;
@@ -3022,7 +3037,8 @@ public class MRF {
 			UIMan.verbose(1, ">>> MC-SAT INIT: running WalkSAT on hard clauses...");
 			int x = retainOnlyHardClauses();
 			UIMan.verbose(1, "### hard clauses = " + x);
-			sampleSAT(numFlips);
+			boolean foundSatisfyingAssignment = sampleSAT(numFlips);
+			UIMan.println("### Found initial satisfying assignment: " + foundSatisfyingAssignment);
 		}
 
 		if(!Config.snapshoting_so_do_not_do_init_flip){
@@ -3206,6 +3222,187 @@ public class MRF {
 
 		return sumCost;
 	}
+	
+	/**
+	 * Execute the MC-SAT algorithm.
+	 * @param numSamples number of MC-SAT samples
+	 * @param numFlips number of SampleSAT steps in each iteration
+	 */
+	@SuppressWarnings("unused")
+	public double mcsatClean(int numSamples, long numFlips, DataMover... dmovers){
+
+		initStrategy = INIT_STRATEGY.COIN_FLIP;
+		
+		Config.stop_samplesat_upon_sat = true;
+		
+		UIMan.println(">>> Running MC-SAT for " + numSamples + " samples...");
+		// init
+		sampleSatMode = false;
+
+
+		UIMan.verbose(1, ">>> MC-SAT INIT: running WalkSAT on hard clauses...");
+		int x = retainOnlyHardClauses();
+		UIMan.verbose(1, "### hard clauses = " + x);
+		boolean foundSatisfyingAssignment = sampleSAT(numFlips);
+		UIMan.println("### Found initial satisfying assignment: " + foundSatisfyingAssignment);
+
+		enableAllClauses();
+		restoreLowTruth();
+
+		sampleSatMode = true;
+		// clear tallies of clauses.
+		this.nClauseVioTallies = 0;
+		this.clauseVioTallies = null;
+		this.clauseSatTallies = null;
+		this.expectationOfViolation = null;
+		this.expectationOfSatisfication = null;
+		this.clauseSquareVioTallies = null;
+		this.expectationOfSquareViolation = null;
+		this.clauseNiNjViolationTallies = null;
+		this.expectationOfNiNjViolation = null;
+
+		double time = 0;
+
+		int dumpingTime = 0;
+		int lastTime = (int)Timer.elapsedSeconds();
+
+		LinkedHashSet<Integer> historyTime = new LinkedHashSet<Integer>();
+
+		double sumCost = 0;
+		int nSample = numSamples;
+		int size = this.atoms.size();
+		double knob = Math.pow(2, this.atoms.size()+1);
+
+		LinkedHashSet<Integer> history_po2 = new LinkedHashSet<Integer>();
+
+		double maxWeight = Double.NEGATIVE_INFINITY;
+		double treeWidth = 0;
+		double avgDegree = 0;
+		
+		if(Config.sampleLog != null){
+			for(GClause gc : this.clauses){
+				if(maxWeight <= gc.weight){
+					maxWeight = gc.weight;
+				}
+			}
+			this.buildIndices();
+			int nn = 0;
+			int nneigh = 0;
+			for(Integer atom : this.adj.keySet()){
+				nn += 1;
+				nneigh +=this.adj.get(atom).size();
+			}
+			avgDegree = 1.0*nneigh/nn;
+			DS_JunctionTree jt = new DS_JunctionTree(this);
+			treeWidth = jt.getTreeWidth();
+		}
+
+		// sample
+		for(int i=1; i<=numSamples; i++){
+			if (Timer.hasTimedOut()) {
+				Config.mcsatTimedOut = true;
+				if (i > numSamples * Config.minPercentMcSatSamples) {
+					numSamples = i;
+					UIMan.print(">>>> Tuffy timed out after " + i + " samples, stopping MC-SAT");
+					break;
+				} else {
+					ExceptionMan.die(">>>> Tuffy timed out after only " + i + " samples");
+				}
+			}
+
+			if(Config.sampleLog != null){
+				Timer.start(this + "aaa");
+			}
+
+			UIMan.verbose(3, ">>> MC-SAT Sample #" + i + "");
+			sumCost += performMCSatStep(numFlips);
+			
+			int curTime = (int) Timer.elapsedSeconds();
+
+			if(Config.sampleLog != null){
+				time += Timer.elapsedMilliSeconds(this + "aaa");
+			}
+
+			if(dmovers.length == 1){
+				boolean timeDump = false;
+
+				if(timeDump && (i < 100  || 
+						(Math.abs(((curTime - dumpingTime) % 100)) < 5 && 
+								!historyTime.contains(curTime - dumpingTime)))){
+					historyTime.add(curTime - dumpingTime);
+					String fout = "tuffy.mcsat.results.samples." + i + ".seconds." + (curTime - dumpingTime);
+					UIMan.println("MCSAT-SAMPLE-" + i + ": " + (curTime-dumpingTime) + " " + Timer.elapsed());
+					UIMan.println("Writing MCSAT result to file " + fout);
+
+					updateAtomMarginalProbs(mcsatTotalSamples + i);
+					dmovers[0].flushAtomStates(this.atoms.values(), mln.relAtoms);
+					dmovers[0].dumpProbsToFile(mln.relAtoms, fout);
+
+					int aTime = (int)Timer.elapsedSeconds();
+					dumpingTime += (aTime - curTime);
+				}
+			}
+
+
+			if(Config.sampleLog != null){
+				if( Math.log10(i) == (int)Math.log10(i)
+						|| (i % (nSample/100) == 0) 
+						|| isPowerOfTwo(nSample/i)){
+
+					String sig = "";
+					if(isPowerOfTwo(nSample/i)){
+						sig += "exp" + (nSample/i) + "|";
+					}
+
+					if(Math.log10(i) == (int)Math.log10(i)){
+						sig += "log10|";
+					}
+
+					if((i%100 == 0 && (i/100) % size == 0)){
+						sig += "linear|";
+					}
+
+					if(history_po2.contains(nSample/i) && sig.equals("exp" + (nSample/i) + "|")){
+						continue;
+					}
+					history_po2.add(nSample/i);
+
+					for(GAtom atom : this.atoms.values()){
+
+						Config.sampleLog.println(
+								//System.out.println(
+								i + "\t" + 
+								sig + "\t" + 
+								"tuffy.sample.SampleAlgorithm_MCSAT" + "\t" + 
+								this.atoms.size() + "\t" +
+								time + "\t" +
+								atom.id + "\t" +
+								atom.pid + "\t" + 
+								"-1" + "\t" +
+								"-1" + "\t" + 
+								atom.tallyTrue + "\t" +
+								i + "\t" +
+								"-1" + "\t" + 
+								1.0*atom.tallyTrue/i + "\t" + 
+								maxWeight + "\t" + 
+								treeWidth + "\t" + 
+								avgDegree
+								);
+					}
+				}
+
+
+			}
+
+
+		}
+
+		updateAtomMarginalProbs(numSamples);
+
+
+		return sumCost;
+	}
+
 
 	public void updateAtomTruthFromMLE(ArrayList<BitSetIntPair> samples){
 
@@ -3629,7 +3826,7 @@ public class MRF {
 		// TODO: CURRENTLY, CE FINDS ADDING THIS FUNCTION
 		// MAY INFLUENCE THE SPEED OF SAMPLESAT. CHECK IT
 		// IN THE FUTURE
-		// unitPropagation();
+//		unitPropagation();
 
 		sampleSAT(numFlips);
 
@@ -3900,6 +4097,26 @@ public class MRF {
 	}
 	
 	/**
+	 * Test if a clause is always true no matter how we flip flippable atoms.
+	 * The existing implementation does not work, at least not when ownsAllAtoms is true
+	 * in the non-partitioned case.
+	 * @param gc the clause
+	 * 
+	 */
+	protected boolean isAlwaysTrueNonPartititioned(GClause gc){
+		int fixed = 0;
+		for(int lit : gc.lits){
+//			if(!ownsAtom(Math.abs(lit))){
+				if(isTrueLit(lit)){
+					return true;
+				}
+				fixed ++;
+//			}
+		}
+		return fixed == gc.lits.length;
+	}
+	
+	/**
 	 * Try to satisfy as many clauses as possible with unit propagation.
 	 * Used as a preprocessing step of SampleSAT, which tries to uniformly 
 	 * sample among all zero-cost worlds.
@@ -3912,7 +4129,7 @@ public class MRF {
 		 */
 		for(GClause cee : clauses){
 			if(cee.dead || cee.isPositiveClause()) continue;
-			if(isAlwaysTrue(cee)) continue;
+			if(isAlwaysTrueNonPartititioned(cee)) continue;
 			for(int lit : cee.lits){
 				if(lit > 0){
 					fixAtom(lit, false);
@@ -3933,7 +4150,7 @@ public class MRF {
 			done = true;
 			for(GClause cee : clauses){
 				if(cee.dead || !cee.isPositiveClause()) continue;
-				if(isAlwaysTrue(cee)) continue;
+				if(isAlwaysTrueNonPartititioned(cee)) continue;
 
 				int numCand = 0, lastCand = 0;
 				for(int lit : cee.lits){
