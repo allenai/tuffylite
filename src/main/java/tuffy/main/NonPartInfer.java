@@ -76,6 +76,7 @@ public class NonPartInfer extends Infer{
 				}
 				
 				Stats.numberGroundAtoms = mrf.atoms.size();
+				Stats.numberGroundClauses = mrf.clauses.size();
 				int numberUnits = 0;
 				for (GClause gc : mrf.clauses) {
 					if (gc.isUnitClause() && gc.isHardClause()) {
