@@ -826,14 +826,14 @@ public class Grounding {
 			@Override
 			public int compare(Clause c1, Clause c2) {
 
-				if (c1.isHardClause()) {
-					if (c2.isHardClause()) {
+				if (c1.isHardClauseOrTemplate()) {
+					if (c2.isHardClauseOrTemplate()) {
 						return 0;
 					} else {
 						return -1;
 					}
 				} else {
-					if (c2.isHardClause()) {
+					if (c2.isHardClauseOrTemplate()) {
 						return 1;
 					} else {
 						return 0;
@@ -854,7 +854,7 @@ public class Grounding {
 		boolean firstSoftClause = true;
 		for (Clause c : relevantClauses) {
 
-			if (!c.isHardClause() && firstSoftClause) {
+			if (!c.isHardClauseOrTemplate() && firstSoftClause) {
 				firstSoftClause = false;
 				
 				String tmpClauseTable = cbuffer + "_tmp";
@@ -868,6 +868,9 @@ public class Grounding {
 				mrf = mrf.simplifyWithHardUnits(hardUnits);
 				dmover.writeMRFClausesToBuffer(mrf, cbuffer);
 				db.dropTable(tmpClauseTable);
+				
+				Stats.totalUnitsDuringIUP = hardUnits.size();
+				UIMan.println("Units found during IUP: " + Stats.totalUnitsDuringIUP);
 			}
 
 			LinkedHashSet<Boolean> possibleClausePos = new LinkedHashSet<Boolean>();
@@ -1113,16 +1116,24 @@ public class Grounding {
 							+ UIMan.comma(db.getLastUpdateRowCount())
 							+ "; total = " + UIMan.comma(totalclauses) + "\n");
 
-			if ( Config.iterativeUnitPropagate && c.isHardClause() ) {
+			if ( Config.iterativeUnitPropagate && c.isHardClauseOrTemplate() ) {
 				// prune:
 				// find hard clauses
 				Timer.start("iterativeUP");
 				dmover.dumpCNFToFile(atoms, cbuffer, "temp.cnf");
 				try {
-					Process p = Runtime.getRuntime().exec(
+					Process p;
+					if (Config.useBackbones) {
+					    p = Runtime.getRuntime().exec(
+								new String[]{"/bin/sh",
+										"-c", 
+										Config.glucosePath + " -printbackbone temp.cnf | grep BACKBONE"});
+					} else {
+					    p = Runtime.getRuntime().exec(
 							new String[]{"/bin/sh",
 									"-c", 
 									Config.glucosePath + " -printunits temp.cnf | grep UNITS"});
+					}
 					p.waitFor();
 					BufferedReader reader = 
 					         new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -1137,7 +1148,8 @@ public class Grounding {
 							if (hardUnits.contains(literal)) {
 								continue;
 							}
-	
+
+							UIMan.verbose(3, "New unit: " + literal);
 							hardUnits.add(literal);
 							
 							boolean truth_val = literal > 0;

@@ -37,6 +37,8 @@ public class Config {
 	
 	public static String glucosePath = null;
 	
+	public static boolean useBackbones = false;
+	
 	public static int maxClausesToCNF = 500000;
 	
 	public static boolean no_pushdown = false;
@@ -270,6 +272,7 @@ public class Config {
 		return ManagementFactory.getRuntimeMXBean().getName();
 	}
 	
+	//TODO(ericgribkoff) Handle this more gracefully.
 	public static void reset() {
 		Config.exiting_mode = false;
 		Config.mcsatTimedOut = false;
@@ -280,6 +283,7 @@ Stats.numberSamplesAtTimeout = 0;
 Stats.numberClausesAtTimeout = 0;
 Stats.glucoseTimeMs = 0;
 Stats.javaUPGroundingTimeMs = 0;
+Stats.totalUnitsDuringIUP = 0;
 	    SeededRandom.reset();
 		Timer.resetClock();
 		RDB db = RDB.getRDBbyConfig();

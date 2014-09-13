@@ -8,4 +8,5 @@ public class Stats {
 	public static int numberClausesAtTimeout = 0;
 	public static double glucoseTimeMs = 0;
 	public static double javaUPGroundingTimeMs = 0;
+	public static int totalUnitsDuringIUP = 0;
 }

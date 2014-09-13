@@ -74,11 +74,14 @@ public class CommandOptions {
     @Option(name="-writeWCNF", usage="File to write the grounded WCNF")
     public String writeWCNFFile = null;
     
-    @Option(name="-unitPropagate", usage="Run unit propagation on the grounded MLN")
+    @Option(name="-unitPropagate", usage="Run unit propagation on the grounded MLN (potentially buggy, disabled)")
     public boolean unitPropagate = false;
     
     @Option(name="-iterativeUnitPropagate", usage="Run iterative unit propagation during grounding")
     public boolean iterativeUnitPropagate = false;
+    
+    @Option(name="-useBackbones", usage="Compute backbones instead of units with Glucose")
+    public boolean useBackbones = false;
     
     @Option(name="-glucosePath", usage="Use Glucose for iterative unit propagation")
     public String glucosePath = null;

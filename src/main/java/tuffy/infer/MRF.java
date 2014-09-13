@@ -3921,193 +3921,195 @@ public class MRF {
 	}
 	
 	public MRF unitPropagateAndGetNewMRF() {
-		unitPropagateGround();
-		
-		MRF mrf = new MRF(mln);
-		mrf.ownsAllAtoms = true;
-		for (int i : coreAtoms) {
-			GAtom n = atoms.get(i);
-			mrf.atoms.put(n.id, n);
-			mrf.addAtom(n.id);
-		}
-		LinkedHashMap<Integer, Boolean> hardUnitClauses = new LinkedHashMap<Integer,Boolean>();
-//		if (cee.isUnitClause() && cee.isHardClause()) {
-//			//if (!hardUnitClauses.contains(cee.lits[0])) {
-//			//	hardUnitClauses.add(cee.lits[0]);
-//				mrf.clauses.add(cee);
-//			//}
+		//TODO(ericgribkoff) Potentially buggy
+		return this;
+//		unitPropagateGround();
+//		
+//		MRF mrf = new MRF(mln);
+//		mrf.ownsAllAtoms = true;
+//		for (int i : coreAtoms) {
+//			GAtom n = atoms.get(i);
+//			mrf.atoms.put(n.id, n);
+//			mrf.addAtom(n.id);
 //		}
-//		else if (!cee.ignoreAfterUnitPropagation) {
-//			mrf.clauses.add(cee);
-//		}
-		for (GClause cee : clauses) {
-//			if ((cee.isUnitClause() && cee.isHardClause()) || 
-//					!cee.ignoreAfterUnitPropagation) {
+//		LinkedHashMap<Integer, Boolean> hardUnitClauses = new LinkedHashMap<Integer,Boolean>();
+////		if (cee.isUnitClause() && cee.isHardClause()) {
+////			//if (!hardUnitClauses.contains(cee.lits[0])) {
+////			//	hardUnitClauses.add(cee.lits[0]);
+////				mrf.clauses.add(cee);
+////			//}
+////		}
+////		else if (!cee.ignoreAfterUnitPropagation) {
+////			mrf.clauses.add(cee);
+////		}
+//		for (GClause cee : clauses) {
+////			if ((cee.isUnitClause() && cee.isHardClause()) || 
+////					!cee.ignoreAfterUnitPropagation) {
+////				mrf.clauses.add(cee);
+////			}
+//			if (cee.isUnitClause() && cee.isHardClause()) {
+//				if (!hardUnitClauses.containsKey(Math.abs(cee.lits[0]))) {
+//					hardUnitClauses.put(Math.abs(cee.lits[0]), (cee.lits[0] * cee.weight > 0));
+//					mrf.clauses.add(cee);
+//				    UIMan.verbose(3, "Adding " + cee);
+//				} else {
+//					if (hardUnitClauses.get(Math.abs(cee.lits[0])) == (cee.lits[0] * cee.weight > 0)) {
+//						UIMan.verbose(3, "Skipping " + cee + " (already added)");
+//					} else {
+//						ExceptionMan.die("stopping here with an unsatisfiable hard clause\n" + 
+//								"trying to add " + cee + " but already had its negation as a hard clause");
+//					}
+//				}
+//			}
+//			else if (!cee.ignoreAfterUnitPropagation) {
 //				mrf.clauses.add(cee);
 //			}
-			if (cee.isUnitClause() && cee.isHardClause()) {
-				if (!hardUnitClauses.containsKey(Math.abs(cee.lits[0]))) {
-					hardUnitClauses.put(Math.abs(cee.lits[0]), (cee.lits[0] * cee.weight > 0));
-					mrf.clauses.add(cee);
-				    UIMan.verbose(3, "Adding " + cee);
-				} else {
-					if (hardUnitClauses.get(Math.abs(cee.lits[0])) == (cee.lits[0] * cee.weight > 0)) {
-						UIMan.verbose(3, "Skipping " + cee + " (already added)");
-					} else {
-						ExceptionMan.die("stopping here with an unsatisfiable hard clause\n" + 
-								"trying to add " + cee + " but already had its negation as a hard clause");
-					}
-				}
-			}
-			else if (!cee.ignoreAfterUnitPropagation) {
-				mrf.clauses.add(cee);
-			}
-		}
-		mrf.buildIndices();
-		return mrf;
-	}
-	
-	private void unitPropagateGround() {
-		Deque<Integer> Q = new ArrayDeque<Integer>();
-		LinkedHashSet<Integer> QIds = new LinkedHashSet<Integer>();
-		int lit;
-		// adj gives literal to clause map
-		for (GClause cee : clauses) {
-			if (Timer.hasTimedOut()) {
-				ExceptionMan.die("Tuffy timed out");
-			}
-			if (cee.isUnitClause() && cee.isHardClause()) {
-				lit = cee.lits[0];
-				cee.ignoreAfterUnitPropagation = true;
-				if(lit > 0){
-					if (cee.isPositiveClause()) {
-						if (!QIds.contains(Math.abs(lit))) {
-							Q.add(lit);
-							QIds.add(Math.abs(lit));
-							UIMan.verbose(3, "From " + cee + ", Adding to Q1: " + lit);
-						}
-						fixAtom(lit, true);
-					} else {
-						if (!QIds.contains(Math.abs(lit))) {
-							Q.add(-lit);
-							QIds.add(Math.abs(lit));
-							UIMan.verbose(3, "From " + cee + ", Adding to Q2: " + -lit);
-						}
-						fixAtom(lit, false);
-					}
-				}else{
-					if (cee.isPositiveClause()) {
-						if (!QIds.contains(Math.abs(lit))) {
-							Q.add(lit);
-							QIds.add(Math.abs(lit));
-							UIMan.verbose(3, "From " + cee + ", Adding to Q3: " + lit);
-						}
-						fixAtom(-lit, false);
-					} else {
-						if (!QIds.contains(Math.abs(lit))) {
-							Q.add(-lit);
-							QIds.add(Math.abs(lit));
-							UIMan.verbose(3, "From " + cee + ", Adding to Q4: " + -lit);
-						}
-						fixAtom(-lit, true);
-					}
-				}
-			}
-		}
-		while (!Q.isEmpty()) {
-			if (Timer.hasTimedOut()) {
-				ExceptionMan.die("Tuffy timed out");
-			}
-			lit = Q.pop();
-			UIMan.verbose(3, "Popped from Q: " + lit + "");
-			QIds.remove(Math.abs(lit));
-			ArrayList<GClause> tmp = adj.get(lit);
-			if (adj.get(lit) != null) {
-				//TODO(ericgribkoff) Make any difference to inference if cee has negative weight and is removed?
-				for (GClause cee : adj.get(lit)) {
-					for (int k : cee.lits) {
-							if (k != lit) {
-								adj.get(k).remove(cee);
-							}
-					}
-					UIMan.verbose(3, "Removing clause (unless hard unit clause) " + cee);
-					cee.ignoreAfterUnitPropagation = true;
-				}
-			}
-			ArrayList<Integer> aidToDelete = new ArrayList<Integer>(); 
-			if (adj.get(-lit) != null) {
-				for (GClause cee : adj.get(-lit)) {
-					if (cee.ignoreAfterUnitPropagation) {
-						continue;
-					}
-					if (cee.lits.length == 1) {
-						UIMan.verbose(3, "Clause " + cee + " is unsatisfiable");
-						continue;
-					}
-					int tmpLit[] = new int[cee.lits.length-1];
-					int index = 0;
-					for (int t : cee.lits) {
-						if (t != -lit) {
-					    	tmpLit[index] = t;
-					    	index++;
-						}
-					}
-					StringBuilder clauseStr = new StringBuilder();
-					clauseStr.append(tmpLit[0]);
-					for (int i = 1; i < tmpLit.length; i++) {
-						clauseStr.append(", ").append(tmpLit[i]);
-					}
-					UIMan.verbose(3, "Clause " + cee + " becomes: " + clauseStr);
-					cee.lits = tmpLit;
-					if (cee.isUnitClause() && cee.isHardClause()) {
-						int k = cee.lits[0];
-						if (k != -lit) {
-							if(k > 0){
-								if (cee.isPositiveClause()) {
-									// TODO(ericgribkoff): Moving away from this code anyways, but
-									// this shouldn't check for abs(k) - we can have -l and l
-									// and here we should catch this and return that the formulas
-									// are unsatisfiable. Currently this is not caught till after
-									// this unit prop routine finishes and the new MRF is being generated
-									// in unitPropagateAndGetNewMRF()
-									if (!QIds.contains(Math.abs(k))) {
-										Q.add(k);
-										QIds.add(Math.abs(k));
-										UIMan.verbose(3, "Adding to Q1: " + k);
-									}
-									fixAtom(k, true);
-								} else {
-									if (!QIds.contains(Math.abs(k))) {
-										Q.add(-k);
-										QIds.add(Math.abs(k));
-										UIMan.verbose(3, "Adding to Q2: " + -k);
-									}
-									fixAtom(k, false);
-								}
-							}else{
-								if (cee.isPositiveClause()) {
-									if (!QIds.contains(Math.abs(k))) {
-										Q.add(k);
-										QIds.add(Math.abs(k));
-										UIMan.verbose(3, "Adding to Q3: " + k);
-									}
-									fixAtom(-k, false);
-								} else {
-									if (!QIds.contains(Math.abs(k))) {
-										Q.add(-k);
-										QIds.add(Math.abs(k));
-										UIMan.verbose(3, "Adding to Q4: " + -k);
-									}
-									fixAtom(-k, true);
-								}
-							}
-						}
-						adj.get(k).remove(cee);
-						cee.ignoreAfterUnitPropagation = true;
-					}
-				}
-			}
-		}
+//		}
+//		mrf.buildIndices();
+//		return mrf;
+//	}
+//	
+//	private void unitPropagateGround() {
+//		Deque<Integer> Q = new ArrayDeque<Integer>();
+//		LinkedHashSet<Integer> QIds = new LinkedHashSet<Integer>();
+//		int lit;
+//		// adj gives literal to clause map
+//		for (GClause cee : clauses) {
+//			if (Timer.hasTimedOut()) {
+//				ExceptionMan.die("Tuffy timed out");
+//			}
+//			if (cee.isUnitClause() && cee.isHardClause()) {
+//				lit = cee.lits[0];
+//				cee.ignoreAfterUnitPropagation = true;
+//				if(lit > 0){
+//					if (cee.isPositiveClause()) {
+//						if (!QIds.contains(Math.abs(lit))) {
+//							Q.add(lit);
+//							QIds.add(Math.abs(lit));
+////							UIMan.verbose(3, "From " + cee + ", Adding to Q1: " + lit);
+//						}
+//						fixAtom(lit, true);
+//					} else {
+//						if (!QIds.contains(Math.abs(lit))) {
+//							Q.add(-lit);
+//							QIds.add(Math.abs(lit));
+////							UIMan.verbose(3, "From " + cee + ", Adding to Q2: " + -lit);
+//						}
+//						fixAtom(lit, false);
+//					}
+//				}else{
+//					if (cee.isPositiveClause()) {
+//						if (!QIds.contains(Math.abs(lit))) {
+//							Q.add(lit);
+//							QIds.add(Math.abs(lit));
+////							UIMan.verbose(3, "From " + cee + ", Adding to Q3: " + lit);
+//						}
+//						fixAtom(-lit, false);
+//					} else {
+//						if (!QIds.contains(Math.abs(lit))) {
+//							Q.add(-lit);
+//							QIds.add(Math.abs(lit));
+////							UIMan.verbose(3, "From " + cee + ", Adding to Q4: " + -lit);
+//						}
+//						fixAtom(-lit, true);
+//					}
+//				}
+//			}
+//		}
+//		while (!Q.isEmpty()) {
+//			if (Timer.hasTimedOut()) {
+//				ExceptionMan.die("Tuffy timed out");
+//			}
+//			lit = Q.pop();
+////			UIMan.verbose(3, "Popped from Q: " + lit + "");
+//			QIds.remove(Math.abs(lit));
+//			ArrayList<GClause> tmp = adj.get(lit);
+//			if (adj.get(lit) != null) {
+//				//TODO(ericgribkoff) Make any difference to inference if cee has negative weight and is removed?
+//				for (GClause cee : adj.get(lit)) {
+//					for (int k : cee.lits) {
+//							if (k != lit) {
+//								adj.get(k).remove(cee);
+//							}
+//					}
+////					UIMan.verbose(3, "Removing clause (unless hard unit clause) " + cee);
+//					cee.ignoreAfterUnitPropagation = true;
+//				}
+//			}
+//			ArrayList<Integer> aidToDelete = new ArrayList<Integer>(); 
+//			if (adj.get(-lit) != null) {
+//				for (GClause cee : adj.get(-lit)) {
+//					if (cee.ignoreAfterUnitPropagation) {
+//						continue;
+//					}
+//					if (cee.lits.length == 1) {
+//						UIMan.verbose(3, "Clause " + cee + " is unsatisfiable");
+//						continue;
+//					}
+//					int tmpLit[] = new int[cee.lits.length-1];
+//					int index = 0;
+//					for (int t : cee.lits) {
+//						if (t != -lit) {
+//					    	tmpLit[index] = t;
+//					    	index++;
+//						}
+//					}
+//					StringBuilder clauseStr = new StringBuilder();
+//					clauseStr.append(tmpLit[0]);
+//					for (int i = 1; i < tmpLit.length; i++) {
+//						clauseStr.append(", ").append(tmpLit[i]);
+//					}
+////					UIMan.verbose(3, "Clause " + cee + " becomes: " + clauseStr);
+//					cee.lits = tmpLit;
+//					if (cee.isUnitClause() && cee.isHardClause()) {
+//						int k = cee.lits[0];
+//						if (k != -lit) {
+//							if(k > 0){
+//								if (cee.isPositiveClause()) {
+//									// TODO(ericgribkoff): Moving away from this code anyways, but
+//									// this shouldn't check for abs(k) - we can have -l and l
+//									// and here we should catch this and return that the formulas
+//									// are unsatisfiable. Currently this is not caught till after
+//									// this unit prop routine finishes and the new MRF is being generated
+//									// in unitPropagateAndGetNewMRF()
+//									if (!QIds.contains(Math.abs(k))) {
+//										Q.add(k);
+//										QIds.add(Math.abs(k));
+////										UIMan.verbose(3, "Adding to Q1: " + k);
+//									}
+//									fixAtom(k, true);
+//								} else {
+//									if (!QIds.contains(Math.abs(k))) {
+//										Q.add(-k);
+//										QIds.add(Math.abs(k));
+////										UIMan.verbose(3, "Adding to Q2: " + -k);
+//									}
+//									fixAtom(k, false);
+//								}
+//							}else{
+//								if (cee.isPositiveClause()) {
+//									if (!QIds.contains(Math.abs(k))) {
+//										Q.add(k);
+//										QIds.add(Math.abs(k));
+////										UIMan.verbose(3, "Adding to Q3: " + k);
+//									}
+//									fixAtom(-k, false);
+//								} else {
+//									if (!QIds.contains(Math.abs(k))) {
+//										Q.add(-k);
+//										QIds.add(Math.abs(k));
+////										UIMan.verbose(3, "Adding to Q4: " + -k);
+//									}
+//									fixAtom(-k, true);
+//								}
+//							}
+//						}
+//						adj.get(k).remove(cee);
+//						cee.ignoreAfterUnitPropagation = true;
+//					}
+//				}
+//			}
+//		}
 	}
 	
 	/**
