@@ -75,15 +75,16 @@ public class NonPartInfer extends Infer{
 					UIMan.println("### total unit propagation = " + Timer.elapsed("fullUnitPropagate"));
 				}
 				
-				Stats.numberGroundAtoms = mrf.atoms.size();
-				Stats.numberGroundClauses = mrf.clauses.size();
-				int numberUnits = 0;
-				for (GClause gc : mrf.clauses) {
-					if (gc.isUnitClause() && gc.isHardClause()) {
-						numberUnits++;
-					}
-				}
-				Stats.numberUnits = numberUnits;
+//				Stats.numberGroundAtoms = mrf.atoms.size();
+//				Stats.numberGroundClauses = mrf.clauses.size();
+//				int numberUnits = 0;
+//				for (GClause gc : mrf.clauses) {
+//					if (gc.isUnitClause() && gc.isHardClause()) {
+//						numberUnits++;
+//					}
+//				}
+//				Stats.numberUnits = numberUnits;
+				MRF.computeStats(mrf);
 				
 				Timer.start("mcsat");
 				UIMan.println(">>>Starting MC-Sat...");
@@ -135,6 +136,7 @@ public class NonPartInfer extends Infer{
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			db.close();
+//			UIMan.println(Stats.numberGroundClauses +"");
 //			UIMan.println(Stats.numberUnits +"");
 //			UIMan.println(Stats.numberGroundAtoms +"");
 //			UIMan.println(Stats.numberSamplesAtTimeout+"");

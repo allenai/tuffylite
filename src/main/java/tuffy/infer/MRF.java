@@ -171,6 +171,18 @@ public class MRF {
 		}
 
 	}
+	
+	public static void computeStats(MRF mrf) {
+		Stats.numberGroundAtoms = mrf.atoms.size();
+		Stats.numberGroundClauses = mrf.clauses.size();
+		int numberUnits = 0;
+		for (GClause gc : mrf.clauses) {
+			if (gc.isUnitClause() && gc.isHardClause()) {
+				numberUnits++;
+			}
+		}
+		Stats.numberUnits = numberUnits;
+	}
 
 	/**
 	 * compile current MRF into a set of bitmaps, so that the calculation of

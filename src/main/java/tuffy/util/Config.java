@@ -273,6 +273,13 @@ public class Config {
 	public static void reset() {
 		Config.exiting_mode = false;
 		Config.mcsatTimedOut = false;
+		Stats.numberGroundClauses = 0;
+Stats.numberUnits = 0;
+Stats.numberGroundAtoms = 0;
+Stats.numberSamplesAtTimeout = 0;
+Stats.numberClausesAtTimeout = 0;
+Stats.glucoseTimeMs = 0;
+Stats.javaUPGroundingTimeMs = 0;
 	    SeededRandom.reset();
 		Timer.resetClock();
 		RDB db = RDB.getRDBbyConfig();
