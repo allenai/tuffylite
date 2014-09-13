@@ -22,7 +22,12 @@ public class ExceptionMan {
 		if(Config.exiting_mode) return;		
 		Config.exiting_mode = true;
 		UIMan.error(msg);
-		RDB db = RDB.getRDBbyConfig();
+		RDB db = RDB.getRDBbyConfig(Config.db_schema);
+		
+		if (Config.inGroundingPhase) {
+			//TODO(ericgribkoff) get the cbuffer table name dynamically
+			Stats.numberClausesAtTimeout = (int) db.countTuplesAfterGroundingTimeout("mln0_cbuffer");
+		}
 		
 		if(Config.keep_db_data == false){
 			UIMan.print("removing database schema '" + Config.db_schema + "'...");

@@ -948,6 +948,32 @@ public class RDB {
 		return -1;
 	}
 
+	public long countTuplesAfterGroundingTimeout(String table) {
+		String sql = "SELECT COUNT(*) FROM " + table;
+		ResultSet rs;
+		try {
+			Statement stmt = con.createStatement(ResultSet.HOLD_CURSORS_OVER_COMMIT, 1);
+			currentlyRunningQuery = stmt;
+			stmt.setFetchSize(100000);
+			rs = stmt.executeQuery(sql);
+			currentlyRunningQuery = null;		
+			if(rs == null) ExceptionMan.die("");
+			try {
+				if(rs.next()) {
+					long c = rs.getLong(1);
+					rs.close();
+					return c;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		} catch (SQLException e) {
+			UIMan.error("can't get number of tuples at grounding time out");
+			ExceptionMan.handle(e);
+		}
+		return -1;
+	}
+
 	/**
 	 * Count the tuples in a table.
 	 */

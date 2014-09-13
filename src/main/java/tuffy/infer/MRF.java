@@ -32,6 +32,7 @@ import tuffy.util.DebugMan;
 import tuffy.util.ExceptionMan;
 import tuffy.util.HashArray;
 import tuffy.util.SeededRandom;
+import tuffy.util.Stats;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
 import tuffy.util.myInt;
@@ -3098,6 +3099,7 @@ public class MRF {
 		for(int i=1; i<=numSamples; i++){
 			if (Timer.hasTimedOut()) {
 				Config.mcsatTimedOut = true;
+				Stats.numberSamplesAtTimeout = i-1;
 				if (i > numSamples * Config.minPercentMcSatSamples) {
 					numSamples = i;
 					UIMan.print(">>>> Tuffy timed out after " + i + " samples, stopping MC-SAT");

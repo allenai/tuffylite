@@ -26,6 +26,7 @@ import tuffy.mln.Term;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
 import tuffy.util.FileMan;
+import tuffy.util.Stats;
 import tuffy.util.StringMan;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
@@ -1164,6 +1165,7 @@ public class Grounding {
 
 
 				// report stats after pruning
+				Stats.glucoseTimeMs += Timer.elapsedMilliSeconds("iterativeUP");
 				UIMan.verbose(2,
 						"### iterative UP took " + Timer.elapsed("iterativeUP"));
 			}

@@ -3,10 +3,12 @@ package tuffy.main;
 import java.util.ArrayList;
 
 import tuffy.infer.MRF;
+import tuffy.infer.ds.GClause;
 import tuffy.parse.CommandOptions;
 import tuffy.util.BitSetIntPair;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
+import tuffy.util.Stats;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
 /**
@@ -69,8 +71,18 @@ public class NonPartInfer extends Infer{
 					writeClausesToFile();
 					writeWCNFToFile();
 					UIMan.println("### MRF Size After Unit Prop: atoms = " + mrf.atoms.size() + "; clauses = " + mrf.clauses.size());
+					Stats.javaUPGroundingTimeMs += Timer.elapsedMilliSeconds("fullUnitPropagate");
 					UIMan.println("### total unit propagation = " + Timer.elapsed("fullUnitPropagate"));
 				}
+				
+				Stats.numberGroundAtoms = mrf.atoms.size();
+				int numberUnits = 0;
+				for (GClause gc : mrf.clauses) {
+					if (gc.isUnitClause() && gc.isHardClause()) {
+						numberUnits++;
+					}
+				}
+				Stats.numberUnits = numberUnits;
 				
 				Timer.start("mcsat");
 				UIMan.println(">>>Starting MC-Sat...");
@@ -122,6 +134,12 @@ public class NonPartInfer extends Infer{
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			db.close();
+//			UIMan.println(Stats.numberUnits +"");
+//			UIMan.println(Stats.numberGroundAtoms +"");
+//			UIMan.println(Stats.numberSamplesAtTimeout+"");
+//			UIMan.println(Stats.numberClausesAtTimeout+"");
+//			UIMan.println(Stats.glucoseTimeMs+"");
+//			UIMan.println(Stats.javaUPGroundingTimeMs +"");
 			throw e1;
 		}
 	}
