@@ -39,7 +39,7 @@ public class Config {
 	
 	public static boolean useBackbones = false;
 	
-	public static int maxClausesToCNF = 500000;
+	public static int maxClausesToCNF = 1000000;
 	
 	public static boolean no_pushdown = false;
 	
