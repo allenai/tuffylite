@@ -136,13 +136,13 @@ public class NonPartInfer extends Infer{
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			db.close();
-//			UIMan.println(Stats.numberGroundClauses +"");
-//			UIMan.println(Stats.numberUnits +"");
-//			UIMan.println(Stats.numberGroundAtoms +"");
-//			UIMan.println(Stats.numberSamplesAtTimeout+"");
-//			UIMan.println(Stats.numberClausesAtTimeout+"");
-//			UIMan.println(Stats.glucoseTimeMs+"");
-//			UIMan.println(Stats.javaUPGroundingTimeMs +"");
+			UIMan.println(Stats.numberGroundClauses +"");
+			UIMan.println(Stats.numberUnits +"");
+			UIMan.println(Stats.numberGroundAtoms +"");
+			UIMan.println(Stats.numberSamplesAtTimeout+"");
+			UIMan.println(Stats.numberClausesAtTimeout+"");
+			UIMan.println(Stats.glucoseTimeMs+"");
+			UIMan.println(Stats.javaUPGroundingTimeMs +"");
 			throw e1;
 		}
 	}

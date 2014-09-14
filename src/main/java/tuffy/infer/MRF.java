@@ -3052,6 +3052,9 @@ public class MRF {
 			UIMan.verbose(1, "### hard clauses = " + x);
 			boolean foundSatisfyingAssignment = sampleSAT(numFlips);
 			UIMan.println("### Found initial satisfying assignment: " + foundSatisfyingAssignment);
+			if (!foundSatisfyingAssignment) {
+				ExceptionMan.die("WalkSAT failed to satisfy hard clauses");
+			}
 		}
 
 		if(!Config.snapshoting_so_do_not_do_init_flip){

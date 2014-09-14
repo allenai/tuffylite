@@ -26,7 +26,8 @@ public class ExceptionMan {
 		
 		if (Config.inGroundingPhase) {
 			//TODO(ericgribkoff) get the cbuffer table name dynamically
-			Stats.numberClausesAtTimeout = (int) db.countTuplesAfterGroundingTimeout("mln0_cbuffer");
+			msg = "timed out during grounding\n" + msg;
+			Stats.numberClausesAtTimeout = (int) db.countTuplesAfterGroundingTimeout(Stats.latestCBuffer);
 		}
 		
 		if(Config.keep_db_data == false){

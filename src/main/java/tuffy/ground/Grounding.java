@@ -302,6 +302,7 @@ public class Grounding {
 
 		UIMan.verbose(1, ">>> Computing active clauses...");
 		String cbuffer = "mln" + mln.getID() + "_cbuffer";
+		Stats.latestCBuffer = cbuffer;
 		sql = "CREATE TABLE " + cbuffer + "(list INT[], weight FLOAT8, "
 				+ "fcid INT, ffcid text)";
 
