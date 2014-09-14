@@ -27,6 +27,9 @@ public class MarkovLogicNetwork implements Cloneable{
 	private static int idGen = 0;
 	private int id = 0;
 	
+	public static void resetStaticVars() {
+		idGen = 0;
+	}
 	/**
 	 * The db connection associated with this MLN.
 	 */

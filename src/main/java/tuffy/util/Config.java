@@ -6,6 +6,9 @@ import java.lang.management.ManagementFactory;
 import java.util.LinkedHashSet;
 
 import tuffy.db.RDB;
+import tuffy.infer.ds.GClause;
+import tuffy.mln.Clause;
+import tuffy.mln.MarkovLogicNetwork;
 
 
 /**
@@ -290,6 +293,24 @@ Stats.totalUnitsDuringIUP = 0;
 		if (db != null) {
 			db.close();
 		}
+		
+		// When running as a service (i.e., more than one inference task before closing the JVM) some
+		// non-determinism is persisting. Resetting static variables by class to address this.
+		
+		// RDB:
+		RDB.resetStaticVars();
+		
+		// GClause:
+		GClause.maxFCID = -1;
+		
+		// Clause:
+		Clause.mappingFromID2Desc = null;
+		Clause.mappingFromID2Const = null;
+		
+		MarkovLogicNetwork.resetStaticVars();
+		
+		ProbMan.resetStaticVars();
+		
 	}
 	
 	public static double logAdd(double logX, double logY) {

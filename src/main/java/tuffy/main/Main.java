@@ -30,6 +30,12 @@ public class Main {
 				new PartInfer().run(options);
 			}else{
 				new NonPartInfer().run(options);
+//				Config.reset();
+//				options = UIMan.parseCommand(args);
+//				new NonPartInfer().run(options);
+//				Config.reset();
+//				options = UIMan.parseCommand(args);
+//				new NonPartInfer().run(options);
 			}
 		}else{
 			

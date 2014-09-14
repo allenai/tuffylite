@@ -51,6 +51,12 @@ public class RDB {
 	public String schema = null;
 
 	public static LinkedHashSet<RDB> historyInstances = new LinkedHashSet<RDB>();
+	
+	public static void resetStaticVars() {
+		allRDBs = new ArrayList<RDB>();
+		historyInstances = new LinkedHashSet<RDB>();
+		currentDBCounter = 0;
+	}
 
 	/**
 	 *  Disable auto-commit so that JDBC won't fetch all query results at once. 
