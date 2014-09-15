@@ -826,9 +826,30 @@ public class Grounding {
 		Collections.sort(relevantClauses, new Comparator<Clause>() {
 			@Override
 			public int compare(Clause c1, Clause c2) {
-
-				if (c1.isHardClauseOrTemplate()) {
-					if (c2.isHardClauseOrTemplate()) {
+				
+//				if (c1.isHardClauseOrTemplate()) {
+//					if (c2.isHardClauseOrTemplate()) {
+//						return 0;
+//					} else {
+//						return -1;
+//					}
+//				} else {
+//					if (c2.isHardClauseOrTemplate()) {
+//						return 1;
+//					} else {
+//						return 0;
+//					}
+//				}
+				if (c1.isHardClause()) {
+					if (c2.isHardClause()) {
+						return 0;
+					} else {
+						return -1;
+					}
+				} else if (c1.isHardTemplate()) {
+					if (c2.isHardClause()) {
+						return 1;
+					} else if (c2.isHardTemplate()) {
 						return 0;
 					} else {
 						return -1;
