@@ -1474,6 +1474,7 @@ public class MRF {
 		if(!adj.isEmpty()) return;
 		adj.clear();
 		for(GClause f : clauses){
+//			UIMan.verbose(3, "building index for " + f);
 			boolean isCut = false;
 			for(int lit : f.lits){
 				ArrayList<GClause> plist = adj.get(lit);

@@ -36,6 +36,7 @@ import tuffy.util.ExceptionMan;
 import tuffy.util.FileMan;
 import tuffy.util.SeededRandom;
 import tuffy.util.StringMan;
+import tuffy.util.Timer;
 import tuffy.util.UIMan;
 import tuffy.util.myInt;
 
@@ -91,12 +92,15 @@ public class DataMover {
 	 */
 	public MRF loadMrfFromDb(MRF mrf, String relAtoms, String relClauses){
 		mrf.ownsAllAtoms = true;
-		try {
-			db.disableAutoCommitForNow();
+		String sql = "SELECT atomID, truth, isquery, isqueryevid FROM " + relAtoms;
+		try (ResultSet rs = db.query(sql)){
+			//db.disableAutoCommitForNow();
 			// load atoms
-			String sql = "SELECT atomID, truth, isquery, isqueryevid FROM " + relAtoms;
-			ResultSet rs = db.query(sql);
+			UIMan.verbose(3, "Selecting atoms from DB...");
 			while(rs.next()){
+				if (Timer.hasTimedOut()) {
+					ExceptionMan.die("Tuffy timed out reading atoms from DB");
+				}
 				GAtom n = new GAtom(rs.getInt("atomID"));
 				n.truth = rs.getBoolean("truth");
 
@@ -115,19 +119,32 @@ public class DataMover {
 				mrf.addAtom(n.id);
 			}
 			rs.close();
-			System.gc();
+		} catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+
+		sql = "SELECT * FROM " + relClauses;
+		try (ResultSet rs = db.query(sql)) {
+			//System.gc(); disabling this
 			// load clauses
-			sql = "SELECT * FROM " + relClauses;
-			rs = db.query(sql);
+			UIMan.verbose(3, "Selecting clauses from DB...");
 			while(rs.next()){
+				if (Timer.hasTimedOut()) {
+					rs.close();
+					UIMan.verbose(3, "timed out here");
+					ExceptionMan.die("Tuffy timed out reading atoms from DB");
+				}
 				GClause f = new GClause();
 				f.parse(rs);
+//				UIMan.verbose(3, "Selected clause " + f);
+//				UIMan.verbose(3, "Time left " + Timer.secondsToTimeOut());
 				mrf.clauses.add(f);
 			}
 			rs.close();
 
-			System.gc();
-			db.restoreAutoCommitState();
+			//System.gc(); disabling this
+			//db.restoreAutoCommitState();
+			UIMan.verbose(3, "Building indices...");
 			mrf.buildIndices();
 		} catch (Exception e) {
 			ExceptionMan.handle(e);

@@ -60,6 +60,7 @@ public class NonPartInfer extends Infer{
 				
 				if(mrf == null){
 					mrf = new MRF(mln);
+					UIMan.verbose(3, "Loading MRF from DB...");
 					dmover.loadMrfFromDb(mrf, mln.relAtoms, mln.relClauses);
 				}
 							

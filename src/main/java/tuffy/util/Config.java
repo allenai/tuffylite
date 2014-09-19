@@ -310,6 +310,8 @@ Stats.mcsatStepsWhereSampleSatFails = 0;
 		
 		MarkovLogicNetwork.resetStaticVars();
 		
+		// This was the culprit for non-determinism: it retained a static reference to a random number
+		// generator from SeededRandom that persisted across runs of inference.
 		ProbMan.resetStaticVars();
 		
 	}
