@@ -153,7 +153,7 @@ public class Config {
 	 */
 	public static boolean use_atom_blocking = false;
 	public static boolean mark_all_atoms_active = false;
-	public static boolean stop_samplesat_upon_sat = false;
+	public static boolean stop_samplesat_upon_sat = false; //TODO(ericgribkoff) Only set to true for learning mode (verify)
 
 	public static double soft_evidence_activation_threshold = 0;
 	public static double samplesat_sa_coef = 10;
@@ -287,6 +287,7 @@ Stats.numberClausesAtTimeout = 0;
 Stats.glucoseTimeMs = 0;
 Stats.javaUPGroundingTimeMs = 0;
 Stats.totalUnitsDuringIUP = 0;
+Stats.mcsatStepsWhereSampleSatFails = 0;
 	    SeededRandom.reset();
 		Timer.resetClock();
 		RDB db = RDB.getRDBbyConfig();

@@ -96,6 +96,15 @@ public class NonPartInfer extends Infer{
 				
 				UIMan.println(">>> Writing answer to file: " + mfout);
 				dmover.dumpProbsToFile(mln.relAtoms, mfout);
+
+				UIMan.println(Stats.numberGroundClauses +"");
+				UIMan.println(Stats.numberUnits +"");
+				UIMan.println(Stats.numberGroundAtoms +"");
+				UIMan.println(Stats.numberSamplesAtTimeout+"");
+				UIMan.println(Stats.numberClausesAtTimeout+"");
+				UIMan.println(Stats.glucoseTimeMs+"");
+				UIMan.println(Stats.javaUPGroundingTimeMs +"");
+				UIMan.println(Stats.mcsatStepsWhereSampleSatFails +"");
 			}
 			
 			if(opt.mle){
@@ -143,6 +152,7 @@ public class NonPartInfer extends Infer{
 			UIMan.println(Stats.numberClausesAtTimeout+"");
 			UIMan.println(Stats.glucoseTimeMs+"");
 			UIMan.println(Stats.javaUPGroundingTimeMs +"");
+			UIMan.println(Stats.mcsatStepsWhereSampleSatFails +"");
 			throw e1;
 		}
 	}

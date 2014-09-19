@@ -2736,6 +2736,13 @@ public class MRF {
 	 * @return true iff a zero-cost world was reached
 	 */
 	public boolean sampleSAT(long nSteps){
+		//TODO(ericgribkoff) SampleSAT failure is ignored.
+		//If samplesat fails to find a satisfying solution during MC-SAT
+		//the next sample should be the same as the previous sample (ie, we couldn't find
+		//another valid state, so stick with the one we know). Looks like this, instead, will
+		//lead to Tuffy sampling invalid states during MC-SAT, as this function updates
+		//the atom states and returns false, but its return value is never checked
+		
 		if(!Config.learning_mode)
 			UIMan.verbose(3, "    Running SampleSAT for " + UIMan.comma(nSteps) + " flips...");
 
@@ -3037,6 +3044,9 @@ public class MRF {
 	@SuppressWarnings("unused")
 	public double mcsat(int numSamples, long numFlips, DataMover... dmovers){
 
+		//TODO(ericgribkoff) mcsat_cumulative seems to be for calling mcsat iteratively:
+		// that is, run for 100 samples, get estimate of marginal, run for 100 more, improve
+		// estimate, etc
 		if (!Config.mcsat_cumulative) resetAtomTruthTallies();
 		initStrategy = INIT_STRATEGY.COIN_FLIP;
 		if(!Config.learning_mode) Config.stop_samplesat_upon_sat = true;
@@ -3245,7 +3255,6 @@ public class MRF {
 	 * @param numSamples number of MC-SAT samples
 	 * @param numFlips number of SampleSAT steps in each iteration
 	 */
-	@SuppressWarnings("unused")
 	public double mcsatClean(int numSamples, long numFlips, DataMover... dmovers){
 
 		initStrategy = INIT_STRATEGY.COIN_FLIP;
@@ -3845,7 +3854,9 @@ public class MRF {
 		// IN THE FUTURE
 //		unitPropagation();
 
-		sampleSAT(numFlips);
+		if (!sampleSAT(numFlips)) {
+			Stats.mcsatStepsWhereSampleSatFails += 1;
+		}
 
 		unfixAllAtoms();
 		enableAllClauses();
