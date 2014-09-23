@@ -3,7 +3,7 @@ package tuffy.main;
 import java.util.ArrayList;
 
 import tuffy.infer.MRF;
-import tuffy.infer.SimpleMRF;
+import tuffy.infer.MRF;
 import tuffy.infer.ds.GClause;
 import tuffy.parse.CommandOptions;
 import tuffy.util.BitSetIntPair;
@@ -37,7 +37,7 @@ public class NonPartInfer extends Infer{
 				options.maxTries = 3;
 			}
 	
-			SimpleMRF mrf = null;
+			MRF mrf = null;
 			
 //			if((!opt.marginal && !opt.mle) || opt.dual){
 //				UIMan.println(">>> Running MAP inference...");
@@ -60,7 +60,7 @@ public class NonPartInfer extends Infer{
 				if(opt.dual) mfout += ".marginal";
 				
 				if(mrf == null){
-					mrf = new SimpleMRF(mln);
+					mrf = new MRF(mln);
 					UIMan.verbose(3, "Loading MRF from DB...");
 					dmover.loadSimpleMrfFromDb(mrf, mln.relAtoms, mln.relClauses);
 				}
@@ -86,7 +86,7 @@ public class NonPartInfer extends Infer{
 //					}
 //				}
 //				Stats.numberUnits = numberUnits;
-				SimpleMRF.computeStats(mrf);
+				MRF.computeStats(mrf);
 				
 				Timer.start("mcsat");
 				UIMan.println(">>>Starting MC-Sat...");

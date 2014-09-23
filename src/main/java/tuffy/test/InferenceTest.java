@@ -72,104 +72,104 @@ public class InferenceTest extends Infer {
 	 * Alchemy's output. If there are no significant differences,
 	 * it is regarded as real pass.
 	 */
-	@Test
-	public final void test_WalkSAT_inference() throws Exception {
-		// THE RESULT OF THIS FUNCTION IS CHECKED MANUALLY
-		Config.verbose_level = 2;
-		//Config.init_strategy = INIT_STRATEGY.ALL_FALSE;
-		String[] args = {"-e", "test/rc1000_evidence.db", "-i", "test/rc1000_prog2.mln",
-				"-o", "test/testOutput.txt", "-queryFile", "test/rc1000_query.db"};
-		CommandOptions options = UIMan.parseCommand(args);
-		setUp(options);
-		ground();
-		
-		if(options.maxFlips == 0){
-			options.maxFlips = 100 * grounding.getNumAtoms();
-		}
-		if(options.maxTries == 0){
-			options.maxTries = 1;
-		}
-		
-
-		DataMover mover = new DataMover(mln);
-		MRF mrf = mover.loadMrfFromDb(mln.relAtoms, mln.relClauses);
-		DebugMan.checkPeakMem();
-		mrf.inferWalkSAT(options.maxTries, options.maxFlips); //hTuffy
-		//mrf.flushLowTruth(db);
-		dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
-
-		//mln.dumpMapAnswer(options.fout);
-		dmover.dumpTruthToFile(mln.relAtoms, options.fout);
-		cleanUp();
-	}
+//	@Test
+//	public final void test_WalkSAT_inference() throws Exception {
+//		// THE RESULT OF THIS FUNCTION IS CHECKED MANUALLY
+//		Config.verbose_level = 2;
+//		//Config.init_strategy = INIT_STRATEGY.ALL_FALSE;
+//		String[] args = {"-e", "test/rc1000_evidence.db", "-i", "test/rc1000_prog2.mln",
+//				"-o", "test/testOutput.txt", "-queryFile", "test/rc1000_query.db"};
+//		CommandOptions options = UIMan.parseCommand(args);
+//		setUp(options);
+//		ground();
+//		
+//		if(options.maxFlips == 0){
+//			options.maxFlips = 100 * grounding.getNumAtoms();
+//		}
+//		if(options.maxTries == 0){
+//			options.maxTries = 1;
+//		}
+//		
+//
+//		DataMover mover = new DataMover(mln);
+//		MRF mrf = mover.loadMrfFromDb(mln.relAtoms, mln.relClauses);
+//		DebugMan.checkPeakMem();
+//		mrf.inferWalkSAT(options.maxTries, options.maxFlips); //hTuffy
+//		//mrf.flushLowTruth(db);
+//		dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
+//
+//		//mln.dumpMapAnswer(options.fout);
+//		dmover.dumpTruthToFile(mln.relAtoms, options.fout);
+//		cleanUp();
+//	}
 	
 	/**
 	 * Test inference on whether it can deal with hard clause constrains.
 	 * This test is passed if the output of both marginal and MAP inference
 	 * obey all the hard clauses.
 	 */
-	@Test
-	public final void test_hardClause() throws Exception {
-		Config.verbose_level = 2;
-		//Config.init_strategy = INIT_STRATEGY.ALL_FALSE;
-		String[] args = {"-e", "test/ie_evidence.db", "-i", "test/ie_prog.mln",
-				"-o", "test/testOutput.txt", "-queryFile", "test/ie_query.db", "-maxFlips", "1000000"};
-		CommandOptions options = UIMan.parseCommand(args);
-		setUp(options);
-		ground();
-		Timer.runStat.markGroundingDone();
-		if(options.maxFlips == 0){
-			options.maxFlips = 100 * grounding.getNumAtoms();
-		}
-		if(options.maxTries == 0){
-			options.maxTries = 1;
-		}
-		
-		//Config.init_strategy = Config.INIT_STRATEGY.COIN_FLIP;
-
-		MRF mcsat = new MRF(mln);
-		dmover.loadMrfFromDb(mcsat, mln.relAtoms, mln.relClauses);
-		
-		mcsat.mcsat(options.mcsatSamples, options.maxFlips);
-		Timer.runStat.markInferDone();
-		
-		
-		for(GClause c : mcsat.clauses){
-			if(c.isHardClause()){
-				if(c.weight > 0)
-					assertTrue(c.nsat > 0);
-			}
-		}
-
-		//mcsat.dumpAtomProb(options.mcsatSamples, options.fout);
-		dmover.dumpProbsToFile(mln.relAtoms, options.fout);
-		
-		// WALKSAT
-
-		DataMover mover = new DataMover(mln);
-		MRF mrf = mover.loadMrfFromDb(mln.relAtoms, mln.relClauses);
-		DebugMan.checkPeakMem();
-		mrf.inferWalkSAT(options.maxTries, options.maxFlips); //hTuffy
-		//mrf.flushLowTruth(db);
-		dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
-		
-		int violate = 0;
-		int all = 0;
-		for(GClause c : mrf.clauses){
-			if(c.isHardClause()){
-				if(c.weight > 0 && c.nsat == 0)
-					violate ++;
-				all ++;
-			}
-		}
-		assertTrue(violate < all/20);
-		
-		//UIMan.display(">>> Writing answer to file: " + options.fout);
-
-		//if(Config.report_runtime_stat) Timer.runStat.report();
-		
-		cleanUp();
-	}
+//	@Test
+//	public final void test_hardClause() throws Exception {
+//		Config.verbose_level = 2;
+//		//Config.init_strategy = INIT_STRATEGY.ALL_FALSE;
+//		String[] args = {"-e", "test/ie_evidence.db", "-i", "test/ie_prog.mln",
+//				"-o", "test/testOutput.txt", "-queryFile", "test/ie_query.db", "-maxFlips", "1000000"};
+//		CommandOptions options = UIMan.parseCommand(args);
+//		setUp(options);
+//		ground();
+//		Timer.runStat.markGroundingDone();
+//		if(options.maxFlips == 0){
+//			options.maxFlips = 100 * grounding.getNumAtoms();
+//		}
+//		if(options.maxTries == 0){
+//			options.maxTries = 1;
+//		}
+//		
+//		//Config.init_strategy = Config.INIT_STRATEGY.COIN_FLIP;
+//
+//		MRF mcsat = new MRF(mln);
+//		dmover.loadMrfFromDb(mcsat, mln.relAtoms, mln.relClauses);
+//		
+//		mcsat.mcsat(options.mcsatSamples, options.maxFlips);
+//		Timer.runStat.markInferDone();
+//		
+//		
+//		for(GClause c : mcsat.clauses){
+//			if(c.isHardClause()){
+//				if(c.weight > 0)
+//					assertTrue(c.nsat > 0);
+//			}
+//		}
+//
+//		//mcsat.dumpAtomProb(options.mcsatSamples, options.fout);
+//		dmover.dumpProbsToFile(mln.relAtoms, options.fout);
+//		
+//		// WALKSAT
+//
+//		DataMover mover = new DataMover(mln);
+//		MRF mrf = mover.loadMrfFromDb(mln.relAtoms, mln.relClauses);
+//		DebugMan.checkPeakMem();
+//		mrf.inferWalkSAT(options.maxTries, options.maxFlips); //hTuffy
+//		//mrf.flushLowTruth(db);
+//		dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
+//		
+//		int violate = 0;
+//		int all = 0;
+//		for(GClause c : mrf.clauses){
+//			if(c.isHardClause()){
+//				if(c.weight > 0 && c.nsat == 0)
+//					violate ++;
+//				all ++;
+//			}
+//		}
+//		assertTrue(violate < all/20);
+//		
+//		//UIMan.display(">>> Writing answer to file: " + options.fout);
+//
+//		//if(Config.report_runtime_stat) Timer.runStat.report();
+//		
+//		cleanUp();
+//	}
 	
 	
 	@Test

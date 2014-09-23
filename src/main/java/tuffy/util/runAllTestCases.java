@@ -15,7 +15,7 @@ public class runAllTestCases {
 		JUnitCore junit = new JUnitCore();
 	    junit.addListener(new TextListener(System.out));
 	    junit.run(
-	    	LearnerTest.class,
+//	    	LearnerTest.class,
 			AtomTest.class,
 			ClauseTest.class,
 			ConfigTest.class,

@@ -152,8 +152,8 @@ public class DataMover {
 		return mrf;
 	}
 	
-	public SimpleMRF loadSimpleMrfFromDb(String relAtoms, String relClauses){
-		SimpleMRF mrf = new SimpleMRF(mln);
+	public MRF loadSimpleMrfFromDb(String relAtoms, String relClauses){
+		MRF mrf = new MRF(mln);
 		loadSimpleMrfFromDb(mrf, relAtoms, relClauses);
 		return mrf;
 	}
@@ -163,7 +163,7 @@ public class DataMover {
 	 * Load the entire grounding result into memory as an MRF.
 	 * Also build the atom-clause index.
 	 */
-	public SimpleMRF loadSimpleMrfFromDb(SimpleMRF mrf, String relAtoms, String relClauses){
+	public MRF loadSimpleMrfFromDb(MRF mrf, String relAtoms, String relClauses){
 		mrf.ownsAllAtoms = true;
 		String sql = "SELECT atomID, truth, isquery, isqueryevid FROM " + relAtoms;
 		try (ResultSet rs = db.query(sql)){
@@ -1337,7 +1337,7 @@ public class DataMover {
 		}
 	}
 	
-	public void writeSimpleMRFClausesToTable(SimpleMRF mrf, String relClauses){
+	public void writeSimpleMRFClausesToTable(MRF mrf, String relClauses){
 		db.dropTable(relClauses);
 		db.dropView(relClauses);
 		String sql = "CREATE TABLE " + relClauses + "(\n";

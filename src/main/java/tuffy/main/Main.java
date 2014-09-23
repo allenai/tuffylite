@@ -2,9 +2,9 @@ package tuffy.main;
 
 import java.sql.SQLException;
 
-import tuffy.learn.DNLearner;
-import tuffy.learn.MultiCoreSGDLearner;
-import tuffy.learn.SGDLearner;
+//import tuffy.learn.DNLearner;
+//import tuffy.learn.MultiCoreSGDLearner;
+//import tuffy.learn.SGDLearner;
 import tuffy.parse.CommandOptions;
 import tuffy.util.Config;
 import tuffy.util.ExceptionMan;
@@ -26,8 +26,8 @@ public class Main {
 		if(!options.isDLearningMode){
 			// INFERENCE
 			if(!options.disablePartition){
-				
-				new PartInfer().run(options);
+				UIMan.println("Partitioned inference disabled");
+//				new PartInfer().run(options);
 			}else{
 				new NonPartInfer().run(options);
 //				Config.reset();
@@ -38,18 +38,18 @@ public class Main {
 //				new NonPartInfer().run(options);
 			}
 		}else{
-			
-			if(options.mle){
-				//SGDLearner l = new SGDLearner();
-				MultiCoreSGDLearner l = new MultiCoreSGDLearner();
-				l.run(options);
-				l.cleanUp();
-				
-			}else{
-				//LEARNING
-				DNLearner l = new DNLearner();
-				l.run(options);
-			}
+			UIMan.println("Learning disabled");
+//			if(options.mle){
+//				//SGDLearner l = new SGDLearner();
+//				MultiCoreSGDLearner l = new MultiCoreSGDLearner();
+//				l.run(options);
+//				l.cleanUp();
+//				
+//			}else{
+//				//LEARNING
+//				DNLearner l = new DNLearner();
+//				l.run(options);
+//			}
 		}
 		
 
