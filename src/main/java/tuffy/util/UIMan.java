@@ -148,6 +148,7 @@ public class UIMan {
 		
 		Config.snapshot_mode = opt.snapshot;
 		
+		Config.simulatedAnnealingSampleSATProb = opt.simulatedAnnealingSampleSATProb;
 		Config.mcsat_sample_para = opt.mcsatPara;
 		Config.avoid_breaking_hard_clauses = opt.avoidBreakingHardClauses;
 		Config.output_prolog_format = opt.outputProlog;

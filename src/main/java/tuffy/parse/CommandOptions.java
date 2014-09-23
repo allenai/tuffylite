@@ -175,6 +175,9 @@ public class CommandOptions {
     @Option(name="-innerPara", usage="[Default=1] Parallism for MLE sampler.")
     public int innerPara = 1;
 
+    @Option(name="-saProb", usage="Probability of performing a simulated annealing step during "
+    		+ "SampleSAT. DEFAULT=0.5")
+    public double simulatedAnnealingSampleSATProb = 0.5;
     
     @Option(name="-mcsatParam", usage="Set x; each step of MC-SAT retains each " +
     		"non-violated clause with probability 1-exp(-|weight|*x). DEFAULT=1.")
@@ -248,10 +251,11 @@ public class CommandOptions {
     @Option(name="-log", usage="[DEFAULT=FALSE] Write samples to log file.")
     public boolean sampleLog = false;
     
-    @Option(name="-sa", usage="SA.")
+    @Option(name="-sa", usage="SampleSAT Simulated Annealing \"Temperature\" (inverse of temp)")
     public double samplesat_sa_coef = Config.samplesat_sa_coef;
     
-    @Option(name="-randomStep", usage="Specify the WalkSAT random step probability")
+    @Option(name="-randomStep", usage="Specify the WalkSAT random step probability (the probability "
+    		+"WalkSAT performs a non-greedy flip)")
     public double random_step = 0.5;
     
 }

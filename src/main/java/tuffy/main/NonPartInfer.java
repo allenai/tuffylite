@@ -107,6 +107,12 @@ public class NonPartInfer extends Infer{
 				UIMan.println(Stats.glucoseTimeMs+"");
 				UIMan.println(Stats.javaUPGroundingTimeMs +"");
 				UIMan.println(Stats.mcsatStepsWhereSampleSatFails +"");
+				
+				UIMan.println("WalkSAT Random Step Prob: (-randomStep)" + Config.walksat_random_step_probability);
+				UIMan.println("Simulated Annealing Step Prob: (-saProb)" + Config.simulatedAnnealingSampleSATProb);
+				UIMan.println("Simulated Annealing inverse temp: (-sa)" + Config.samplesat_sa_coef);
+				UIMan.println("Number MC-SAT Samples: (-mcsatSamples)" + options.mcsatSamples);
+				UIMan.println("Number Flips: (-maxFlips)" + options.maxFlips);
 			}
 			
 //			if(opt.mle){
@@ -155,6 +161,13 @@ public class NonPartInfer extends Infer{
 			UIMan.println(Stats.glucoseTimeMs+"");
 			UIMan.println(Stats.javaUPGroundingTimeMs +"");
 			UIMan.println(Stats.mcsatStepsWhereSampleSatFails +"");
+			
+			UIMan.println("WalkSAT Random Step Prob: (-randomStep)" + Config.walksat_random_step_probability);
+			UIMan.println("Simulated Annealing Step Prob: (-saProb)" + Config.simulatedAnnealingSampleSATProb);
+			UIMan.println("Simulated Annealing inverse temp: (-sa)" + Config.samplesat_sa_coef);
+			UIMan.println("Number MC-SAT Samples: (-mcsatSamples)" + options.mcsatSamples);
+			UIMan.println("Number Flips: (-maxFlips)" + options.maxFlips);
+			
 			throw e1;
 		}
 	}
