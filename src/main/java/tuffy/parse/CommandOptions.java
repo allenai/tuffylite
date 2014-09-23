@@ -2,6 +2,8 @@ package tuffy.parse;
 import org.kohsuke.args4j.Option;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+
+import tuffy.util.Config;
 /**
  * Parser for command line options.
  */
@@ -246,8 +248,8 @@ public class CommandOptions {
     @Option(name="-log", usage="[DEFAULT=FALSE] Write samples to log file.")
     public boolean sampleLog = false;
     
-    @Option(name="-sa", usage="[DEFAULT=10] SA.")
-    public int samplesat_sa_coef = 10;
+    @Option(name="-sa", usage="SA.")
+    public double samplesat_sa_coef = Config.samplesat_sa_coef;
     
     @Option(name="-randomStep", usage="Specify the WalkSAT random step probability")
     public double random_step = 0.5;

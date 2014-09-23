@@ -956,7 +956,11 @@ public class Grounding {
 					if (lit.getPred().isClosedWorld()) {
 						// TODO: double check!!!!!!!!!!!!!!
 						if (lit.getPred().hasSoftEvidence()) {
+							//TODO(ericgribkoff) Grounding queries seem unnecessarily complicated due to the fact that 
+							// soft evidence has "truth=true" set in the database; should probably change this and clean
+							// up the queries in this function.
 							String condition = r + ".atomID IS NOT NULL";
+							
 							// TODO(ericgribkoff) Understand why commenting this
 							// out is the right thing to do :)
 							// if (Config.iterativeUnitPropagate) {
@@ -1092,32 +1096,35 @@ public class Grounding {
 				// }
 			}
 
-			boolean unifySoftUnitClauses = true;
-			if (unifySoftUnitClauses) {
-				sql = "SELECT (CASE WHEN unitNegativeClause(list2)>=0 THEN "
-						+ "list2 ELSE array[-list2[1]] END) AS list, "
-						+ "(CASE WHEN unitNegativeClause(list2)>=0 THEN weight2 "
-						+ "ELSE -weight2 END) AS weight, "
-						+ "(CASE WHEN unitNegativeClause(list2)>=0 THEN "
-						+ c.getId() + " "
-						+ "ELSE -"
-						+ c.getId()
-						+ " END) AS fcid "
-						+
-						// ffcid, for learning
-						", (CASE WHEN unitNegativeClause(list2)>=0 THEN ('"
-						+ c.getId() + ".' || ffid) " + "ELSE ('-" + c.getId()
-						+ ".' || ffid) END) AS ffcid "
-						+
-						//
-						"FROM (" + sql + ") as " + c.getName()
-						+ " WHERE array_upper(list2,1)>=1";
-			} else {
+			//TODO(ericgribkoff) The if {} branch introduces hard unit clauses with negative weights and has
+			//little other discernible effect, disabling for now.
+			
+//			boolean unifySoftUnitClauses = true;
+//			if (unifySoftUnitClauses) {
+//				sql = "SELECT (CASE WHEN unitNegativeClause(list2)>=0 THEN "
+//						+ "list2 ELSE array[-list2[1]] END) AS list, "
+//						+ "(CASE WHEN unitNegativeClause(list2)>=0 THEN weight2 "
+//						+ "ELSE -weight2 END) AS weight, "
+//						+ "(CASE WHEN unitNegativeClause(list2)>=0 THEN "
+//						+ c.getId() + " "
+//						+ "ELSE -"
+//						+ c.getId()
+//						+ " END) AS fcid "
+//						+
+//						// ffcid, for learning
+//						", (CASE WHEN unitNegativeClause(list2)>=0 THEN ('"
+//						+ c.getId() + ".' || ffid) " + "ELSE ('-" + c.getId()
+//						+ ".' || ffid) END) AS ffcid "
+//						+
+//						//
+//						"FROM (" + sql + ") as " + c.getName()
+//						+ " WHERE array_upper(list2,1)>=1";
+//			} else {
 				sql = "SELECT list2 AS list, " + "weight2 AS weight, "
 						+ c.getId() + " AS fcid, '" + c.getId()
 						+ ".' || ffid as ffcid " + "FROM (" + sql + ") as "
 						+ c.getName() + " WHERE array_upper(list2,1)>=1";
-			}
+//			}
 			if (Config.verbose_level == 1)
 				UIMan.print(".");
 			UIMan.verbose(2, ">>> Grounding clause " + (clsidx++) + " / "

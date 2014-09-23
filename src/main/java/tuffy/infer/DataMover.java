@@ -151,6 +151,84 @@ public class DataMover {
 		}
 		return mrf;
 	}
+	
+	public SimpleMRF loadSimpleMrfFromDb(String relAtoms, String relClauses){
+		SimpleMRF mrf = new SimpleMRF(mln);
+		loadSimpleMrfFromDb(mrf, relAtoms, relClauses);
+		return mrf;
+	}
+
+
+	/**
+	 * Load the entire grounding result into memory as an MRF.
+	 * Also build the atom-clause index.
+	 */
+	public SimpleMRF loadSimpleMrfFromDb(SimpleMRF mrf, String relAtoms, String relClauses){
+		mrf.ownsAllAtoms = true;
+		String sql = "SELECT atomID, truth, isquery, isqueryevid FROM " + relAtoms;
+		try (ResultSet rs = db.query(sql)){
+			//db.disableAutoCommitForNow();
+			// load atoms
+			UIMan.verbose(3, "Selecting atoms from DB...");
+			while(rs.next()){
+				if (Timer.hasTimedOut()) {
+					ExceptionMan.die("Tuffy timed out reading atoms from DB");
+				}
+				GAtom n = new GAtom(rs.getInt("atomID"));
+				n.truth = rs.getBoolean("truth");
+
+				n.isquery = rs.getBoolean("isquery");
+
+				n.isquery_evid = rs.getBoolean("isqueryevid");
+
+
+
+				/*
+				if(rs.getInt("keyID") != -1){
+					mrf.keyBlock.pushGAtom(rs.getInt("keyID"), n);
+				}
+				 */
+				mrf.atoms.put(n.id, n);
+				mrf.addAtom(n.id);
+			}
+			rs.close();
+		} catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+
+		sql = "SELECT * FROM " + relClauses;
+		try (ResultSet rs = db.query(sql)) {
+			//System.gc(); disabling this
+			// load clauses
+			UIMan.verbose(3, "Selecting clauses from DB...");
+			while(rs.next()){
+				if (Timer.hasTimedOut()) {
+					rs.close();
+					UIMan.verbose(3, "timed out here");
+					ExceptionMan.die("Tuffy timed out reading atoms from DB");
+				}
+				GClause f = new GClause();
+				f.parse(rs);
+//				UIMan.verbose(3, "Selected clause " + f);
+//				UIMan.verbose(3, "Time left " + Timer.secondsToTimeOut());
+				if (!f.tautology) {
+					mrf.clauses.add(f);
+				} else {
+					UIMan.verbose(3, "skipping tautological clause");
+				}
+			}
+			rs.close();
+
+			//System.gc(); disabling this
+			//db.restoreAutoCommitState();
+			UIMan.verbose(3, "Building indices...");
+			mrf.buildIndices();
+		} catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+		return mrf;
+	}
+
 
 	public double calcMLELogCost(ArrayList<GAtom> _tomargin, Set<Component> components, BitSet world){
 
@@ -1235,6 +1313,31 @@ public class DataMover {
 	}
 	
 	public void writeMRFClausesToTable(MRF mrf, String relClauses){
+		db.dropTable(relClauses);
+		db.dropView(relClauses);
+		String sql = "CREATE TABLE " + relClauses + "(\n";
+		sql += "cid INT,\n";
+		sql += "lits INT[],\n";
+		sql += "weight FLOAT8,\n";
+		sql += "fcid INT[],\n";
+		sql += "ffcid TEXT[]);";
+		db.update(sql);
+		
+		for (GClause cee : mrf.clauses) {
+			StringBuilder clauseStr = new StringBuilder();
+			clauseStr.append(cee.lits[0]);
+			for (int i = 1; i < cee.lits.length; i++) {
+				clauseStr.append(", ").append(cee.lits[i]);
+			}
+			String iql = "INSERT INTO " + relClauses + " (cid, lits, weight) " +
+					" VALUES (" + cee.id +
+					", array[ " + clauseStr + "], " +
+					cee.weight + ");";
+			db.update(iql);
+		}
+	}
+	
+	public void writeSimpleMRFClausesToTable(SimpleMRF mrf, String relClauses){
 		db.dropTable(relClauses);
 		db.dropView(relClauses);
 		String sql = "CREATE TABLE " + relClauses + "(\n";

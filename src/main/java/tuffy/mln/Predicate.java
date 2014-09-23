@@ -616,6 +616,8 @@ public class Predicate {
 			cols.add("prior");
 			cols.add("club");
 			cols.addAll(args);
+			//TODO(ericgribkoff) Soft evidence gets read in with a prior and truth="true" in the DB
+			//This is confusing, because it is not true, just potentially true
 			FileInputStream in = new FileInputStream(loadingFile);
 			PGConnection con = (PGConnection) db.getConnection();
 			String sql = "COPY " + getRelName() + 

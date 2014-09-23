@@ -36,7 +36,11 @@ public class Config {
 	
 	public static boolean inGroundingPhase = false; // used with separate grounding/overall timeouts
 	
+	//TODO(ericgribkoff) Make command-line options
 	public static boolean computeSimpleActiveClauses = true; // not compatible with parameterized weights or learning
+	public static boolean performSimpleSampleSAT = true;
+	public static double simulatedAnnealingSampleSATProb = 0.5;
+//	public static boolean useSimpleMRF = true;
 	
 	public static String glucosePath = null;
 	
@@ -154,7 +158,7 @@ public class Config {
 	public static boolean use_atom_blocking = false;
 	public static boolean mark_all_atoms_active = false;
 	public static boolean stop_samplesat_upon_sat = false; //TODO(ericgribkoff) Only set to true for learning mode (verify)
-
+	public static int maxAtomId = 100000; //TODO(ericgribkoff) hack for checking for redundant clauses
 	public static double soft_evidence_activation_threshold = 0;
 	public static double samplesat_sa_coef = 10;
 	public static double mcsat_sample_para = 1;
