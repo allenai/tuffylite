@@ -24,10 +24,10 @@ libraryDependencies ++= Seq(
     "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
     "org.antlr" % "antlr" % "3.2",
     "args4j" % "args4j" % "2.0.16",
-    "org.apache.commons" % "commons-lang3" % "3.0",
+    "org.apache.commons" % "commons-lang3" % "3.3",
     "thirdparty" % "jgrapht-jdk1.6" % "0.8.2",
     "org.apache.commons" % "commons-math" % "2.2",
-    "junit" % "junit" % "4.9"
+    "junit" % "junit" % "4.11"
 )
 
 //autoScalaLibrary := false
