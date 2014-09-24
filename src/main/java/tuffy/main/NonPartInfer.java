@@ -62,14 +62,14 @@ public class NonPartInfer extends Infer{
 				if(mrf == null){
 					mrf = new MRF(mln);
 					UIMan.verbose(3, "Loading MRF from DB...");
-					dmover.loadSimpleMrfFromDb(mrf, mln.relAtoms, mln.relClauses);
+					dmover.loadMrfFromDb(mrf, mln.relAtoms, mln.relClauses);
 				}
 							
 				if (Config.unitPropagate) {
 					Timer.start("fullUnitPropagate");
 					UIMan.println(">>> Starting unit propagation...");
 					mrf = mrf.unitPropagateAndGetNewMRF();
-					dmover.writeSimpleMRFClausesToTable(mrf, mln.relClauses);
+					dmover.writeMRFClausesToTable(mrf, mln.relClauses);
 					writeClausesToFile();
 					writeWCNFToFile();
 					UIMan.println("### MRF Size After Unit Prop: atoms = " + mrf.atoms.size() + "; clauses = " + mrf.clauses.size());
