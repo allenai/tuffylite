@@ -57,6 +57,7 @@ public class Clause implements Cloneable{
 		ret.varWeight = this.varWeight;
 		ret.violatedGClauses = (ArrayList<GClause>) this.violatedGClauses.clone();
 		ret.weight = this.weight;
+		ret.weightOfTemplate = this.weightOfTemplate;
 		
 		
 		return ret;
@@ -167,6 +168,13 @@ public class Clause implements Cloneable{
 	 * weight of this clause.
 	 */
 	protected double weight = 0;
+	
+
+	/**
+	 * weight of this clause using a template - any clause with constants
+	 * has its weight stored in the DB, and can be accessed here subsequently
+	 */
+	protected double weightOfTemplate = 0;
 	
 	/**
 	 * name of this clause.
@@ -521,6 +529,7 @@ public class Clause implements Cloneable{
 		}else{
 			c.isTemplate = true;
 			c.weight = (this.weight > 0 ? 1 : -1);
+			c.weightOfTemplate = this.weight;
 			for(int i=0; i<conTypeList.size(); i++){
 				c.addMetaVariable("c"+i, conTypeList.get(i));
 			}
@@ -678,6 +687,14 @@ public class Clause implements Cloneable{
 	 */
 	public boolean isHardClause(){
 		return weight >= Config.hard_weight;
+	}
+	
+	public boolean isHardTemplate(){
+		return isTemplate && weightOfTemplate >= Config.hard_weight;
+	}
+	
+	public boolean isHardClauseOrTemplate(){
+		return isHardClause() || isHardTemplate();
 	}
 	
 	/**

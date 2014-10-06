@@ -10,7 +10,10 @@ import tuffy.db.RDB;
  */
 public class ExceptionMan {
 	public static void handle(Exception e) {
-		if(Config.exiting_mode) return;
+		if(Config.exiting_mode) {
+			UIMan.println("Config.exiting_mode = true");
+			return;
+		}
 		e.printStackTrace(System.err);
 		die(e.getMessage());
 	}
@@ -19,16 +22,24 @@ public class ExceptionMan {
 		if(Config.exiting_mode) return;		
 		Config.exiting_mode = true;
 		UIMan.error(msg);
-		RDB db = RDB.getRDBbyConfig();
+		RDB db = RDB.getRDBbyConfig(Config.db_schema);
+		
+		if (Config.inGroundingPhase) {
+			//TODO(ericgribkoff) get the cbuffer table name dynamically
+			msg = "timed out during grounding\n" + msg;
+			Stats.numberClausesAtTimeout = (int) db.countTuplesAfterGroundingTimeout(Stats.latestCBuffer);
+		}
 		
 		if(Config.keep_db_data == false){
 			UIMan.print("removing database schema '" + Config.db_schema + "'...");
 			UIMan.println(db.dropSchema(Config.db_schema)?"OK" : "FAILED");
 		}
+		db.close();
 		
 		UIMan.print("removing temporary dir '" + Config.getWorkingDir() + "'...");
 		UIMan.println(FileMan.removeDirectory(new File(Config.getWorkingDir()))?"OK" : "FAILED");
 		if(Config.throw_exception_when_dying){
+			Config.exiting_mode = false;
 			throw new TuffyThrownError(msg);
 		}else{
 			System.exit(2);

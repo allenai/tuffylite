@@ -5,6 +5,11 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.util.LinkedHashSet;
 
+import tuffy.db.RDB;
+import tuffy.infer.ds.GClause;
+import tuffy.mln.Clause;
+import tuffy.mln.MarkovLogicNetwork;
+
 
 /**
  * Container for global configuration parameters.
@@ -21,7 +26,28 @@ public class Config {
 	public static boolean snapshot_mode = false;
 	public static boolean snapshoting_so_do_not_do_init_flip = false;
 	public static int currentSampledNumber = 0;
-
+	
+	public static boolean reuseSchema = false; // whether to reuse schema if it exists (false is useful for debugging
+											   // db state across runs, as atom/clause ids get reset to start at 1
+	public static float minPercentMcSatSamples = 0.75f; // if Tuffy times out before MC-SAT finishes, 
+													  // return an answer if we've gotten at least this
+													  // fraction of the requested samples
+	public static boolean iterativeUnitPropagate = false;
+	
+	public static boolean inGroundingPhase = false; // used with separate grounding/overall timeouts
+	
+	//TODO(ericgribkoff) Make command-line options
+	public static boolean computeSimpleActiveClauses = true; // not compatible with parameterized weights or learning
+	public static boolean performSimpleSampleSAT = true;
+	public static double simulatedAnnealingSampleSATProb = 0.5;
+//	public static boolean useSimpleMRF = true;
+	
+	public static String glucosePath = null;
+	
+	public static boolean useBackbones = false;
+	
+	public static int maxClausesToCNF = 1000000;
+	
 	public static boolean no_pushdown = false;
 	
 	public static boolean using_greenplum = false;
@@ -61,7 +87,10 @@ public class Config {
 	
 	public static boolean savePredicateNamesToDB = true;
 	
+	public static boolean unitPropagate = false;
+	
 	public static String writeClausesFile = null;
+	public static String writeWCNFFile = null;
 
 	public static String db_url = "jdbc:postgresql://localhost:5432/postgres";
 	public static String db_username = "tuffer";
@@ -128,8 +157,8 @@ public class Config {
 	 */
 	public static boolean use_atom_blocking = false;
 	public static boolean mark_all_atoms_active = false;
-	public static boolean stop_samplesat_upon_sat = false;
-
+	public static boolean stop_samplesat_upon_sat = false; //TODO(ericgribkoff) Only set to true for learning mode (verify)
+	public static int maxAtomId = 100000; //TODO(ericgribkoff) hack for checking for redundant clauses
 	public static double soft_evidence_activation_threshold = 0;
 	public static double samplesat_sa_coef = 10;
 	public static double mcsat_sample_para = 1;
@@ -176,14 +205,16 @@ public class Config {
 
 	public static boolean output_prolog_format = false;
 	public static boolean output_prior_with_marginals = true;
-	public static boolean throw_exception_when_dying = false;
+	public static boolean throw_exception_when_dying = true;
 
 	public static boolean keep_db_data = false;
 
 	public static boolean track_clause_provenance = false;
 	public static boolean reorder_literals = false;
 
-	public static double timeout = Double.MAX_VALUE;
+	public static int timeout = Integer.MAX_VALUE;
+	public static int groundingTimeout = Integer.MAX_VALUE;
+	public static boolean mcsatTimedOut = false;
 	public static int num_tries_per_periodic_flush = 0;
 
 
@@ -246,6 +277,47 @@ public class Config {
 
 	public static String getProcessID(){
 		return ManagementFactory.getRuntimeMXBean().getName();
+	}
+	
+	//TODO(ericgribkoff) Handle this more gracefully.
+	public static void reset() {
+		Config.exiting_mode = false;
+		Config.mcsatTimedOut = false;
+		Stats.numberGroundClauses = 0;
+Stats.numberUnits = 0;
+Stats.numberGroundAtoms = 0;
+Stats.numberSamplesAtTimeout = 0;
+Stats.numberClausesAtTimeout = 0;
+Stats.glucoseTimeMs = 0;
+Stats.javaUPGroundingTimeMs = 0;
+Stats.totalUnitsDuringIUP = 0;
+Stats.mcsatStepsWhereSampleSatFails = 0;
+	    SeededRandom.reset();
+		Timer.resetClock();
+		RDB db = RDB.getRDBbyConfig();
+		if (db != null) {
+			db.close();
+		}
+		
+		// When running as a service (i.e., more than one inference task before closing the JVM) some
+		// non-determinism is persisting. Resetting static variables by class to address this.
+		
+		// RDB:
+		RDB.resetStaticVars();
+		
+		// GClause:
+		GClause.maxFCID = -1;
+		
+		// Clause:
+		Clause.mappingFromID2Desc = null;
+		Clause.mappingFromID2Const = null;
+		
+		MarkovLogicNetwork.resetStaticVars();
+		
+		// This was the culprit for non-determinism: it retained a static reference to a random number
+		// generator from SeededRandom that persisted across runs of inference.
+		ProbMan.resetStaticVars();
+		
 	}
 	
 	public static double logAdd(double logX, double logY) {

@@ -5,6 +5,10 @@ import java.util.Random;
 public class ProbMan {
 	private static Random rand = SeededRandom.getInstance();
 	
+	public static void resetStaticVars() {
+		rand = SeededRandom.getInstance();
+	}
+	
 	public static boolean testChance(double prob){
 		return rand.nextDouble() < prob;
 	}

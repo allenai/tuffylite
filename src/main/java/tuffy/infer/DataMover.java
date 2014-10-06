@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.postgresql.PGConnection;
 
 import tuffy.db.RDB;
@@ -34,6 +36,7 @@ import tuffy.util.ExceptionMan;
 import tuffy.util.FileMan;
 import tuffy.util.SeededRandom;
 import tuffy.util.StringMan;
+import tuffy.util.Timer;
 import tuffy.util.UIMan;
 import tuffy.util.myInt;
 
@@ -89,12 +92,15 @@ public class DataMover {
 	 */
 	public MRF loadMrfFromDb(MRF mrf, String relAtoms, String relClauses){
 		mrf.ownsAllAtoms = true;
-		try {
-			db.disableAutoCommitForNow();
+		String sql = "SELECT atomID, truth, isquery, isqueryevid FROM " + relAtoms;
+		try (ResultSet rs = db.query(sql)){
+			//db.disableAutoCommitForNow();
 			// load atoms
-			String sql = "SELECT atomID, truth, isquery, isqueryevid FROM " + relAtoms;
-			ResultSet rs = db.query(sql);
+			UIMan.verbose(3, "Selecting atoms from DB...");
 			while(rs.next()){
+				if (Timer.hasTimedOut()) {
+					ExceptionMan.die("Tuffy timed out reading atoms from DB");
+				}
 				GAtom n = new GAtom(rs.getInt("atomID"));
 				n.truth = rs.getBoolean("truth");
 
@@ -113,25 +119,43 @@ public class DataMover {
 				mrf.addAtom(n.id);
 			}
 			rs.close();
-			System.gc();
+		} catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+
+		sql = "SELECT * FROM " + relClauses;
+		try (ResultSet rs = db.query(sql)) {
+			//System.gc(); disabling this
 			// load clauses
-			sql = "SELECT * FROM " + relClauses;
-			rs = db.query(sql);
+			UIMan.verbose(3, "Selecting clauses from DB...");
 			while(rs.next()){
+				if (Timer.hasTimedOut()) {
+					rs.close();
+					UIMan.verbose(3, "timed out here");
+					ExceptionMan.die("Tuffy timed out reading atoms from DB");
+				}
 				GClause f = new GClause();
 				f.parse(rs);
-				mrf.clauses.add(f);
+//				UIMan.verbose(3, "Selected clause " + f);
+//				UIMan.verbose(3, "Time left " + Timer.secondsToTimeOut());
+				if (!f.tautology) {
+					mrf.clauses.add(f);
+				} else {
+					UIMan.verbose(3, "skipping tautological clause");
+				}
 			}
 			rs.close();
 
-			System.gc();
-			db.restoreAutoCommitState();
+			//System.gc(); disabling this
+			//db.restoreAutoCommitState();
+			UIMan.verbose(3, "Building indices...");
 			mrf.buildIndices();
 		} catch (Exception e) {
 			ExceptionMan.handle(e);
 		}
 		return mrf;
 	}
+
 
 	public double calcMLELogCost(ArrayList<GAtom> _tomargin, Set<Component> components, BitSet world){
 
@@ -1078,7 +1102,7 @@ public class DataMover {
 		db.update(sql);
 		
 		sql = "INSERT INTO " + relClauseDesc + " ";
-		sql += "SELECT cid, string_agg(CASE WHEN litid > 0 THEN atomdesc ELSE CONCAT('!', atomdesc) END, ' v ') ";
+		sql += "SELECT cid, string_agg(CASE WHEN litid > 0 THEN atomdesc ELSE CONCAT('!', atomdesc) END, ' v ' ORDER BY atomdesc) ";
 		sql += "FROM " + Config.relAtomDesc + " a, (SELECT cid, UNNEST(lits) AS litid FROM " + relClauses + ") c ";
 		sql += "WHERE ABS(c.litid) = a.atomid GROUP BY cid;";
 		db.update(sql);
@@ -1095,7 +1119,7 @@ public class DataMover {
 		String sql;
 		try {
 			sql = "SELECT c.weight, d.clauseDesc FROM " + relClauseDesc + " d, ";
-			sql += relClauses + " c  WHERE c.cid = d.clauseId";
+			sql += relClauses + " c  WHERE c.cid = d.clauseId ORDER BY c.weight, d.clauseDesc";
 			ResultSet rs = db.query(sql);
 			while(rs.next()) {
 				String clauseDesc = rs.getString("clauseDesc");
@@ -1107,6 +1131,136 @@ public class DataMover {
 			bufferedWriter.close();
 		}catch (Exception e) {
 			ExceptionMan.handle(e);
+		}
+	}
+	
+	public void dumpCNFToFile(String relAtoms, String relClauses, String fout){
+		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
+		String sql;
+		try {
+			sql = "SELECT count(*) as count FROM " + relClauses;
+			ResultSet rs = db.query(sql);
+			rs.next();
+			int numClauses = rs.getInt("count");
+			if (numClauses > Config.maxClausesToCNF) {
+				ExceptionMan.die("Too many clauses in grounded CNF for unit prop");
+			}
+			sql = "SELECT count(*) as count FROM " + relAtoms;
+			rs = db.query(sql);
+			rs.next();
+			int numAtoms = rs.getInt("count");
+//			UIMan.verbose(3, "p cnf " + numAtoms + " " + numClauses);
+			bufferedWriter.append( "p cnf " + numAtoms + " " + numClauses + "\n");
+			
+			sql = "SELECT weight, array_length(list, 1) as len, array_to_string(list, ' ') as lits FROM " + relClauses +
+					" WHERE abs(weight) >= " + Config.hard_weight;
+			rs = db.query(sql);
+			while(rs.next()) {
+				String lits = rs.getString("lits");
+				int len = rs.getInt("len");
+				double weight = rs.getDouble("weight");
+				if (weight <= -Config.hard_weight && len == 1) {
+					if (lits.charAt(0) == '-') {
+						lits = lits.substring(1);
+					} else {
+						lits = "-" + lits;
+					}
+				}
+//				UIMan.verbose(3, lits + " 0");
+				bufferedWriter.append(lits + " 0\n");
+			}
+			rs.close();
+			bufferedWriter.close();
+		}catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+	}
+	
+	public void dumpWCNFToFile(String relAtoms, String relClauses, String fout){
+		BufferedWriter bufferedWriter = FileMan.getBufferedWriterMaybeGZ(fout);
+		int digits = 4;
+		String sql;
+		try {
+			sql = "SELECT count(*) as count FROM " + relClauses;
+			ResultSet rs = db.query(sql);
+			rs.next();
+			int numClauses = rs.getInt("count");
+			sql = "SELECT count(*) as count FROM " + relAtoms;
+			rs = db.query(sql);
+			rs.next();
+			int numAtoms = rs.getInt("count");
+//			UIMan.verbose(3, "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight));
+			bufferedWriter.append( "p wcnf " + numAtoms + " " + numClauses + " " + UIMan.decimalRound(digits, Config.hard_weight) + "\n");
+			
+			sql = "SELECT weight, array_length(lits, 1) as len, array_to_string(lits, ' ') as lits FROM " + relClauses +
+					" ORDER BY cid";
+			rs = db.query(sql);
+			while(rs.next()) {
+				String lits = rs.getString("lits");
+				int len = rs.getInt("len");
+				double weight = rs.getDouble("weight");
+				if (weight > Config.hard_weight) {
+					weight = Config.hard_weight;
+				} else if (weight <= -Config.hard_weight && len == 1) {
+					weight = Config.hard_weight;
+					if (lits.charAt(0) == '-') {
+						lits = lits.substring(1);
+					} else {
+						lits = "-" + lits;
+					}
+				}
+//				UIMan.verbose(3, UIMan.decimalRound(digits, weight) + " " + lits);
+				bufferedWriter.append(UIMan.decimalRound(digits, weight) + " " + lits + " 0\n");
+			}
+			rs.close();
+			bufferedWriter.close();
+		}catch (Exception e) {
+			ExceptionMan.handle(e);
+		}
+	}
+	
+	public void writeMRFClausesToBuffer(MRF mrf, String cbuffer){
+		db.dropTable(cbuffer);
+		db.dropView(cbuffer);
+		String sql = "CREATE TABLE " + cbuffer + "(list INT[], weight FLOAT8, "
+				+ "fcid INT, ffcid text)";
+		db.update(sql);
+		
+		for (GClause cee : mrf.clauses) {
+			StringBuilder clauseStr = new StringBuilder();
+			clauseStr.append(cee.lits[0]);
+			for (int i = 1; i < cee.lits.length; i++) {
+				clauseStr.append(", ").append(cee.lits[i]);
+			}
+			String iql = "INSERT INTO " + cbuffer + " (list, weight) " +
+					" VALUES (array[ " + clauseStr + "], " +
+					cee.weight + ");";
+			db.update(iql);
+		}
+	}
+	
+	public void writeMRFClausesToTable(MRF mrf, String relClauses){
+		db.dropTable(relClauses);
+		db.dropView(relClauses);
+		String sql = "CREATE TABLE " + relClauses + "(\n";
+		sql += "cid INT,\n";
+		sql += "lits INT[],\n";
+		sql += "weight FLOAT8,\n";
+		sql += "fcid INT[],\n";
+		sql += "ffcid TEXT[]);";
+		db.update(sql);
+		
+		for (GClause cee : mrf.clauses) {
+			StringBuilder clauseStr = new StringBuilder();
+			clauseStr.append(cee.lits[0]);
+			for (int i = 1; i < cee.lits.length; i++) {
+				clauseStr.append(", ").append(cee.lits[i]);
+			}
+			String iql = "INSERT INTO " + relClauses + " (cid, lits, weight) " +
+					" VALUES (" + cee.id +
+					", array[ " + clauseStr + "], " +
+					cee.weight + ");";
+			db.update(iql);
 		}
 	}
 
@@ -1156,7 +1310,8 @@ public class DataMover {
 						line += " // prior = " + UIMan.decimalRound(digits, prior);
 						line += " ; delta = " + UIMan.decimalRound(digits, prob - prior);
 					}
-					UIMan.verbose(3, line);
+					//UIMan.verbose(3, line);
+					UIMan.println(line);
 					bufferedWriter.append(line + "\n");
 				}
 				rs.close();

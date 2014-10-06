@@ -148,6 +148,7 @@ public class UIMan {
 		
 		Config.snapshot_mode = opt.snapshot;
 		
+		Config.simulatedAnnealingSampleSATProb = opt.simulatedAnnealingSampleSATProb;
 		Config.mcsat_sample_para = opt.mcsatPara;
 		Config.avoid_breaking_hard_clauses = opt.avoidBreakingHardClauses;
 		Config.output_prolog_format = opt.outputProlog;
@@ -158,6 +159,11 @@ public class UIMan {
 		Config.seed = opt.seed;
 		Config.pgSeed = opt.pgSeed;
 		Config.writeClausesFile = opt.writeClausesFile;
+		Config.writeWCNFFile = opt.writeWCNFFile;
+		Config.unitPropagate = opt.unitPropagate;
+		Config.iterativeUnitPropagate = opt.iterativeUnitPropagate;
+		Config.useBackbones = opt.useBackbones;
+		Config.glucosePath = opt.glucosePath;
 		
 		Config.evidDBSchema = opt.evidDBSchema;
 		Config.dbNeedTranslate = opt.dbNeedTranslate;
@@ -170,6 +176,11 @@ public class UIMan {
 		Config.mcsat_cumulative = opt.mcsatCumulative;
 		Config.mcsatDumpPeriodSeconds = opt.mcsatDumpPeriodSec;
 		Config.timeout = opt.timeout;
+		if (opt.groundingTimeout > 0) {
+			Config.groundingTimeout = opt.groundingTimeout;
+		} else {
+			Config.groundingTimeout = opt.timeout;
+		}
 		Config.mcsat_dump_interval = opt.mcsatDumpInt;
 		Config.marginal_output_min_prob = opt.minProb;
 		/*

@@ -78,6 +78,18 @@ public class Timer {
 			long diff = now() - birth;
 			return (diff / 1000.0);
 	}
+	
+	public static int secondsToTimeOut() {
+			return Config.timeout - (int) elapsedSeconds();
+	}
+	
+	public static boolean hasTimedOut() {
+			return Config.timeout != 0 && elapsedSeconds() > Config.timeout;
+	}
+	
+	public static int secondsToGroundingTimeOut() {
+			return Config.groundingTimeout - (int) elapsedSeconds();
+	}
 
 	/**
 	 * Prints the elapsed time since last clock reset.

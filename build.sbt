@@ -21,14 +21,20 @@ resolvers ++= Seq("scala-tools.org" at "http://scala-tools.org/repo-releases",
                 )
 
 libraryDependencies ++= Seq(
-    "postgresql" % "postgresql" % "8.4-701.jdbc4",
+    "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
     "org.antlr" % "antlr" % "3.2",
-    "args4j" % "args4j" % "2.0.12",
-    "org.apache.commons" % "commons-lang3" % "3.0",
+    "args4j" % "args4j" % "2.0.16",
+    "org.apache.commons" % "commons-lang3" % "3.3",
     "thirdparty" % "jgrapht-jdk1.6" % "0.8.2",
     "org.apache.commons" % "commons-math" % "2.2",
-    "junit" % "junit" % "4.9"
+    "junit" % "junit" % "4.11"
 )
+
+//autoScalaLibrary := false
+
+//crossPaths := false
+
+EclipseKeys.projectFlavor := EclipseProjectFlavor.Java
 
 compileOrder := CompileOrder.JavaThenScala
 

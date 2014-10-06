@@ -1,10 +1,19 @@
 package tuffy.parse;
 import org.kohsuke.args4j.Option;
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import tuffy.util.Config;
 /**
  * Parser for command line options.
  */
 public class CommandOptions {
-
+	
+	public String toString()
+	{
+		return ReflectionToStringBuilder.toString(this, ToStringStyle.MULTI_LINE_STYLE);
+	}
+	
 	public enum MAPInferAlgo {WALK, SWEEP};
 	public enum InferDataStore {RAM, DISK};
 	
@@ -63,6 +72,21 @@ public class CommandOptions {
 
     @Option(name="-writeClauses", usage="File to write the grounded MLN")
     public String writeClausesFile = null;
+    
+    @Option(name="-writeWCNF", usage="File to write the grounded WCNF")
+    public String writeWCNFFile = null;
+    
+    @Option(name="-unitPropagate", usage="Run unit propagation on the grounded MLN (potentially buggy, disabled)")
+    public boolean unitPropagate = false;
+    
+    @Option(name="-iterativeUnitPropagate", usage="Run iterative unit propagation during grounding")
+    public boolean iterativeUnitPropagate = false;
+    
+    @Option(name="-useBackbones", usage="Compute backbones instead of units with Glucose")
+    public boolean useBackbones = false;
+    
+    @Option(name="-glucosePath", usage="Use Glucose for iterative unit propagation")
+    public String glucosePath = null;
 
     //@Option(name="-psec", usage="Dump MCSAT results every [psec] seconds.")
     public int mcsatDumpPeriodSec = 0;
@@ -87,7 +111,10 @@ public class CommandOptions {
     public boolean showHelp = false;
 
     @Option(name="-timeout", usage="Timeout in seconds.")
-    public int timeout = Integer.MAX_VALUE;
+    public int timeout = 0;
+    
+    @Option(name="-groundingTimeout", usage="Grounding timeout in seconds.")
+    public int groundingTimeout = 0;
 
     @Option(name="-rawString", usage="Store constants as raw strings instead of normalizing them into integer IDs.")
     public boolean constantAsRawString = false;
@@ -148,6 +175,9 @@ public class CommandOptions {
     @Option(name="-innerPara", usage="[Default=1] Parallism for MLE sampler.")
     public int innerPara = 1;
 
+    @Option(name="-saProb", usage="Probability of performing a simulated annealing step during "
+    		+ "SampleSAT. DEFAULT=0.5")
+    public double simulatedAnnealingSampleSATProb = 0.5;
     
     @Option(name="-mcsatParam", usage="Set x; each step of MC-SAT retains each " +
     		"non-violated clause with probability 1-exp(-|weight|*x). DEFAULT=1.")
@@ -218,13 +248,14 @@ public class CommandOptions {
     @Option(name="-small", usage="[DEFAULT=FALSE] Do optimization on samll components.")
     public boolean mle_optimize_small_component = false;
     
-    @Option(name="-log", usage="[DEFAULT=FALSE] Partition Component into different chunks while sampling.")
+    @Option(name="-log", usage="[DEFAULT=FALSE] Write samples to log file.")
     public boolean sampleLog = false;
     
-    @Option(name="-sa", usage="[DEFAULT=10] SA.")
-    public int samplesat_sa_coef = 10;
+    @Option(name="-sa", usage="SampleSAT Simulated Annealing \"Temperature\" (inverse of temp)")
+    public double samplesat_sa_coef = Config.samplesat_sa_coef;
     
-    @Option(name="-randomStep", usage="Specify the WalkSAT random step probability")
+    @Option(name="-randomStep", usage="Specify the WalkSAT random step probability (the probability "
+    		+"WalkSAT performs a non-greedy flip)")
     public double random_step = 0.5;
     
 }

@@ -51,6 +51,12 @@ public class RDB {
 	public String schema = null;
 
 	public static LinkedHashSet<RDB> historyInstances = new LinkedHashSet<RDB>();
+	
+	public static void resetStaticVars() {
+		allRDBs = new ArrayList<RDB>();
+		historyInstances = new LinkedHashSet<RDB>();
+		currentDBCounter = 0;
+	}
 
 	/**
 	 *  Disable auto-commit so that JDBC won't fetch all query results at once. 
@@ -232,6 +238,46 @@ public class RDB {
 		return con;
 	}
 
+	public Statement createStatementWithTimeout() throws SQLException  {
+		Statement stm = con.createStatement();
+		if (Config.timeout > 0 && !Config.mcsatTimedOut && !Config.exiting_mode) {
+			int secondsLeft;
+			if (Config.inGroundingPhase) {
+				secondsLeft = Timer.secondsToGroundingTimeOut();
+				if (secondsLeft <= 0) {
+					ExceptionMan.die("Timeout during grounding");
+				}
+			} else {
+				secondsLeft = Timer.secondsToTimeOut();
+			}
+			if (secondsLeft <= 0) {
+				ExceptionMan.die("Trying to set query timeout to value <= 0");
+			}
+//			UIMan.verbose(3, "Creating statement with " + secondsLeft + " second timeout...");
+			stm.setQueryTimeout(secondsLeft);
+		}
+		return stm;
+	}
+	
+	public Statement createStatementWithTimeout(int resultSetType, int resultSetConcurrency) throws SQLException  {
+		Statement stm = con.createStatement(resultSetType, resultSetConcurrency);
+		if (Config.timeout > 0 && !Config.mcsatTimedOut && !Config.exiting_mode) {
+			int secondsLeft;
+			if (Config.inGroundingPhase) {
+				secondsLeft = Timer.secondsToGroundingTimeOut();
+				if (secondsLeft <= 0) {
+					ExceptionMan.die("Timeout during grounding");
+				}
+			} else {
+				secondsLeft = Timer.secondsToTimeOut();
+			}			
+			if (secondsLeft <= 0) {
+				ExceptionMan.die("Trying to set query timeout to value <= 0");
+			}
+			stm.setQueryTimeout(secondsLeft);
+		}
+		return stm;
+	}
 
 	/**
 	 * Dump a MAP world produced by MAP inference.
@@ -344,8 +390,8 @@ public class RDB {
 	 */
 	public int update(String sql){
 		if(Config.exiting_mode) ExceptionMan.die("");
-		try {
-			Statement stmt = con.createStatement();
+		try (Statement stmt = createStatementWithTimeout()) {
+//			Statement stmt = createStatementWithTimeout();
 			currentlyRunningQuery = stmt;
 			lastUpdateRowCount = stmt.executeUpdate(sql);
 			stmt.close();
@@ -364,8 +410,8 @@ public class RDB {
 	public void execute(String sql) {		
 		//if(sql.contains("DELETE") || sql.contains("delete")) System.out.println(sql);
 		if(Config.exiting_mode) ExceptionMan.die("");
-		try {
-			Statement stmt = con.createStatement();
+		try (Statement stmt = createStatementWithTimeout()) {
+//			Statement stmt = createStatementWithTimeout();
 			currentlyRunningQuery = stmt;
 			stmt.execute(sql);
 			stmt.close();
@@ -379,8 +425,8 @@ public class RDB {
 	}
 
 	public void executeWhatever(String sql) {
-		try {
-			Statement stmt = con.createStatement();
+		try (Statement stmt = createStatementWithTimeout()) {
+//			Statement stmt = createStatementWithTimeout();
 			stmt.execute(sql);
 			stmt.close();
 		} catch (SQLException e) {
@@ -389,7 +435,7 @@ public class RDB {
 	}
 
 	private void executeRaw(String sql) throws SQLException{
-		Statement stmt = con.createStatement();
+		Statement stmt = createStatementWithTimeout();
 		stmt.execute(sql);
 		stmt.close();
 	}
@@ -397,7 +443,7 @@ public class RDB {
 	private void updateRaw(String sql) throws SQLException{
 		this.commit();
 		this.setAutoCommit(true);
-		Statement stmt = con.createStatement();
+		Statement stmt = createStatementWithTimeout();
 		currentlyRunningQuery = stmt;
 		stmt.executeUpdate(sql);
 		stmt.close();
@@ -410,8 +456,8 @@ public class RDB {
 	 * @return true on success
 	 */
 	public boolean updateBatch(ArrayList<String> sqls) {
-		try {
-			Statement st = con.createStatement();
+		try (Statement st = createStatementWithTimeout()) {
+//			Statement st = createStatementWithTimeout();
 			currentlyRunningQuery = st;
 			for(String s : sqls) {
 				st.addBatch(s);
@@ -435,7 +481,7 @@ public class RDB {
 	public ResultSet query(String sql){
 		if(Config.exiting_mode) ExceptionMan.die("");
 		try {
-			Statement stmt = con.createStatement(ResultSet.HOLD_CURSORS_OVER_COMMIT, 1);
+			Statement stmt = createStatementWithTimeout(ResultSet.HOLD_CURSORS_OVER_COMMIT, 1);
 			currentlyRunningQuery = stmt;
 			stmt.setFetchSize(100000);
 			ResultSet rs = stmt.executeQuery(sql);
@@ -718,7 +764,7 @@ public class RDB {
         	execute("SELECT setseed(" + Config.pgSeed + ");");
     	}
         UIMan.verbose(3, "### Checking existence of " + schema);
-        if (countTuples("(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '" + schema + "') SC") > 0) {
+        if (Config.reuseSchema && countTuples("(SELECT schema_name FROM information_schema.schemata WHERE schema_name = '" + schema + "') SC") > 0) {
             try {
                 updateRaw("SET search_path = " + schema);
                 UIMan.verbose(3, "### Reusing schema " + schema);
@@ -795,11 +841,11 @@ public class RDB {
 	 * Useless when AutoCommit is on, which is so by default.
 	 */
 	public void commit() {
-		try {
-			con.commit();
-		} catch (SQLException e) {
-			ExceptionMan.handle(e);
-		}
+//		try {
+//			con.commit();
+//		} catch (SQLException e) {
+//			ExceptionMan.handle(e);
+//		}
 	}
 
 	/**
@@ -904,6 +950,32 @@ public class RDB {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		}
+		return -1;
+	}
+
+	public long countTuplesAfterGroundingTimeout(String table) {
+		String sql = "SELECT COUNT(*) FROM " + table;
+		ResultSet rs;
+		try {
+			Statement stmt = con.createStatement(ResultSet.HOLD_CURSORS_OVER_COMMIT, 1);
+			currentlyRunningQuery = stmt;
+			stmt.setFetchSize(100000);
+			rs = stmt.executeQuery(sql);
+			currentlyRunningQuery = null;		
+			if(rs == null) ExceptionMan.die("");
+			try {
+				if(rs.next()) {
+					long c = rs.getLong(1);
+					rs.close();
+					return c;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		} catch (SQLException e) {
+			UIMan.error("can't get number of tuples at grounding time out");
+			ExceptionMan.handle(e);
 		}
 		return -1;
 	}

@@ -50,7 +50,25 @@ public abstract class Infer {
 	 */
 	protected void ground(){
 		grounding = new Grounding(mln);
+		grounding.dmover = dmover;
 		grounding.constructMRF();
+		
+		writeClausesToFile();
+		writeWCNFToFile();
+	}
+	
+	protected void writeClausesToFile() {
+		if (Config.writeClausesFile != null) {
+			dmover.createAtomDescTable(mln.relAtoms, Config.relAtomDesc);
+			dmover.createClauseDescTable(mln.relClauses, Config.relClauseDesc);
+			dmover.dumpClauseDescToFile(mln.relClauses, Config.relClauseDesc, Config.writeClausesFile);
+		}
+	}
+	
+	protected void writeWCNFToFile() {
+		if (Config.writeWCNFFile != null) {
+			dmover.dumpWCNFToFile(mln.relAtoms, mln.relClauses, Config.writeWCNFFile);
+		}
 	}
 
 	/**
@@ -119,7 +137,7 @@ public abstract class Infer {
 		db.dropView(Config.relPreds);
 		String sql = "CREATE TABLE " + Config.relPreds + "(\n";
 		sql += "predid INT,\n";
-		sql += "name VARCHAR(32));";
+		sql += "name CHARACTER VARYING);";
 		db.update(sql);
 		
 		for(Predicate p : mln.getAllPredOrderByName()){			

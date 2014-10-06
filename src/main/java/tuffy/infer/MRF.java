@@ -1,9 +1,13 @@
 package tuffy.infer;
 
+import java.sql.ResultSet;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Iterator;
@@ -14,26 +18,27 @@ import java.util.LinkedHashMap; // formerly java.util.concurrent.ConcurrentHashM
 import tuffy.infer.ds.GAtom;
 import tuffy.infer.ds.GClause;
 import tuffy.infer.ds.KeyBlock;
-import tuffy.learn.Learner;
+//import tuffy.learn.Learner;
 import tuffy.mln.Clause;
 import tuffy.mln.MarkovLogicNetwork;
-import tuffy.sample.DS_JunctionTree;
-import tuffy.sample.SampleAlgorithm_MCSAT;
-import tuffy.sample.SampleAlgorithm_MetropolisHastingsSampling;
-import tuffy.sample.SampleAlgorithm_NaiveSampling;
-import tuffy.sample.SampleAlgorithm_SerialMixture;
+//import tuffy.sample.DS_JunctionTree;
+//import tuffy.sample.SampleAlgorithm_MCSAT;
+//import tuffy.sample.SampleAlgorithm_MetropolisHastingsSampling;
+//import tuffy.sample.SampleAlgorithm_NaiveSampling;
+//import tuffy.sample.SampleAlgorithm_SerialMixture;
 import tuffy.util.BitSetIntPair;
 import tuffy.util.Config;
 import tuffy.util.DebugMan;
 import tuffy.util.ExceptionMan;
 import tuffy.util.HashArray;
 import tuffy.util.SeededRandom;
+import tuffy.util.Stats;
 import tuffy.util.Timer;
 import tuffy.util.UIMan;
 import tuffy.util.myInt;
-import tuffy.worker.MLEWorker;
-import tuffy.worker.MLEWorker_gibbsSampler;
-import tuffy.worker.MLEWorkerInstance;
+//import tuffy.worker.MLEWorker;
+//import tuffy.worker.MLEWorker_gibbsSampler;
+//import tuffy.worker.MLEWorkerInstance;
 import tuffy.worker.ds.MLEWorld;
 
 /**
@@ -73,8 +78,8 @@ public class MRF {
 
 	public boolean ownsAllAtoms = false;
 
-	// TODO: blocking
-	private boolean usingBlocks = true;
+	// TODO: blocking - which is???
+//	private boolean usingBlocks = true;
 
 	private LinkedHashSet<Integer> coreAtoms = new LinkedHashSet<Integer>();
 
@@ -82,6 +87,17 @@ public class MRF {
 	 * Array of all GClause objects in this MRF.
 	 */
 	public ArrayList<GClause> clauses = new ArrayList<GClause>();
+	
+
+	// TODO(ericgribkoff) Need ArrayList of atom IDs to select a random atom
+	// for simulated annealing step of SampleSAT.
+	public ArrayList<Integer> atomsArrayList = new ArrayList<Integer>();
+	
+	// Clauses index and atomid for the current subset of clauses selected by
+	// MC-SAT for passing to SampleSAT
+	public ArrayList<GClause> sampledClauses = new ArrayList<GClause>();
+	public ArrayList<Integer> sampledAtoms = new ArrayList<Integer>();
+	public LinkedHashSet<Integer> sampledAtomsSet = new LinkedHashSet<Integer>();
 
 	LinkedHashMap<Integer, GClause> singletons = null;
 
@@ -165,6 +181,18 @@ public class MRF {
 
 		}
 
+	}
+	
+	public static void computeStats(MRF mrf) {
+		Stats.numberGroundAtoms = mrf.atoms.size();
+		Stats.numberGroundClauses = mrf.clauses.size();
+		int numberUnits = 0;
+		for (GClause gc : mrf.clauses) {
+			if (gc.isUnitClause() && gc.isHardClause()) {
+				numberUnits++;
+			}
+		}
+		Stats.numberUnits = numberUnits;
 	}
 
 	/**
@@ -594,32 +622,6 @@ public class MRF {
 
 	}
 
-	public double MLE_populateTaskToDBFast(int myID, int nSamples, int nMachines){
-		/*
-		this.compile();
-
-		for(int machine = 0; machine < nMachines; machine ++){
-			String taskID = DigestUtils.md5Hex("" + myID + "---" + machine);
-
-			String pid = "" + myID;
-			String mid = "" + machine;
-
-			String weight = this.getWeightArray();
-			String clause = this.getClauseArray();
-			String query  = this.getQueryArray();
-			String nsample = "" + (nSamples/nMachines + 1);
-			String nvariable = "" + (this.globalAtom.size());
-
-			System.out.println(taskID + "\t" + pid + "\t" + mid + "\t" + weight + "\t" + clause + "\t" + query + "\t" + nsample + "\t" + nvariable);
-
-
-		}
-
-		return 0;
-		 */
-
-		return 0;
-	}
 
 	public double logAdd(double logX, double logY) {
 
@@ -641,366 +643,6 @@ public class MRF {
 		return logX + java.lang.Math.log(1.0 + java.lang.Math.exp(negDiff)); 
 	}
 
-	public LinkedHashMap<String, Double> MLE_getGradientUpdate(LinkedHashMap<String, Double> currentWeight, double mu, double alpha){
-
-		ExceptionMan.die("Why are you still using the slower version? :-)");
-		return null;
-
-		//System.out.println("graident 1");
-		/*
-		LinkedHashMap<String, Double> rs = new LinkedHashMap<String, Double>();
-
-		LinkedHashMap<String, myDouble> tally_small = new LinkedHashMap<String, myDouble>();
-		LinkedHashMap<String, myDouble> tally_large = new LinkedHashMap<String, myDouble>();
-		Double smallZ = Double.NEGATIVE_INFINITY;
-		Double largeZ = Double.NEGATIVE_INFINITY;
-
-		for(String c : currentWeight.keySet()){
-			tally_small.put(c, new myDouble());
-			tally_large.put(c, new myDouble());
-		}
-
-		//System.out.println("graident 2");
-		int nbatch = 1;
-
-		for(int batch=0;batch<nbatch;batch ++){
-
-			//System.out.print(".");
-			BitSet bitmap_smallsample = new BitSet();
-			BitSet bitmap_largesample = new BitSet();
-
-			for(Integer atomid: globalAtom.keySet()){
-
-				GAtom atom = globalAtom.get(atomid);
-
-				if(atom.isquery){
-					if(atom.truth){
-						bitmap_smallsample.set(atomid);
-					}
-					if(SeededRandom.getInstance().nextDouble() > 0.5){
-						bitmap_largesample.set(atomid);
-					}
-				}else{
-
-					if(SeededRandom.getInstance().nextDouble() > 0.5){
-						bitmap_smallsample.set(atomid);
-					}
-
-					if(SeededRandom.getInstance().nextDouble() > 0.5){
-						bitmap_largesample.set(atomid);
-					}
-				}
-
-			}
-
-			LinkedHashMap<String, Double> tally_small_meta = getClauseTallies(bitmap_smallsample);
-			LinkedHashMap<String, Double> tally_large_meta = getClauseTallies(bitmap_largesample);
-
-			double c_small = this.getCost(bitmap_smallsample);
-			double c_large = this.getCost(bitmap_largesample);
-
-
-			bitmap_smallsample = new BitSet();
-			bitmap_largesample = new BitSet();
-
-			for(Integer atomid: globalAtom.keySet()){
-
-				GAtom atom = globalAtom.get(atomid);
-
-				if(atom.isquery){
-					if(atom.truth){
-						bitmap_smallsample.set(atomid);
-					}
-					if(SeededRandom.getInstance().nextDouble() > 0.5){
-						bitmap_largesample.set(atomid);
-					}
-				}else{
-
-					if(SeededRandom.getInstance().nextDouble() > 0.5){
-						bitmap_smallsample.set(atomid);
-					}
-
-					if(SeededRandom.getInstance().nextDouble() > 0.5){
-						bitmap_largesample.set(atomid);
-					}
-				}
-
-			}
-
-			double c_smallz = this.getCost(bitmap_smallsample);
-			smallZ = logAdd(-c_smallz, smallZ);
-
-			double c_largez = this.getCost(bitmap_largesample);
-			largeZ = logAdd(-c_largez, largeZ);
-
-			for(String c : tally_small_meta.keySet()){
-				tally_small.get(c).tallylog( -c_small + Math.log(tally_small_meta.get(c)));
-				//System.out.println("~~~");
-				//System.out.println(-c_small);
-				//System.out.println(currentWeight);
-				//System.out.println(tally_small_meta.get(c));
-				//System.out.println("###");
-			}
-
-			for(String c : tally_large_meta.keySet()){
-				tally_large.get(c).tallylog( -c_large + Math.log(tally_large_meta.get(c)));
-			}
-
-		}
-
-		//TODO: change to log base
-
-		for(String ffcid : currentWeight.keySet()){
-
-			double delta = 0;
-			double m1 = 0;
-			double m2 = 0;
-
-			if(tally_small.containsKey(ffcid)){
-				//m1 = tally_small.get(ffcid) * Math.exp(-c_small - logsum);
-				m1 = Math.exp(tally_small.get(ffcid).value - smallZ);
-				//m1 = tally_small.get(ffcid);
-			}
-
-			if(tally_large.containsKey(ffcid)){
-				//m2 = tally_large.get(ffcid) * Math.exp(-c_large - logsum);
-				m2 = Math.exp(tally_large.get(ffcid).value - largeZ);
-				//System.out.println("tally_large: " + tally_large.get(ffcid).value);
-				//System.out.println("largeZ: " + largeZ);
-				//System.out.println("m2: " + m2);
-				System.out.println("weight: " + currentWeight);
-			}
-
-			//System.out.println("smallZ = " + smallZ + ", largeZ = " + largeZ + 
-			//		"; smallTally = " + tally_small.get(ffcid).value + 
-			//		", largeTally = " + tally_large.get(ffcid).value);
-			//System.out.println("m1 = " + m1 + ", m2 = " + m2);
-
-			System.out.println(tally_small + "\t" + tally_large + "\t" + smallZ + "\t" + smallZ + "\t" + m1 + "\t" + m2);
-
-			if(m2 == Double.NEGATIVE_INFINITY || m2== Double.POSITIVE_INFINITY || m1 == Double.NEGATIVE_INFINITY || m2 == Double.POSITIVE_INFINITY){
-				delta = 0 ;
-			}else{
-
-				if(Math.abs(alpha * (m2-m1)) > 0.001){
-					delta += 0.1/alpha;
-				}else{
-					delta += (m2 - m1);
-				}	
-			}
-
-			rs.put(ffcid, currentWeight.get(ffcid) + alpha * delta);
-
-		}
-
-		//TODO: change the flushing of weight somewhere else
-		for(int ct=0;ct<bitmaps_weight.length;ct++){
-
-			GClause gc = clauses.get(ct);
-
-			bitmaps_weight[ct] = 0;
-
-			for(String ffcid : gc.ffcid){
-
-				if(ffcid.startsWith("-")){
-					bitmaps_weight[ct] -= currentWeight.get(ffcid);
-				}else{
-					bitmaps_weight[ct] += currentWeight.get(ffcid);
-				}
-
-			}
-
-			gc.weight = bitmaps_weight[ct];
-
-
-		}
-		return rs;
-		 */
-	}
-
-
-	/*
-	public double MLE_gibbsSampler(int nSamples){
-
-		this.compile();
-
-	}
-	 */
-
-
-	public double MLE_naiveSampler(int nSamples){
-
-		this.compile();
-
-		ArrayList<MLEWorker> samplers = new ArrayList<MLEWorker>();
-
-		int metaSample = (int)Math.ceil(1.0*nSamples / Config.innerPara);
-
-		for(int i=0;i<Config.innerPara;i++){
-
-			MLEWorkerInstance sampler = null;
-
-
-			if(Config.mle_use_mcsat_sampling){
-
-				sampler = new MLEWorkerInstance(this, metaSample,
-						SampleAlgorithm_MCSAT.class, null);
-
-			}else if(Config.mle_use_gibbs_sampling){
-
-				sampler = new MLEWorkerInstance(this, metaSample,
-						SampleAlgorithm_MetropolisHastingsSampling.class, null);
-
-			}else if(Config.mle_use_serialmix_sampling){
-
-				sampler = new MLEWorkerInstance(this, metaSample, 
-						SampleAlgorithm_SerialMixture.class, null);
-
-			}else{
-
-				sampler = new MLEWorkerInstance(this, metaSample, 
-						SampleAlgorithm_NaiveSampling.class, null);
-
-			}
-
-			samplers.add(sampler);
-			sampler.start();
-
-		}
-
-		try {
-			for(int i=0;i<Config.innerPara;i++){
-				samplers.get(i).join();
-			}
-		} catch (InterruptedException e) {
-			ExceptionMan.die(e.getMessage());
-		}
-
-		MLEWorld allworld = new MLEWorld(empty);
-
-		LinkedHashMap<BitSet, MLEWorld> worlds = new LinkedHashMap<BitSet, MLEWorld>();
-		for(int i=0;i<Config.innerPara;i++){
-			// TODO: may need some smarter top-k algorithm
-			ArrayList<MLEWorld> topk = samplers.get(i).getTopK(-1);
-			for(MLEWorld world : topk){
-				if(worlds.containsKey(world.bitmap)){
-					worlds.get(world.bitmap).tallyLogCost(world.logCost);
-					worlds.get(world.bitmap).tallyFreq(world.freq);
-				}else{
-					worlds.put(world.bitmap, world);
-				}
-				allworld.tallyFreq(world.freq);
-				allworld.tallyLogCost(world.logCost);
-			}
-		}
-
-		ArrayList<MLEWorld> mlers = new ArrayList<MLEWorld>();
-		mlers.addAll(worlds.values());
-
-		if(Config.mle_use_gibbs_sampling || Config.mle_use_mcsat_sampling){
-			Collections.sort(mlers, new Comparator<MLEWorld>(){
-				@Override
-				public int compare(MLEWorld o1, MLEWorld o2) {
-					if(o1.freq > o2.freq){
-						return -1;
-					}else if (o1.freq == o2.freq){
-						return 0;
-					}else{
-						return 1;
-					}
-				}
-			});
-		}else{
-			Collections.sort(mlers, new Comparator<MLEWorld>(){
-				@Override
-				public int compare(MLEWorld o1, MLEWorld o2) {
-					if(o1.logCost > o2.logCost){
-						return -1;
-					}else if (o1.logCost == o2.logCost){
-						return 0;
-					}else{
-						return 1;
-					}
-				}
-			});
-		}
-
-		if(mlers.size() > 0){
-			MLEWorld top1 = mlers.get(0);
-
-			for(Integer natom : this.coreAtoms){
-				this.atoms.get(natom).truth = false;
-			}
-
-			if(Config.mle_use_gibbs_sampling || Config.mle_use_mcsat_sampling){
-				for (int pos = top1.bitmap.nextSetBit(0); pos >= 0; pos = top1.bitmap.nextSetBit(pos+1)) {
-					this.globalAtom.get(pos).truth = true;
-				}
-
-				for(GAtom atom : this.atoms.values()){
-					atom.prob = (float) (atom.tallyTrueFreq / atom.tallyFreq);
-				}
-			}else{
-
-				for (int pos = top1.bitmap.nextSetBit(0); pos >= 0; pos = top1.bitmap.nextSetBit(pos+1)) {
-					this.globalAtom.get(pos).truth = true;
-				}
-
-				for(GAtom atom : this.atoms.values()){
-					atom.prob = (float) Math.exp(atom.tallyTrueLogWeight - atom.tallyLogWeight);
-				}
-
-			}
-
-			//System.out.println(">>> Top Freq = " + top1.freq);
-			return Math.exp(top1.logCost - allworld.logCost);
-		}
-
-		return 1;
-
-	}
-
-
-
-
-	public void updateSingletonClauses(LinkedHashMap<Integer, Double> deltas, boolean inv) {
-		if (singletons == null) {
-			singletons = new LinkedHashMap<Integer, GClause>();
-			for (GClause gc : clauses) {
-				if (gc.lits.length == 1) {
-					singletons.put(gc.lits[0], gc);
-				}
-			}
-		}
-
-		int newones = 0;
-		for (int a : deltas.keySet()) {
-			if (!coreAtoms.contains(a)) continue;
-			double w = deltas.get(a);
-			if (inv) w = -w;
-			GClause gc = singletons.get(a);
-			if (gc == null) {
-				gc = new GClause();
-				gc.lits = new int[] {a};
-				gc.weight = w;
-				singletons.put(a, gc);
-				clauses.add(gc);
-				newones ++;
-				ArrayList<GClause> plist = adj.get(a);
-				if (plist == null) {
-					plist = new ArrayList<GClause>();
-					adj.put(a, plist);
-				}
-				plist.add(gc);
-			} else {
-				gc.weight += w;
-				//UIMan.verbose(1, "" + a + " : " + w);
-			}
-		}
-		if (newones > 0) {
-			//UIMan.verbose(1, "@@@ New singleton clauses = " + newones);
-		}
-	}
 
 
 	/**
@@ -1254,6 +896,7 @@ public class MRF {
 	 * @param aid id of the atom
 	 */
 	public void addAtom(int aid){
+		atomsArrayList.add(aid);
 		getCoreAtoms().add(aid);
 	}
 
@@ -1301,9 +944,7 @@ public class MRF {
 	 * If current truths have the lowest cost, save them.
 	 * @param cost the current cost
 	 */
-	protected void saveLowTruth(double cost){
-		if(!(cost < lowCost || (cost < 0.0001 && sampleSatMode))) return;
-		if(cost < lowCost) lowCost = cost;
+	protected void saveLowTruth(){
 		if(dirtyAtoms.size() > 0){ // incremental dump
 			for(int aid : dirtyAtoms){
 				GAtom ga = atoms.get(aid);
@@ -1311,30 +952,16 @@ public class MRF {
 			}
 			dirtyAtoms.clear();
 		}else{ // force flushing
-			if(ownsAllAtoms){
-				for(GAtom n : atoms.values()){
-					n.lowTruth = n.truth;
-				}
-			}else{
-				for(int aid : getCoreAtoms()){
-					GAtom n = atoms.get(aid);
-					n.lowTruth = n.truth;
-				}
+			for(GAtom n : atoms.values()){
+				n.lowTruth = n.truth;
 			}
 		}
 	}
 
 
 	private void saveTruthAsLow(){
-		if(ownsAllAtoms){
-			for(GAtom n : atoms.values()){
-				n.lowTruth = n.truth;
-			}
-		}else{
-			for(int aid : getCoreAtoms()){
-				GAtom n = atoms.get(aid);
-				n.lowTruth = n.truth;
-			}
+		for(GAtom n : atoms.values()){
+			n.lowTruth = n.truth;
 		}
 	}
 
@@ -1372,7 +999,14 @@ public class MRF {
 	 * @param aid id of the atom
 	 * @param t truth value to be fixed
 	 */
+	
+	private ArrayList<Integer> fixedAtomList = new ArrayList<Integer>();
 	protected void fixAtom(int aid, boolean t){
+		if (aid == 10 || aid == 78 || aid == 17 || aid == 124 || aid == 122) {
+			UIMan.verbose(3, "here");
+		}
+		fixedAtomList.add(t ? aid : -aid);
+		UIMan.verbose(3, fixedAtomList.toString());
 		GAtom a = atoms.get(aid);
 		a.truth = t;
 		a.fixed = true;
@@ -1420,15 +1054,8 @@ public class MRF {
 	 * Assign the recorded low-cost truth values to current truth values.
 	 */
 	public void restoreLowTruth(){
-		if(ownsAllAtoms){
-			for(GAtom n : atoms.values()){
-				n.truth = n.lowTruth;
-			}
-		}else{
-			for(int aid : getCoreAtoms()){
-				GAtom n = atoms.get(aid);
-				n.truth = n.lowTruth;
-			}
+		for(GAtom n : atoms.values()){
+			n.truth = n.lowTruth;
 		}
 	}
 
@@ -1448,9 +1075,9 @@ public class MRF {
 	 */
 	public void buildIndices(){
 		if(!adj.isEmpty()) return;
-		adj.clear();
+		adj.clear(); //TODO(ericgribkoff) if it's empty, clearing does nothing
 		for(GClause f : clauses){
-			boolean isCut = false;
+//			UIMan.verbose(3, "building index for " + f);
 			for(int lit : f.lits){
 				ArrayList<GClause> plist = adj.get(lit);
 				if(plist == null){
@@ -1458,24 +1085,21 @@ public class MRF {
 					adj.put(lit, plist);
 				}
 				plist.add(f);
-				if(!ownsAllAtoms && !getCoreAtoms().contains(Math.abs(lit))){
-					isCut = true;
-				}
-				if(Config.checkNumCriticalNodes){
-					GAtom n = atoms.get(Math.abs(lit));
-					if((lit > 0) == (f.weight > 0)){
-						n.markWannaBeTrue();
-					}else{
-						n.markWannaBeFalse();
-					}
-				}
 			}
-			if(isCut){
-				numClausesInCut++;
-				weightClausesInCut += Math.abs(f.weight);
-				for(int lit : f.lits){
-					atoms.get(Math.abs(lit)).cut = true;
+		}
+	}
+	
+	public void buildIndicesSampledClauses(){
+		adj.clear();
+		for(GClause f : sampledClauses){
+//			UIMan.verbose(3, "building index for " + f);
+			for(int lit : f.lits){
+				ArrayList<GClause> plist = adj.get(lit);
+				if(plist == null){
+					plist = new ArrayList<GClause>();
+					adj.put(lit, plist);
 				}
+				plist.add(f);
 			}
 		}
 	}
@@ -1520,264 +1144,6 @@ public class MRF {
 
 	}
 
-	/**
-	 * Run WalkSAT.
-	 * @param nTries number of tries
-	 * @param nSteps number of steps per try
-	 */
-	public void inferWalkSAT(int nTries, long nSteps){
-		this.inferWalkSATwithBlocks(nTries, nSteps);
-	}
-
-	@SuppressWarnings("unchecked")
-	public void inferWalkSAT(int nTries, long nSteps, LinkedHashSet<Integer> notChanges){
-		if(Config.use_atom_blocking == false){
-			this.inferWalkSATwithoutBlocking(nTries, nSteps, notChanges);
-		}else{
-			this.inferWalkSATwithBlocks(nTries, nSteps);
-		}
-	}
-
-	/**
-	 * Run WalkSAT.
-	 * @param nTries number of tries
-	 * @param nSteps number of steps per try
-	 */
-	private synchronized void inferWalkSATwithoutBlocking(int nTries, 
-			long nSteps, LinkedHashSet<Integer>... notChanges){
-		if(atoms.size() == 0){
-			return;
-		}
-
-		LinkedHashSet<Integer> notChange = null;
-		if(notChanges.length == 1){
-			notChange = notChanges[0];
-		}
-
-		if(nSteps < 4) nSteps = 4;
-		if(!Config.learning_mode) UIMan.println("    Running WalkSAT for " + nTries +
-				" tries, " + UIMan.comma(nSteps) + " flips/try");
-		if(adj.isEmpty()) buildIndices();
-		Random rand = SeededRandom.getInstance();
-		// low cost of periodic flushing
-		for(long itry=1; itry<=nTries; itry++){
-			if(!Config.learning_mode)  UIMan.println("[Try #" + itry + "/" + nTries + "]");
-			if(notChanges.length == 0){
-				initMRF();
-			}else{
-				if(usingBlocks)	maintainKeyConstraints();
-				lowCost = calcCosts();
-				dirtyAtoms.clear();
-				saveTruthAsLow();
-			}
-			for(long flip = 1; flip <= nSteps; flip++){
-				// check if we have reached terminal condition
-				if(unsat.isEmpty()){
-					if(!Config.learning_mode)   UIMan.println("Resolved!");
-					saveLowTruth(totalCost);
-					return;
-				}
-				// pick random unsat clause
-				GClause lucky = unsat.getRandomElement();
-				// pick an atom therein
-				int picked = 0;
-				if(lucky.isPositiveClause()){
-					// a positive clause
-					if(testChance(Config.walksat_random_step_probability)){
-						// a random step
-						picked = -1;
-
-						if(notChange != null){
-							boolean skip = true;
-							for(int luckylit : lucky.lits){
-								if(!notChange.contains(Math.abs(luckylit))){
-									skip = false;
-								}
-							}
-							if(skip == true){
-								continue;
-							}
-						}
-
-						while(picked == -1 || !ownsAtom(picked, notChange) ){
-							picked = Math.abs(lucky.lits[rand.nextInt(lucky.lits.length)]);
-						}
-					}else{
-						// a greedy step
-						double minDelta = Double.MAX_VALUE;
-						int nrivals = 0;
-						for(int lit : lucky.lits){
-							int a = Math.abs(lit);
-							if(!ownsAtom(a, notChange)) continue;
-							if(atoms.get(a).delta() < minDelta){
-								picked = a;
-								minDelta = atoms.get(a).delta();
-								nrivals = 1;
-							}else if(atoms.get(a).delta() == minDelta){
-								if(testChance(1.0/(++nrivals))){
-									picked = a;
-								}
-							}
-						}
-					}
-					if(picked == 0){
-						System.out.println();
-					}
-				}else{
-					// a negative clause
-					ArrayList<Integer> cands = new ArrayList<Integer>();
-					for(int lit : lucky.lits){
-						if(isTrueLit(lit) && ownsAtom(Math.abs(lit), notChange)   ){
-							cands.add(Math.abs(lit));
-						}
-					}
-
-					if(cands.size() == 0){
-						continue;
-					}
-					if(cands.size() == 1){
-						picked = cands.get(0);
-					}else{
-						if(testChance(Config.walksat_random_step_probability)){
-							// a random step
-							picked = cands.get(rand.nextInt(cands.size()));
-						}else{
-							// a greedy step
-							double minDelta = Double.MAX_VALUE;
-							int nrivals = 0;
-							for(int a : cands){
-								if(atoms.get(a).delta() < minDelta){
-									picked = a;
-									minDelta = atoms.get(a).delta();
-									nrivals = 1;
-								}else if(atoms.get(a).delta() == minDelta){
-									if(testChance(1.0/(++nrivals))){
-										picked = a;
-									}
-								}
-							}
-						}
-					}
-
-					if(picked == 0){
-						System.out.println();
-					}
-				}
-
-				//if(picked == 0) continue;
-				inferOps ++;
-				if(flip==1 || flip==nSteps || flip % (nSteps/4) == 0){
-					if(!Config.learning_mode)   UIMan.verbose(1, "At flip "+UIMan.comma(flip)+
-							"/" + UIMan.comma(nSteps) + ";\tcost = " + UIMan.comma(lowCost));
-				}
-				if(!ownsAtom(picked, notChange)) continue;
-				GAtom atom = atoms.get(picked);
-
-				if(Config.avoid_breaking_hard_clauses && 
-						atom.criticalForHardClauses()) continue;
-
-				if(Config.apply_greedy_throttling && 
-						atom.delta() > 0 && 
-						testChance(0.95)){
-					continue;
-				}
-				// flip this atom
-				Timer.runStat.effectiveSteps++;
-
-				//double oldTotal = totalCost;
-
-				totalCost += atom.delta();
-				atom.truth = !atom.truth;
-
-				//double expected = totalCost;
-
-				dirtyAtoms.add(picked);
-				atom.invertDelta();
-				if(totalCost < lowCost){
-					saveLowTruth(totalCost);
-				}
-				// update stats
-				ArrayList<GClause> tlfac, flfac;
-				if(atom.truth){
-					tlfac = adj.get(atom.id);
-					flfac = adj.get(-atom.id);
-
-
-				}else{
-					flfac = adj.get(atom.id);
-					tlfac = adj.get(-atom.id);
-
-				}
-				if(tlfac != null){
-					for(GClause f : tlfac){
-						++ f.nsat;
-						int nsat = f.nsat;
-						if(nsat==1){
-							if(f.weight >= 0) {
-								unsat.removeObj(f);
-							}else{
-								unsat.add(f);
-							}
-							for(int lit : f.lits){
-								int a = Math.abs(lit);
-								if(a==picked || !ownsAtom(a, notChange)) continue;
-								atoms.get(a).revokeSatPotential(f);
-							}
-						}else if(nsat==2){
-							for(int lit : f.lits){
-								int a = Math.abs(lit);
-								if(a==picked || !ownsAtom(a, notChange)) continue;
-								GAtom n = atoms.get(a);
-								if((lit>0) == n.truth && willChange(lit, f.lits)){
-									n.revokeUnsatPotential(f);
-									break;
-								}
-							}
-						}
-					}
-				}
-				if(flfac != null){
-					for(GClause f : flfac){
-						-- f.nsat;
-						int nsat = f.nsat;
-						if(nsat==0){
-							if(f.weight <= 0) {
-								unsat.removeObj(f);
-							}else{
-								unsat.add(f);
-							}
-							for(int lit : f.lits){
-								int a = Math.abs(lit);
-								if(a==picked || !ownsAtom(a, notChange)) continue;
-								atoms.get(a).assignSatPotential(f);
-							}
-						}else if(nsat==1){
-							for(int lit : f.lits){
-								int a = Math.abs(lit);
-								if(a==picked || !ownsAtom(a, notChange)) continue;
-								GAtom n = atoms.get(a);
-								if((lit>0) == n.truth && willChange(lit, f.lits)){
-									n.assignUnsatPotential(f);
-									break;
-								}
-							}
-						}
-					}
-				}
-
-				/*
-				double newcost = this.recalcCostNotOverrideOldCost();
-				if( newcost != expected){
-					if(Math.abs(newcost - expected) > 0.1){
-						System.out.println();
-					}
-					System.out.println(newcost - expected);
-				}
-				 */
-			}
-		}
-	}
-
 	public boolean willChange(int lit, int[] lits){
 		for(int a : lits){
 			if(a == -lit){
@@ -1786,380 +1152,6 @@ public class MRF {
 		}
 		return true;
 	}
-
-	/**
-	 * Run WalkSAT with blocks.
-	 * @param nTries number of tries
-	 * @param nSteps number of steps per try
-	 */
-	private void inferWalkSATwithBlocks(int nTries, long nSteps){
-
-		//TODO: CHECK KEYBLOCK AND PARTITIONING
-
-		if(atoms.size() == 0){
-			return;
-		}
-		if(nSteps < 4) nSteps = 4;
-		//System.out.print(".");
-		UIMan.println(">>> Running WalkSAT for " + nTries +
-				" tries, " + UIMan.comma(nSteps) + " flips/try");
-		if(adj.isEmpty()) buildIndices();
-		Random rand = SeededRandom.getInstance();
-		// low cost of periodic flushing
-		for(int itry=1; itry<=nTries; itry++){
-			UIMan.println("[Try #" + itry + "/" + nTries + "]");
-			initMRF();
-
-			for(long flip = 1; flip <= nSteps; flip++){
-
-				//	if(flip % 1000 == 0){
-				//		this.testKeyConstraints();
-				//	}
-
-				// check if we have reached terminal condition
-				if(unsat.isEmpty()){
-					UIMan.println("resolved!");
-					saveLowTruth(totalCost);
-					return;
-				}
-				// pick random unsat clause
-				GClause lucky = unsat.getRandomElement();
-				// pick an atom therein
-				int picked = 0;
-				if(lucky.isPositiveClause()){
-					// a positive clause
-					if(testChance(Config.walksat_random_step_probability)){
-						// a random step
-						picked = -1;
-						while(picked == -1 || !ownsAtom(picked)){
-							picked = Math.abs(lucky.lits[rand.nextInt(lucky.lits.length)]);
-						}
-					}else{
-						// a greedy step
-						double minDelta = Double.MAX_VALUE;
-						int nrivals = 0;
-						for(int lit : lucky.lits){
-							int a = Math.abs(lit);
-							if(!ownsAtom(a)) continue;
-							if(atoms.get(a).delta() < minDelta){
-								picked = a;
-								minDelta = atoms.get(a).delta();
-								nrivals = 1;
-							}else if(atoms.get(a).delta() == minDelta){
-								if(testChance(1.0/(++nrivals))){
-									picked = a;
-								}
-							}
-						}
-						if(minDelta > 0){
-							continue;
-						}
-					}
-				}else{
-					// a negative clause
-					ArrayList<Integer> cands = new ArrayList<Integer>();
-					for(int lit : lucky.lits){
-						if(isTrueLit(lit) && ownsAtom(Math.abs(lit))){
-							cands.add(Math.abs(lit));
-						}
-					}
-					if(cands.size() == 1){
-						picked = cands.get(0);
-						if(atoms.get(picked).delta() > 0 && !testChance(Config.walksat_random_step_probability)){
-							continue;
-						}
-					}else{
-						if(testChance(Config.walksat_random_step_probability)){
-							// a random step
-							picked = cands.get(rand.nextInt(cands.size()));
-						}else{
-							// a greedy step
-							double minDelta = Double.MAX_VALUE;
-							int nrivals = 0;
-							for(int a : cands){
-								if(atoms.get(a).delta() < minDelta){
-									picked = a;
-									minDelta = atoms.get(a).delta();
-									nrivals = 1;
-								}else if(atoms.get(a).delta() == minDelta){
-									if(testChance(1.0/(++nrivals))){
-										picked = a;
-									}
-								}
-							}
-							if(minDelta > 0){
-								continue;
-							}
-						}
-					}
-				}
-
-				//if(picked == 0) continue;
-				inferOps ++;
-				if(flip % (nSteps/4) == 1){
-					UIMan.verbose(1, "At flip "+UIMan.comma(flip)+
-							"/" + UIMan.comma(nSteps));
-				}
-				if(!ownsAtom(picked)) continue;
-				GAtom atom = atoms.get(picked);
-				if(Config.avoid_breaking_hard_clauses && 
-						atom.criticalForHardClauses()) continue;
-
-				if(Config.apply_greedy_throttling && 
-						atom.delta() > 0 && 
-						testChance(0.7)){
-					continue;
-				}
-
-				// flip this atom
-				Timer.runStat.effectiveSteps++;
-
-				totalCost += atom.delta();
-
-				ArrayList<GAtom> influenced = atom.flip(keyBlock);
-				//atom.truth = !atom.truth;
-				for(GAtom n : influenced){
-					dirtyAtoms.add(n.id);
-				}
-
-				if(totalCost < lowCost){
-					saveLowTruth(totalCost);
-					UIMan.verbose(1, "newLowCost=" + UIMan.comma(lowCost) + 
-							" at flip #" + UIMan.comma(flip));
-				}
-
-				// update stats
-				ArrayList<GClause> tlfac = new ArrayList<GClause>();
-				ArrayList<GClause> flfac = new ArrayList<GClause>();
-
-				//TODO
-				if(influenced.isEmpty()){
-
-					atom.invertDelta();
-
-					if(atom.truth){
-						if(adj.get(atom.id) != null)	tlfac.addAll(adj.get(atom.id));
-						if(adj.get(-atom.id) != null)	flfac.addAll(adj.get(-atom.id));
-					}else{
-						if(adj.get(atom.id) != null)	flfac.addAll(adj.get(atom.id));
-						if(adj.get(-atom.id) != null)	tlfac.addAll(adj.get(-atom.id));
-					}
-
-					this.adjustAtomClauseRelation(tlfac, flfac, picked);
-
-				}else{
-
-					// update f-nsat
-					ArrayList<GClause> addNSAT = new ArrayList<GClause>();
-					ArrayList<GClause> minusNSAT = new ArrayList<GClause>();
-					LinkedHashSet<GClause> allGCs = new LinkedHashSet<GClause>();
-					LinkedHashSet<Integer> needToReCalcCost = new LinkedHashSet<Integer>();
-
-					for(GAtom toFlip : influenced ){
-						if(toFlip.truth == false){
-							if(adj.containsKey(toFlip.id)) minusNSAT.addAll(adj.get(toFlip.id));
-							if(adj.containsKey(-toFlip.id)) addNSAT.addAll(adj.get(-toFlip.id));
-						}else{
-							if(adj.containsKey(-toFlip.id)) minusNSAT.addAll(adj.get(-toFlip.id));
-							if(adj.containsKey(toFlip.id)) addNSAT.addAll(adj.get(toFlip.id));
-						}
-					}
-					for(GClause gc : minusNSAT){
-						gc.nsat --;
-						allGCs.add(gc);
-					}
-					for(GClause gc : addNSAT){
-						gc.nsat ++;
-						allGCs.add(gc);
-					}
-					double realCost = 0.0;
-					for(GClause gc : allGCs){
-						for(int a : gc.lits){
-							needToReCalcCost.add(Math.abs(a));
-						}
-						if(gc.weight >= 0){
-							if(gc.nsat > 0){
-								if(unsat.contains(gc)){
-									realCost -= Math.abs(gc.weight);
-								}
-								unsat.removeObj(gc);
-							}else{
-								if(!unsat.contains(gc)){
-									realCost += Math.abs(gc.weight);
-								}
-								unsat.add(gc);
-							}
-						}else{
-							if(gc.nsat > 0){
-								if(!unsat.contains(gc)){
-									realCost += Math.abs(gc.weight);
-								}
-								unsat.add(gc);
-							}else{
-								if(unsat.contains(gc)){
-									realCost -= Math.abs(gc.weight);
-								}
-								unsat.removeObj(gc);
-							}
-						}
-					}
-
-					if(Math.abs(realCost - atom.delta()) > 0.1 ){
-						System.err.println("REALCOST != ESTIMATED COST ERROR");
-					}
-
-					this.calcCostsForWalkSAT(needToReCalcCost);
-
-				}
-
-			}
-		}
-		UIMan.println("### lowest cost = " + UIMan.comma(lowCost));
-	}
-
-
-	private void adjustAtomClauseRelation(ArrayList<GClause> tlfac, ArrayList<GClause> flfac, int picked){
-		if(tlfac.size() != 0){
-			for(GClause f : tlfac){
-				++ f.nsat;
-				int nsat = f.nsat;
-				if(nsat==1){
-					if(f.weight >= 0) {
-						unsat.removeObj(f);
-					}else{
-						unsat.add(f);
-					}
-					for(int lit : f.lits){
-						int a = Math.abs(lit);
-						if(a==picked || !ownsAtom(a)) continue;
-						atoms.get(a).revokeSatPotential(f);
-					}
-				}else if(nsat==2){
-					for(int lit : f.lits){
-						int a = Math.abs(lit);
-						if(a==picked || !ownsAtom(a)) continue;
-						GAtom n = atoms.get(a);
-						if((lit>0) == n.truth){
-							n.revokeUnsatPotential(f);
-							break;
-						}
-					}
-				}
-			}
-		}
-		if(flfac.size() != 0){
-			for(GClause f : flfac){
-				-- f.nsat;
-				int nsat = f.nsat;
-				if(nsat==0){
-					if(f.weight <= 0) {
-						unsat.removeObj(f);
-					}else{
-						unsat.add(f);
-					}
-					for(int lit : f.lits){
-						int a = Math.abs(lit);
-						if(a==picked || !ownsAtom(a)) continue;
-						atoms.get(a).assignSatPotential(f);
-					}
-				}else if(nsat==1){
-					for(int lit : f.lits){
-						int a = Math.abs(lit);
-						if(a==picked || !ownsAtom(a)) continue;
-						GAtom n = atoms.get(a);
-						if((lit>0) == n.truth){
-							n.assignUnsatPotential(f);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Run SweepSAT for MAP inference.
-	 * @param nTries number of tries
-	 * @param nSteps number of steps per try
-	 * @deprecated
-	 */
-	public void inferSweepSAT(int nTries, int nSteps){
-		DebugMan.checkPeakMem();
-		UIMan.println(">>> Running SweepSAT for " + nTries +
-				" tries, " + nSteps + " flips/try");
-
-		for(int itry=1; itry<=nTries; itry++){
-			UIMan.println("[Try #" + itry + "/" + nTries + "]");
-			initMRF();
-			int nflips = 0;
-			while(nflips < nSteps){
-				int numGood = 0;
-				if(ownsAllAtoms){
-					for(GAtom n : atoms.values()){
-						if(n.delta() < 0){
-							++ numGood;
-							if(testChance(Config.sweepsat_greedy_probability)){
-								n.flip();
-								nflips ++;
-								inferOps ++;
-								Timer.runStat.effectiveSteps++;
-							}
-						}
-					}
-					if(numGood == 0){
-						for(GAtom n : atoms.values()){
-							if(testChance(0.5)){
-								if(!Config.avoid_breaking_hard_clauses || !n.criticalForHardClauses()){
-									n.flip();
-									nflips ++;
-									inferOps ++;
-									Timer.runStat.effectiveSteps++;
-								}
-							}
-						}
-					}
-				}else{
-					for(int aid : getCoreAtoms()){
-						GAtom n = atoms.get(aid);
-						if(n.delta() < 0){
-							++ numGood;
-							if(testChance(Config.sweepsat_greedy_probability)){
-								n.flip();
-								nflips ++;
-								inferOps ++;
-								Timer.runStat.effectiveSteps++;
-							}
-						}
-					}
-					if(numGood == 0){
-						for(int aid : getCoreAtoms()){
-							GAtom n = atoms.get(aid);
-							if(testChance(0.5)){
-								if(!Config.avoid_breaking_hard_clauses || !n.criticalForHardClauses()){
-									n.flip();
-									nflips ++;
-									inferOps ++;
-									Timer.runStat.effectiveSteps++;
-								}
-							}
-						}
-					}
-				}
-
-				calcCosts();
-				if(totalCost < lowCost){
-					saveLowTruth(totalCost);
-					UIMan.println("["+nflips+"]low=" + lowCost);
-					if(lowCost == 0){
-						UIMan.println("--all violations gone, cost = " + totalCost);
-						return;
-					}
-				}
-			}
-		}
-		DebugMan.checkPeakMem();
-	}
-
 
 
 	/**
@@ -2182,26 +1174,23 @@ public class MRF {
 		case NO_CHANGE:
 			break;
 		}
-		if(usingBlocks)	maintainKeyConstraints();
-		lowCost = calcCosts();
-		dirtyAtoms.clear();
-		saveTruthAsLow();
+//		if(usingBlocks)	maintainKeyConstraints();
 	}
 
-	private void maintainKeyConstraints(){
-		for(GAtom n : atoms.values()){
-			if(!keyBlock.hasKey(n)){
-				continue;
-			}
-
-			if(n.truth == true){
-				ArrayList<GAtom> mates = keyBlock.getBlockMates(n);
-				for(GAtom shouldBeFalse : mates){
-					shouldBeFalse.truth = false;
-				}
-			}
-		}
-	}
+//	private void maintainKeyConstraints(){
+//		for(GAtom n : atoms.values()){
+//			if(!keyBlock.hasKey(n)){
+//				continue;
+//			}
+//
+//			if(n.truth == true){
+//				ArrayList<GAtom> mates = keyBlock.getBlockMates(n);
+//				for(GAtom shouldBeFalse : mates){
+//					shouldBeFalse.truth = false;
+//				}
+//			}
+//		}
+//	}
 
 	/**
 	 * Set all atoms to false.
@@ -2223,17 +1212,9 @@ public class MRF {
 	 */
 	private void assignRandomTruthValues(){
 		Random rand = SeededRandom.getInstance();
-		if(ownsAllAtoms){
-			for(GAtom n : atoms.values()){
-				if(n.fixed || (Config.focus_on_critical_atoms && !n.critical())) continue;
-				n.truth = rand.nextBoolean();
-			}
-		}else{
-			for(int aid : getCoreAtoms()){
-				GAtom n = atoms.get(aid);
-				if(n.fixed || (Config.focus_on_critical_atoms && !n.critical())) continue;
-				n.truth = rand.nextBoolean();
-			}
+		for(GAtom n : atoms.values()){
+//			if(n.fixed) continue; //TODO(ericgribkoff) Find out when "fixed" is set
+			n.truth = rand.nextBoolean();
 		}
 	}
 
@@ -2271,30 +1252,6 @@ public class MRF {
 			}
 		}
 	}
-
-	// TODO: NEED TO CHANGE THIS FUNCTION FOR READING DATA.
-	// CURRENTLY, IT IS THE SAME OF RANDOM!!!!!!!
-	///**
-	// * Assign initial truth value according to training data. 
-	// * 
-	// * CURRENTLY, IT IS THE SAME OF RANDOM!!!!!!!
-	// * NEED TO CHANGE.
-	// */
-	/*private void assignTruthValuesAccording2TrainingData(){
-		Random rand = SeededRandom.getInstance();
-		if(ownsAllAtoms){
-			for(GAtom n : atoms.values()){
-				if(n.fixed || (Config.focus_on_critical_atoms && !n.critical())) continue;
-				n.truth = rand.nextBoolean();
-			}
-		}else{
-			for(int aid : coreAtoms){
-				GAtom n = atoms.get(aid);
-				if(n.fixed || (Config.focus_on_critical_atoms && !n.critical())) continue;
-				n.truth = rand.nextBoolean();
-			}
-		}
-	}*/
 
 	/**
 	 * Calculate the number of true literals in a clause.
@@ -2377,170 +1334,69 @@ public class MRF {
 		totalCost = 0;
 		unsat.clear();
 		// reset stats
-		if(ownsAllAtoms){
-			for(GAtom n : atoms.values()){
-				n.resetDelta();
-			}
-		}else{
-			for(int aid : getCoreAtoms()){
-				atoms.get(aid).resetDelta();
-			}
-		}
 
+		for (int atomid : sampledAtoms) {
+			GAtom n = atoms.get(atomid);
+			n.resetDelta();
+		}
+		
 		// recompute stats
-		for(GClause f : clauses){
+		for(GClause f : sampledClauses){
 			calcNSAT(f);
-			if(f.dead) continue;
 			totalCost += f.cost();
-			if(!ownsAllAtoms && isAlwaysTrue(f)){
-				continue;
-			}
 			if(f.cost() > 0){
 				unsat.add(f);
 			}
 		}
 
-		for(GAtom n : atoms.values()){
-
-			if(!ownsAllAtoms){	//TODO: CHECK
-				if(!getCoreAtoms().contains(n.id)){
-					continue;
-				}
-			}
-
-			ArrayList<GAtom> flips = this.getFlipSequence(n);
-			ArrayList<GClause> addNSAT = new ArrayList<GClause>();
-			ArrayList<GClause> minusNSAT = new ArrayList<GClause>();
-
-			for(GAtom toFlip : flips ){
-				if(toFlip.truth == true){
-					if(adj.containsKey(toFlip.id)) minusNSAT.addAll(adj.get(toFlip.id));
-					if(adj.containsKey(-toFlip.id)) addNSAT.addAll(adj.get(-toFlip.id));
-				}else{
-					if(adj.containsKey(-toFlip.id)) minusNSAT.addAll(adj.get(-toFlip.id));
-					if(adj.containsKey(toFlip.id)) addNSAT.addAll(adj.get(toFlip.id));
-				}
-			}
-
-			//TODO: CHANGE TO MORE EFFICIENT DATA STRUCTURE
-			LinkedHashMap<GClause, Integer> delta = new LinkedHashMap<GClause, Integer>();
-			for(GClause gc : minusNSAT){
-				if(!delta.containsKey(gc)){
-					delta.put(gc, 0);
-				}
-				delta.put(gc, delta.get(gc)-1);
-			}
-			for(GClause gc : addNSAT){
-				if(!delta.containsKey(gc)){
-					delta.put(gc, 0);
-				}
-				delta.put(gc, delta.get(gc)+1);
-			}
-
-			for(GClause gc : delta.keySet()){
-
-				Integer del = delta.get(gc);
-
-				if(gc.nsat > 0 && gc.nsat + del <= 0){
-					n.assignUnsatPotential(gc);
-				}else if (gc.nsat == 0 && gc.nsat + del > 0){
-					n.assignSatPotential(gc);
-				}
-
-			}
-		}
+//		for (int atomid : sampledAtoms) {
+//			GAtom n = atoms.get(atomid);
+//			
+//			boolean flipToVal = !n.truth;
+//			int trueLiteralID, falseLiteralID;
+//			
+//			if (flipToVal) {
+//			    trueLiteralID = n.id;
+//			    falseLiteralID = -n.id;
+//			} else {
+//			    trueLiteralID = -n.id;
+//			    falseLiteralID = n.id;
+//			}
+//			
+//			// NSat records the number of literals satisfying a clause:
+//			// e.g., if the clause is A v !B v !C, and A=true, B=true, C=false,
+//			// the clause's NSat value is 3
+//			ArrayList<GClause> addNSAT = adj.get(trueLiteralID);
+//			ArrayList<GClause> minusNSAT = adj.get(falseLiteralID);
+//			
+//			LinkedHashMap<GClause, Integer> delta = new LinkedHashMap<GClause, Integer>();
+//			for(GClause gc : minusNSAT){
+//				if(!delta.containsKey(gc)){
+//					delta.put(gc, 0);
+//				}
+//				delta.put(gc, delta.get(gc)-1);
+//			}
+//			for(GClause gc : addNSAT){
+//				if(!delta.containsKey(gc)){
+//					delta.put(gc, 0);
+//				}
+//				delta.put(gc, delta.get(gc)+1);
+//			}
+//
+//			for(GClause gc : delta.keySet()){
+//				Integer del = delta.get(gc);
+//				if(gc.nsat > 0 && gc.nsat + del <= 0){
+//					n.assignUnsatPotential(gc);
+//				}else if (gc.nsat == 0 && gc.nsat + del > 0){
+//					n.assignSatPotential(gc);
+//				}
+//			}
+//			
+//		}
 
 		return totalCost;
 	}
 
-
-	private double calcCostsForWalkSAT(LinkedHashSet<Integer> needToBeReset){
-
-		LinkedHashSet<Integer> afterClosure = new LinkedHashSet<Integer>();
-		/*	
-		if(ownsAllAtoms){
-			for(GAtom n : atoms.values()){
-				afterClosure.add(n.id);
-			}
-		}else{
-			for(int aid : coreAtoms){
-				afterClosure.add(aid);
-			}
-		}
-		 */
-
-		for(Integer _n : needToBeReset){
-
-			GAtom n = atoms.get(_n);
-			afterClosure.add(_n);
-			ArrayList<GAtom> mates = keyBlock.getBlockMates(n);
-
-			if(mates == null){
-				//System.err.println("MATE = NULL");
-				continue;
-			}
-
-			for(GAtom mate : mates){
-				afterClosure.add(mate.id);
-			}
-
-		}
-
-		for(Integer _n : afterClosure){
-
-			GAtom n = atoms.get(_n);
-			n.resetDelta();
-
-			//if(!ownsAllAtoms){	//TODO: CHECK
-			//	if(!coreAtoms.contains(n.id)){
-			//		continue;
-			//	}
-			//}
-
-			ArrayList<GAtom> flips = this.getFlipSequence(n);
-			ArrayList<GClause> addNSAT = new ArrayList<GClause>();
-			ArrayList<GClause> minusNSAT = new ArrayList<GClause>();
-
-			for(GAtom toFlip : flips ){
-				if(toFlip.truth == true){
-					if(adj.containsKey(toFlip.id)) minusNSAT.addAll(adj.get(toFlip.id));
-					if(adj.containsKey(-toFlip.id)) addNSAT.addAll(adj.get(-toFlip.id));
-				}else{
-					if(adj.containsKey(-toFlip.id)) minusNSAT.addAll(adj.get(-toFlip.id));
-					if(adj.containsKey(toFlip.id)) addNSAT.addAll(adj.get(toFlip.id));
-				}
-			}
-
-			//TODO: CHANGE TO MORE EFFICIENT DATA STRUCTURE
-			LinkedHashMap<GClause, myInt> delta = new LinkedHashMap<GClause, myInt>();
-			for(GClause gc : minusNSAT){
-				if(!delta.containsKey(gc)){
-					delta.put(gc, new myInt(0));
-				}
-				delta.get(gc).subOne();
-			}
-			for(GClause gc : addNSAT){
-				if(!delta.containsKey(gc)){
-					delta.put(gc, new myInt(0));
-				}
-				delta.get(gc).addOne();
-			}
-
-			for(GClause gc : delta.keySet()){
-
-				Integer del = delta.get(gc).value;
-
-				if(gc.nsat > 0 && gc.nsat + del <= 0){
-					n.assignUnsatPotential(gc);
-				}else if (gc.nsat == 0 && gc.nsat + del > 0){
-					n.assignSatPotential(gc);
-				}
-
-			}
-		}
-
-		return totalCost;
-	}
 
 	/**
 	 * Track ground clause violations to fo-clauses.
@@ -2684,17 +1540,20 @@ public class MRF {
 	public int retainOnlyHardClauses(){
 		int numHard = 0;
 		for(GClause c : clauses){
-			if(c.isHardClause() == c.dead){
-				c.dead = !c.dead;
-			}
-			if(!c.dead){
-				++ numHard;
+			// Eric: Rewriting for clarity, under assumption a hard clause should never be dead
+			// after this function returns
+			if (c.isHardClause()) {
+				c.dead = false;
+				numHard++;
+			} else {
+				c.dead = true;
 			}
 		}
 		totalAlive = numHard;
 		return numHard;
 	}
-
+	
+	
 	/**
 	 * SampleSAT (with WalkSAT inside), used to uniformly sample a zero-cost world.
 	 * WalkSAT is used as a SAT solver to find the first (quasi-)zero-cost world.
@@ -2703,26 +1562,125 @@ public class MRF {
 	 * 
 	 * @return true iff a zero-cost world was reached
 	 */
-	public boolean sampleSAT(long nSteps){
-		if(!Config.learning_mode)
-			UIMan.verbose(3, "    Running SampleSAT for " + UIMan.comma(nSteps) + " flips...");
+	// TODO(ericgribkoff) Verify this implementation, with extra concept(s) of owned atoms,
+	// learning mode, etc. discarded
+	public boolean walkSAT(long nSteps) {
+		return false;
+	}
+	
+	//Returns # of clauses newly satisfied - # of clauses newly unsatisfied
+	public int deltaOfFlip(int atomid) {
+		GAtom n = atoms.get(atomid);
+		boolean flipToVal = !n.truth;
+		int trueLiteralID, falseLiteralID;
+		if (flipToVal) {
+		    trueLiteralID = n.id;
+		    falseLiteralID = -n.id;
+		} else {
+		    trueLiteralID = -n.id;
+		    falseLiteralID = n.id;
+		}
+		
+		int delta = 0;
+		if (adj.containsKey(trueLiteralID)) {
+			for (GClause gc : adj.get(trueLiteralID)) {
+				if (gc.nsat == 0) {
+					delta++;
+//					UIMan.verbose(3, "Delta + 1: " + gc);
+				}
+			}
+		}
+		if (adj.containsKey(falseLiteralID)) {
+			for (GClause gc : adj.get(falseLiteralID)) {
+				if (gc.nsat == 1) {
+					delta--;
+//					UIMan.verbose(3, "Delta - 1: " + gc);
+				}
+			}
+		}
+		return delta;
+	}
+	
+	public void printAllClauses() {
+		UIMan.verbose(3, "All Clauses:");
+		for (GClause c : clauses) {
+			String truthVals = "";
+			for (int a : c.lits) {
+				if (a > 0) {
+					truthVals += " " + atoms.get(Math.abs(a)).truth;
+				} else {
+					truthVals += " " + !atoms.get(Math.abs(a)).truth;
+				}
+			}
+			UIMan.verbose(3, c.toString() + truthVals);
+		}
+	}
+	
+	public void printSampledClauses() {
+		UIMan.verbose(3, "Sampled Clauses:");
+		for (GClause c : sampledClauses) {
+			String truthVals = "";
+			for (int a : c.lits) {
+				if (a > 0) {
+					truthVals += " " + atoms.get(Math.abs(a)).truth;
+				} else {
+					truthVals += " " + !atoms.get(Math.abs(a)).truth;
+				}
+			}
+			UIMan.verbose(3, c.toString() + truthVals);
+		}
+	}
+	
+	public void printSampledAtoms() {
+		UIMan.verbose(3, "Atom Truth Settings:");
+		for (int atomid : sampledAtoms) {
+			GAtom a = atoms.get(atomid);
+			UIMan.verbose(3, atomid + " : " + a.truth);
+		}
+	}
+	
+    public boolean sampleSAT(long nSteps) {
+    	return sampleSAT(nSteps, false);
+    }
+	public boolean sampleSAT(long nSteps, boolean walkSATMode){
+		UIMan.verbose(3, "    Running SampleSAT for " + UIMan.comma(nSteps) + " flips...");
 
-		if(adj.isEmpty()) buildIndices();
+//		printSampledClauses();
+		
+		if (sampledClauses.size() == 0) {
+			return true;
+		}
+		
+//		if(adj.isEmpty()) buildIndices();
+		buildIndicesSampledClauses();
+		
 		Random rand = SeededRandom.getInstance();
 
-		initMRF();
-
-		for(long flip = 1; flip <= nSteps; flip++){
+		initMRF(); // TODO(ericgribkoff) Verify initialization code
+		
+//		printSampledAtoms();
+		
+		lowCost = calcCosts();
+		dirtyAtoms.clear();
+		
+//		saveTruthAsLow(); //TODO(ericgribkoff) Need to save low truth as a satisfying state for the current
+		// set of hard clauses; this doesn't seem to be doing that, need to call before initializing atoms
+		// to random values
+		
+		boolean foundNewTruth = false;
+		
+		long flip;
+		for(flip = 1; flip <= nSteps; flip++){
 			// check if we have reached terminal condition
 			if(unsat.isEmpty()){
-				saveLowTruth(totalCost);
-				// // keep walking only if in sampleSAT mode
-				if(Config.stop_samplesat_upon_sat)
-					return true;
-				if(!sampleSatMode || totalAlive == 0) return true;
+				saveLowTruth();
+				foundNewTruth = true;
+				if (walkSATMode) {
+					return true; // Stop if we are only interested in finding a solution, rather than
+					 			 // sampling solutions
+				}
 			}
-			// simulated annealing step
-			boolean saStep = false;
+
 			// id of atom to be flipped
 			int picked = 0;
 
@@ -2730,36 +1688,38 @@ public class MRF {
 			 * pick an atom to flip in one of two ways:
 			 * WalkSAT or SA
 			 */
-			if(sampleSatMode && (totalCost <= 0.0001 
-					|| rand.nextDouble() <= 0.5) || unsat.isEmpty()){ 
+			//TODO(ericgribkoff) Why is 0.5 hardcoded??? And what is 0.0001?
+//			if(!walkSATMode && (totalCost <= 0.0001 
+//					|| rand.nextDouble() <= 0.5) || unsat.isEmpty()){ 
+			if(!walkSATMode && (rand.nextDouble() <= Config.simulatedAnnealingSampleSATProb || unsat.isEmpty())){ 
 				// SA step: randomly pick an atom
-				GClause c = clauses.get(rand.nextInt(clauses.size()));
-				picked = Math.abs(c.lits[0]);
-				saStep = true;
+				picked = sampledAtoms.get(rand.nextInt(sampledAtoms.size()));
+				double randVal = rand.nextDouble();
+				int delta = deltaOfFlip(picked);
+				double threshold = Math.exp(delta*Config.samplesat_sa_coef);
+				if(randVal > threshold){
+					continue;
+				}
 			}else{
 				// WalkSAT step
-
 				GClause lucky = unsat.getRandomElement();
 				if(lucky.isPositiveClause()){
 					// a positive clause
 					if(testChance(Config.walksat_random_step_probability)){
 						// random flip
-						picked = -1;
-						while(picked == -1 || !ownsAtom(picked)){
-							picked = Math.abs(lucky.lits[rand.nextInt(lucky.lits.length)]);
-						}
+						picked = Math.abs(lucky.lits[rand.nextInt(lucky.lits.length)]);
 					}else{
 						// greedy flip
-						double minDelta = Double.MAX_VALUE;
+						double maxDelta = -Double.MAX_VALUE; //TODO(ericgribkoff) Looking for MAX!
 						int nrivals = 0;
 						for(int lit : lucky.lits){
 							int a = Math.abs(lit);
-							if(!ownsAtom(a)) continue;
-							if(atoms.get(a).delta() < minDelta){
+							int delta = deltaOfFlip(a);
+							if(delta > maxDelta){
 								picked = a;
-								minDelta = atoms.get(a).delta();
+								maxDelta = delta;
 								nrivals = 1;
-							}else if(atoms.get(a).delta() == minDelta){
+							}else if(delta == maxDelta){
 								if(testChance(1.0/(++nrivals))){
 									picked = a;
 								}
@@ -2767,9 +1727,17 @@ public class MRF {
 						}
 					}
 				}else{
+					//TODO(ericgribkoff) Why handle negative weight clauses in SampleSAT??? Why not just
+					//pass in their negations? Is this even correct if we are treating the negation
+					// of a clause as a single clause (instead of each term becoming its own clause)
+					// For now, leaving this alone - we are not using negative weights, so support for
+					// this is not a priority
+					
 					// a negative clause
 					ArrayList<Integer> cands = new ArrayList<Integer>();
 					for(int lit : lucky.lits){
+						// The clause has negative weight; so we want to flip a literal currently satisfying
+						// the clause
 						if(isTrueLit(lit) && ownsAtom(Math.abs(lit))){
 							cands.add(Math.abs(lit));
 						}
@@ -2780,15 +1748,16 @@ public class MRF {
 						if(testChance(Config.walksat_random_step_probability)){
 							picked = cands.get(rand.nextInt(cands.size()));
 						}else{
-							double minDelta = Double.MAX_VALUE;
+							double maxDelta = -Double.MAX_VALUE;
 							int nrivals = 0;
 							for(int a : cands){
 								// TODO: FIXED
-								if(atoms.get(a).delta() < minDelta){
+								int delta = deltaOfFlip(a);
+								if(delta > maxDelta){
 									picked = a;
-									minDelta = atoms.get(a).delta();
+									maxDelta = delta;
 									nrivals = 1;
-								}else if(atoms.get(a).delta() == minDelta){
+								}else if(delta == maxDelta){
 									if(testChance(1.0/(++nrivals))){
 										picked = a;
 									}
@@ -2798,116 +1767,115 @@ public class MRF {
 					}
 				}
 			}
-			if(picked == 0) continue;
-			if(!ownsAtom(picked)) continue;
-			GAtom atom = atoms.get(picked);
-			if(atom.fixed) continue;
-			if(Config.avoid_breaking_hard_clauses && 
-					atom.criticalForHardClauses()) continue;
-			if(Config.apply_greedy_throttling && 
-					atom.delta() > 0 && 
-					testChance(0.95)){
-				continue;
+			
+			// Flip the picked atom
+			if (flipAtom(picked)) {
+				foundNewTruth = true;
 			}
+		}
+		return foundNewTruth;
+	}
+	
+	// Returns true if flip leads to new low truth (could actually lead back to same low truth
+	// as original, but that's ok)
+	private boolean flipAtom(int picked) {
+		if(picked == 0) return false;
+		
+		GAtom atom = atoms.get(picked);
+		if(atom.fixed) return false; // TODO(ericgribkoff) Check when atoms become fixed
+		
+		/**
+		 *  flip the picked atom
+		 */
+//		totalCost += atom.delta();
+		atom.truth = !atom.truth;
+		dirtyAtoms.add(picked);
+		atom.invertDelta();
+		
+		// update stats
+		ArrayList<GClause> tlfac, flfac;
+		if(atom.truth){
+			tlfac = adj.get(atom.id);
+			flfac = adj.get(-atom.id);
+		}else{
+			flfac = adj.get(atom.id);
+			tlfac = adj.get(-atom.id);
+		}
 
+		// TFLAC = Clauses which become true by the flip just made
+		if(tlfac != null){
+			for(GClause f : tlfac){
+				///////////////////////////////////////////////
+				// Ce flip the following two lines on Nov. 29
+				///////////////////////////////////////////////
+				++ f.nsat;
+				if(f.dead) continue;
 
-			// SA is just a filter to actual flipping
-			if(saStep){
-				if(rand.nextDouble() > Math.exp(-atom.delta()*Config.samplesat_sa_coef)){
-					continue;
-				}
-			}
-
-			/**
-			 *  flip the picked atom
-			 */
-			totalCost += atom.delta();
-			atom.truth = !atom.truth;
-			dirtyAtoms.add(picked);
-			atom.invertDelta();
-
-			if(totalCost <= lowCost){
-				saveLowTruth(totalCost);
-			}
-
-			// update stats
-			ArrayList<GClause> tlfac, flfac;
-			if(atom.truth){
-				tlfac = adj.get(atom.id);
-				flfac = adj.get(-atom.id);
-			}else{
-				flfac = adj.get(atom.id);
-				tlfac = adj.get(-atom.id);
-			}
-
-			if(tlfac != null){
-				for(GClause f : tlfac){
-					///////////////////////////////////////////////
-					// Ce flip the following two lines on Nov. 29
-					///////////////////////////////////////////////
-					++ f.nsat;
-					if(f.dead) continue;
-
-					int nsat = f.nsat;
-					if(nsat==1){
-						if(f.weight >= 0) {
-							unsat.removeObj(f);
-						}else{
-							unsat.add(f);
-						}
-						for(int lit : f.lits){
-							int a = Math.abs(lit);
-							if(a==picked || !ownsAtom(a)) continue;
-							atoms.get(a).revokeSatPotential(f);
-						}
-					}else if(nsat==2){
-						for(int lit : f.lits){
-							int a = Math.abs(lit);
-							if(a==picked || !ownsAtom(a)) continue;
-							GAtom n = atoms.get(a);
-							if((lit>0) == n.truth && willChange(lit, f.lits)){
-								n.revokeUnsatPotential(f);
-								break;
-							}
-						}
+				int nsat = f.nsat;
+				if(nsat==1){
+					if(f.weight >= 0) {
+						unsat.removeObj(f);
+					}else{
+						unsat.add(f);
 					}
-				}
-			}
-			if(flfac != null){
-				for(GClause f : flfac){
-					///////////////////////////////////////////////
-					// Ce flip the following two lines on Nov. 29
-					///////////////////////////////////////////////
-					-- f.nsat;
-					if(f.dead) continue;
-
-					int nsat = f.nsat;
-					if(nsat==0){
-						if(f.weight <= 0) {
-							unsat.removeObj(f);
-						}else{
-							unsat.add(f);
-						}
-						for(int lit : f.lits){
-							int a = Math.abs(lit);
-							if(a==picked || !ownsAtom(a)) continue;
-							atoms.get(a).assignSatPotential(f);
-						}
-					}else if(nsat==1){
-						for(int lit : f.lits){
-							int a = Math.abs(lit);
-							if(a==picked || !ownsAtom(a)) continue;
-							GAtom n = atoms.get(a);
-							if((lit>0) == n.truth && willChange(lit, f.lits)){
-								n.assignUnsatPotential(f);
-								break;
-							}
+					for(int lit : f.lits){
+						int a = Math.abs(lit);
+						if(a==picked) continue;
+						atoms.get(a).revokeSatPotential(f);
+					}
+				}else if(nsat==2){
+					for(int lit : f.lits){
+						int a = Math.abs(lit);
+						if(a==picked) continue;
+						GAtom n = atoms.get(a);
+						if((lit>0) == n.truth && willChange(lit, f.lits)){
+							n.revokeUnsatPotential(f);
+							break;
 						}
 					}
 				}
 			}
 		}
-		return false;
+		if(flfac != null){
+			for(GClause f : flfac){
+				///////////////////////////////////////////////
+				// Ce flip the following two lines on Nov. 29
+				///////////////////////////////////////////////
+				-- f.nsat;
+				if(f.dead) continue;
+
+				int nsat = f.nsat;
+				if(nsat==0){
+					if(f.weight <= 0) {
+						unsat.removeObj(f);
+					}else{
+						unsat.add(f);
+					}
+					for(int lit : f.lits){
+						int a = Math.abs(lit);
+						if(a==picked || !ownsAtom(a)) continue;
+						atoms.get(a).assignSatPotential(f);
+					}
+				}else if(nsat==1){
+					for(int lit : f.lits){
+						int a = Math.abs(lit);
+						if(a==picked || !ownsAtom(a)) continue;
+						GAtom n = atoms.get(a);
+						if((lit>0) == n.truth && willChange(lit, f.lits)){
+							n.assignUnsatPotential(f);
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		if(unsat.isEmpty() && totalCost <= lowCost){
+			saveLowTruth();
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public void updateAtomMarginalProbs(int numSamples){
@@ -2944,36 +1912,6 @@ public class MRF {
 		}
 	}
 
-	private void updateMLETallies(){
-
-		BitSet queryTrueAtoms = new BitSet(atoms.size() + 1);
-
-		if(ownsAllAtoms){
-			for(GAtom n : atoms.values()){
-				if(n.isquery && n.truth){
-					queryTrueAtoms.set(n.id);
-				}
-			}
-		}else{
-			for(int aid : getCoreAtoms()){
-				GAtom n = atoms.get(aid);
-				if(n.isquery && n.truth){
-					queryTrueAtoms.set(n.id);
-				}
-			}
-		}
-
-		if(!mleTallies.containsKey(queryTrueAtoms)){
-
-			mleTallies.put(queryTrueAtoms, new myInt(0));
-
-
-		}
-
-		mleTallies.get(queryTrueAtoms).addOne();
-
-	}
-
 	private void resetAtomTruthTallies(){
 		if(ownsAllAtoms){
 			for(GAtom n : atoms.values()){
@@ -2987,16 +1925,43 @@ public class MRF {
 		}
 	}
 
-	private void resetMLETallies(){
-		mleTallies.clear();
-	}
-
-	private int mcsatTotalSamples = 0;
-
 	public boolean isPowerOfTwo(int n){
 		return ((n!=0) && (n&(n-1))==0);
 	}
 
+	
+	public void clearSampledClauses() {
+		sampledClauses = new ArrayList<GClause>();
+	}
+	
+	public void includeClauseInSample(GClause c) {
+		sampledClauses.add(c);
+		// Add atoms in this clause to sampledAtoms
+		for (int l: c.lits) {
+			int atomid = Math.abs(l);
+			if (!sampledAtomsSet.contains(atomid)) {
+				sampledAtomsSet.add(atomid);
+				sampledAtoms.add(atomid);
+			}
+		}
+	}
+	
+	public void retainHardClauses(){
+		for(GClause c : clauses){
+			if (c.isHardClause()) {
+				includeClauseInSample(c);
+			}
+		}
+	}
+	
+	protected void retainSatisfiedClauses(){
+		for(GClause c : clauses){
+			if(c.isHardClause() || c.selectMCSAT()){
+				includeClauseInSample(c);
+			}
+		}
+	}
+	
 	/**
 	 * Execute the MC-SAT algorithm.
 	 * @param numSamples number of MC-SAT samples
@@ -3005,26 +1970,29 @@ public class MRF {
 	@SuppressWarnings("unused")
 	public double mcsat(int numSamples, long numFlips, DataMover... dmovers){
 
-		if (!Config.mcsat_cumulative) resetAtomTruthTallies();
+		//TODO(ericgribkoff) mcsat_cumulative seems to be for calling mcsat iteratively:
+		// that is, run for 100 samples, get estimate of marginal, run for 100 more, improve
+		// estimate, etc
+		resetAtomTruthTallies();
+		
 		initStrategy = INIT_STRATEGY.COIN_FLIP;
-		if(!Config.learning_mode) Config.stop_samplesat_upon_sat = true;
+		
 		UIMan.println(">>> Running MC-SAT for " + numSamples + " samples...");
+		
 		// init
-		sampleSatMode = false;
-
-		boolean isFirstTime = true;
-
-		if(isFirstTime && !Config.snapshoting_so_do_not_do_init_flip){
-			UIMan.verbose(1, ">>> MC-SAT INIT: running WalkSAT on hard clauses...");
-			int x = retainOnlyHardClauses();
-			UIMan.verbose(1, "### hard clauses = " + x);
-			sampleSAT(numFlips);
-		}
-
-		if(!Config.snapshoting_so_do_not_do_init_flip){
-			isFirstTime = false;
-			enableAllClauses();
-			restoreLowTruth();
+		UIMan.verbose(1, ">>> MC-SAT INIT: running WalkSAT on hard clauses...");
+		
+		clearSampledClauses();
+		retainHardClauses();
+		
+		UIMan.verbose(1, "### hard clauses = " + sampledClauses.size());
+		
+		boolean foundSatisfyingAssignment = false;
+		foundSatisfyingAssignment = sampleSAT(numFlips, true);
+		
+		UIMan.println("### Found initial satisfying assignment: " + foundSatisfyingAssignment);
+		if (!foundSatisfyingAssignment) {
+			ExceptionMan.die("WalkSAT failed to satisfy hard clauses");
 		}
 
 		sampleSatMode = true;
@@ -3039,157 +2007,31 @@ public class MRF {
 		this.clauseNiNjViolationTallies = null;
 		this.expectationOfNiNjViolation = null;
 
-		double time = 0;
-
-		int dumpingTime = 0;
-		int lastTime = (int)Timer.elapsedSeconds();
-
-		LinkedHashSet<Integer> historyTime = new LinkedHashSet<Integer>();
-
 		double sumCost = 0;
-		int nSample = numSamples;
-		int size = this.atoms.size();
-		double knob = Math.pow(2, this.atoms.size()+1);
-
-		LinkedHashSet<Integer> history_po2 = new LinkedHashSet<Integer>();
-
-		double maxWeight = Double.NEGATIVE_INFINITY;
-		double treeWidth = 0;
-		double avgDegree = 0;
-		if(Config.sampleLog != null){
-			for(GClause gc : this.clauses){
-				if(maxWeight <= gc.weight){
-					maxWeight = gc.weight;
-				}
-			}
-			this.buildIndices();
-			int nn = 0;
-			int nneigh = 0;
-			for(Integer atom : this.adj.keySet()){
-				nn += 1;
-				nneigh +=this.adj.get(atom).size();
-			}
-			avgDegree = 1.0*nneigh/nn;
-			DS_JunctionTree jt = new DS_JunctionTree(this);
-			treeWidth = jt.getTreeWidth();
-		}
 
 		// sample
 		for(int i=1; i<=numSamples; i++){
-
-
-			if(Config.sampleLog != null){
-				Timer.start(this + "aaa");
+			if (Timer.hasTimedOut()) {
+				Config.mcsatTimedOut = true;
+				Stats.numberSamplesAtTimeout = i-1;
+				if (i > numSamples * Config.minPercentMcSatSamples) {
+					numSamples = i;
+					UIMan.print(">>>> Tuffy timed out after " + i + " samples, stopping MC-SAT");
+					break;
+				} else {
+					ExceptionMan.die(">>>> Tuffy timed out after only " + i + " samples");
+				}
 			}
 
-			if(Config.learning_mode)
-				UIMan.print("*");
-			else
-				UIMan.verbose(3, ">>> MC-SAT Sample #" + i + "");
+			UIMan.verbose(3, ">>> MC-SAT Sample #" + i + "");
+			
 			sumCost += performMCSatStep(numFlips);
 			int curTime = (int) Timer.elapsedSeconds();
 
-			if(Config.sampleLog != null){
-				time += Timer.elapsedMilliSeconds(this + "aaa");
-			}
-
-			/* Cannot handle parallel processors...
-			if (Config.mcsat_dump_interval>0 && i%Config.mcsat_dump_interval==0) {
-				String fout = "tuffy.mcsat.results.samples." + i;
-				UIMan.println("MCSAT-SAMPLE-" + i + ": " + (curTime-dumpingTime) + " " + Timer.elapsed());
-				UIMan.println("Writing MCSAT result to file " + fout);
-
-				updateAtomMarginalProbs(i);
-				dmovers[0].flushAtomStates(this.atoms.values(), mln.relAtoms);
-				dmovers[0].dumpProbsToFile(mln.relAtoms, fout);
-			}
-			 */
-
-			if(dmovers.length == 1){
-				boolean timeDump = false;
-
-				if(timeDump && (i < 100  || 
-						(Math.abs(((curTime - dumpingTime) % 100)) < 5 && 
-								!historyTime.contains(curTime - dumpingTime)))){
-					historyTime.add(curTime - dumpingTime);
-					String fout = "tuffy.mcsat.results.samples." + i + ".seconds." + (curTime - dumpingTime);
-					UIMan.println("MCSAT-SAMPLE-" + i + ": " + (curTime-dumpingTime) + " " + Timer.elapsed());
-					UIMan.println("Writing MCSAT result to file " + fout);
-
-					updateAtomMarginalProbs(mcsatTotalSamples + i);
-					dmovers[0].flushAtomStates(this.atoms.values(), mln.relAtoms);
-					dmovers[0].dumpProbsToFile(mln.relAtoms, fout);
-
-					int aTime = (int)Timer.elapsedSeconds();
-					dumpingTime += (aTime - curTime);
-				}
-			}
-
-
-			if(Config.sampleLog != null){
-				if( Math.log10(i) == (int)Math.log10(i)
-						|| (i % (nSample/100) == 0) 
-						|| isPowerOfTwo(nSample/i)){
-
-					String sig = "";
-					if(isPowerOfTwo(nSample/i)){
-						sig += "exp" + (nSample/i) + "|";
-					}
-
-					if(Math.log10(i) == (int)Math.log10(i)){
-						sig += "log10|";
-					}
-
-					if((i%100 == 0 && (i/100) % size == 0)){
-						sig += "linear|";
-					}
-
-					if(history_po2.contains(nSample/i) && sig.equals("exp" + (nSample/i) + "|")){
-						continue;
-					}
-					history_po2.add(nSample/i);
-
-					for(GAtom atom : this.atoms.values()){
-
-						Config.sampleLog.println(
-								//System.out.println(
-								i + "\t" + 
-								sig + "\t" + 
-								"tuffy.sample.SampleAlgorithm_MCSAT" + "\t" + 
-								this.atoms.size() + "\t" +
-								time + "\t" +
-								atom.id + "\t" +
-								atom.pid + "\t" + 
-								"-1" + "\t" +
-								"-1" + "\t" + 
-								atom.tallyTrue + "\t" +
-								i + "\t" +
-								"-1" + "\t" + 
-								1.0*atom.tallyTrue/i + "\t" + 
-								maxWeight + "\t" + 
-								treeWidth + "\t" + 
-								avgDegree
-								);
-					}
-				}
-
-
-			}
-
-
 		}
 
-		if(Config.learning_mode){
-			this.calcExpViolation();
-		}
 
-		if (Config.mcsat_cumulative) {
-			mcsatTotalSamples += numSamples;
-			updateAtomMarginalProbs(mcsatTotalSamples);
-		} else {
-			updateAtomMarginalProbs(numSamples);
-		}
-
+		updateAtomMarginalProbs(numSamples);
 
 		return sumCost;
 	}
@@ -3238,296 +2080,6 @@ public class MRF {
 
 	}
 
-	boolean isMLE = false;
-
-	public double mle_naiveMCMC(int numSamples, long numFlips, 
-			ArrayList<BitSetIntPair> mle_rs_cache, DataMover... dmovers){
-
-		isMLE = true;
-
-		if (!Config.mcsat_cumulative) resetAtomTruthTallies();
-		initStrategy = INIT_STRATEGY.COIN_FLIP;
-		if(!Config.learning_mode) Config.stop_samplesat_upon_sat = true;
-		UIMan.println(">>> Running MC-SAT for " + numSamples + " samples...");
-		// init
-		sampleSatMode = false;
-
-		boolean isFirstTime = true;
-
-		isFirstTime = false;
-		enableAllClauses();
-		restoreLowTruth();
-
-		sampleSatMode = true;
-
-		// clear tallies of clauses.
-		this.nClauseVioTallies = 0;
-		this.clauseVioTallies = null;
-		this.clauseSatTallies = null;
-		this.expectationOfViolation = null;
-		this.expectationOfSatisfication = null;
-		this.clauseSquareVioTallies = null;
-		this.expectationOfSquareViolation = null;
-		this.clauseNiNjViolationTallies = null;
-		this.expectationOfNiNjViolation = null;
-
-		int dumpingTime = 0;
-		int lastTime = (int)Timer.elapsedSeconds();
-
-		LinkedHashSet<Integer> historyTime = new LinkedHashSet<Integer>();
-
-		double sumCost = 0;
-
-		// sample
-		for(int i=1; i<=numSamples; i++){
-			if(Config.learning_mode)
-				UIMan.print("*");
-			else
-				UIMan.println(">>> MC-SAT Sample #" + i + "");
-			sumCost += performMCSatStep(numFlips);
-			int curTime = (int) Timer.elapsedSeconds();
-
-			if(dmovers.length == 1){
-				boolean timeDump = false;
-
-				if(timeDump && (i < 100  || 
-						(Math.abs(((curTime - dumpingTime) % 100)) < 5 && 
-								!historyTime.contains(curTime - dumpingTime)))){
-					historyTime.add(curTime - dumpingTime);
-					String fout = "tuffy.mcsat.results.samples." + i + ".seconds." + (curTime - dumpingTime);
-					UIMan.println("MCSAT-SAMPLE-" + i + ": " + (curTime-dumpingTime) + " " + Timer.elapsed());
-					UIMan.println("Writing MCSAT result to file " + fout);
-
-					updateAtomMarginalProbs(mcsatTotalSamples + i);
-					dmovers[0].flushAtomStates(this.atoms.values(), mln.relAtoms);
-					dmovers[0].dumpProbsToFile(mln.relAtoms, fout);
-
-					int aTime = (int)Timer.elapsedSeconds();
-					dumpingTime += (aTime - curTime);
-				}
-			}
-
-		}
-
-		int max = 0;
-		BitSet maxkey = null;
-
-		if(mle_rs_cache == null){
-			mle_rs_cache = new ArrayList<BitSetIntPair>();
-		}
-
-		for(BitSet key : mleTallies.keySet()){
-
-			mle_rs_cache.add(new BitSetIntPair(key, mleTallies.get(key).value));
-
-		}
-
-		Collections.sort(mle_rs_cache, Collections.reverseOrder());
-
-		updateAtomTruthFromMLE(mle_rs_cache);
-
-		return sumCost;
-	}
-
-
-
-
-	/**
-	 * Update the number of violations of a clause. For each GClause, their
-	 * value can increase at most 1 for each MCSAT iteration. For Clause,
-	 * their value can increase more, because there may be more than one
-	 * GClauses associated with it. 
-	 */
-	public void updateClauseVoiTallies(){
-
-		// at least one clause in this system
-		// assert(GClause.maxFCID >= 0);
-
-		if(this.clauseVioTallies == null){
-			this.clauseVioTallies = new LinkedHashMap<String, Long>();
-			this.clauseSatTallies = new LinkedHashMap<String, Long>();
-			this.clauseSquareVioTallies = new LinkedHashMap<String, Long>();
-			this.clauseNiNjViolationTallies = new LinkedHashMap<String, Long>();
-			//this.nGClauseEachClause = new LinkedHashMap<String, Long>();
-		}
-		LinkedHashMap<String, Long> tmpSquareViolation = new LinkedHashMap<String, Long>();
-
-		this.nClauseVioTallies ++ ;
-
-		// HERE THE METHOD FOR CALCULATION OF UNSATISFIED GCLAUSE
-		// CAN BE INFLUENCED BY CE'S CHANGE IN FUNCTION SAMPLESAT().
-		for(GClause c : clauses){
-
-			if(c.ffcid[0].equals("4.0") && c.nsat==0){
-				//System.out.print("");
-			}
-
-			if( c.nsat == 0){
-				// This GClause == false.
-				for(String cid : c.ffcid){
-					String newCID = cid;
-					if(newCID.charAt(0) == '-'){
-						newCID = newCID.substring(1, newCID.length());
-						if( -Learner.currentWeight.get(newCID) > 0 ){
-							// -x is po2.0=11sitive clause
-							// => -x is violated
-							// => x is violated
-							Long tmp = this.clauseVioTallies.get(newCID);
-							if(tmp == null) tmp = 0l;
-							this.clauseVioTallies.put(newCID, tmp+1);
-
-							tmp = tmpSquareViolation.get(newCID);
-							if(tmp == null) tmp = 0l;
-							tmpSquareViolation.put(newCID, tmp+1);
-
-							tmp = this.clauseSatTallies.get(newCID);
-							if(tmp == null)
-								this.clauseSatTallies.put(newCID, 0l);
-						}else{
-							// -x is negative clause
-							// => -x is satisfied
-							// => x is satisfied
-							Long tmp = this.clauseSatTallies.get(newCID);
-							if(tmp == null) tmp = 0l;
-							this.clauseSatTallies.put(newCID, tmp+1);
-
-							tmp = this.clauseVioTallies.get(newCID);
-							if(tmp == null)
-								this.clauseVioTallies.put(newCID, 0l);
-
-							tmp = tmpSquareViolation.get(newCID);
-							if(tmp == null)
-								tmpSquareViolation.put(newCID, 0l);
-						}	
-					}else{
-						if( Learner.currentWeight.get(newCID) > 0 ){
-							// x is positive clause
-							// => x is violated
-							Long tmp = this.clauseVioTallies.get(newCID);
-							if(tmp == null) tmp = 0l;
-							this.clauseVioTallies.put(newCID, tmp+1);
-
-							tmp = tmpSquareViolation.get(newCID);
-							if(tmp == null) tmp = 0l;
-							tmpSquareViolation.put(newCID, tmp+1);
-
-							tmp = this.clauseSatTallies.get(newCID);
-							if(tmp == null)
-								this.clauseSatTallies.put(newCID, 0l);
-						}else{
-							// x is negative clause
-							// => x is satisfied
-							Long tmp = this.clauseSatTallies.get(newCID);
-							if(tmp == null) tmp = 0l;
-							this.clauseSatTallies.put(newCID, tmp+1);
-
-							tmp = this.clauseVioTallies.get(newCID);
-							if(tmp == null)
-								this.clauseVioTallies.put(newCID, 0l);
-
-							tmp = tmpSquareViolation.get(newCID);
-							if(tmp == null)
-								tmpSquareViolation.put(newCID, 0l);
-						}	
-					}
-				}
-			}else{
-				// This GClause == true.
-				for(String cid : c.ffcid){
-					String newCID = cid;
-					if(newCID.charAt(0) == '-'){
-						newCID = newCID.substring(1, newCID.length());
-						if( -Learner.currentWeight.get(newCID) > 0 ){
-							// -x is positive clause
-							// => -x is satisfied
-							// => x is satisfied
-							Long tmp = this.clauseSatTallies.get(newCID);
-							if(tmp == null) tmp = 0l;
-							this.clauseSatTallies.put(newCID, tmp+1);
-
-							tmp = this.clauseVioTallies.get(newCID);
-							if(tmp == null)
-								this.clauseVioTallies.put(newCID, 0l);
-
-							tmp = tmpSquareViolation.get(newCID);
-							if(tmp == null)
-								tmpSquareViolation.put(newCID, 0l);
-						}else{
-							// -x is negative clause
-							// => -x is violated
-							// => x is violated
-							Long tmp = this.clauseVioTallies.get(newCID);
-							if(tmp == null) tmp = 0l;
-							this.clauseVioTallies.put(newCID, tmp+1);
-
-							tmp = tmpSquareViolation.get(newCID);
-							if(tmp == null) tmp = 0l;
-							tmpSquareViolation.put(newCID, tmp+1);
-
-							tmp = this.clauseSatTallies.get(newCID);
-							if(tmp == null)
-								this.clauseSatTallies.put(newCID, 0l);
-						}	
-					}else{
-						if( Learner.currentWeight.get(newCID) > 0 ){
-							// x is positive clause
-							// => x is satisfied
-							Long tmp = this.clauseSatTallies.get(newCID);
-							if(tmp == null) tmp = 0l;
-							this.clauseSatTallies.put(newCID, tmp+1);
-
-							tmp = this.clauseVioTallies.get(newCID);
-							if(tmp == null)
-								this.clauseVioTallies.put(newCID, 0l);
-
-							tmp = tmpSquareViolation.get(newCID);
-							if(tmp == null)
-								tmpSquareViolation.put(newCID, 0l);
-						}else{
-							// x is negative clause
-							// => x is violated
-							Long tmp = this.clauseVioTallies.get(newCID);
-							if(tmp == null) tmp = 0l;
-							this.clauseVioTallies.put(newCID, tmp+1);
-
-							tmp = tmpSquareViolation.get(newCID);
-							if(tmp == null) tmp = 0l;
-							tmpSquareViolation.put(newCID, tmp+1);
-
-							tmp = this.clauseSatTallies.get(newCID);
-							if(tmp == null)
-								this.clauseSatTallies.put(newCID, 0l);
-						}	
-					}
-				}
-
-			}
-		}
-
-		for(String cid : tmpSquareViolation.keySet()){
-			Long value = tmpSquareViolation.get(cid);
-			Long tmp = this.clauseSquareVioTallies.get(cid);
-			if(tmp == null){
-				this.clauseSquareVioTallies.put(cid, value*value);
-			}else{
-				this.clauseSquareVioTallies.put(cid, tmp + value*value);
-			}
-		}
-
-		for(String cid1 : tmpSquareViolation.keySet()){
-			Long value1 = tmpSquareViolation.get(cid1);
-			for(String cid2 : tmpSquareViolation.keySet()){
-				Long value2 = tmpSquareViolation.get(cid2);
-				Long tmp = this.clauseNiNjViolationTallies.get(cid1+","+cid2);
-				if(tmp == null){
-					this.clauseNiNjViolationTallies.put(cid1+","+cid2, value1*value2);
-				}else{
-					this.clauseNiNjViolationTallies.put(cid1+","+cid2, tmp + value1*value2);
-				}
-			}
-		}
-
-	}
 
 	/**
 	 * Calculating the different expectations by filling the LinkedHashMaps related to
@@ -3612,35 +2164,320 @@ public class MRF {
 
 		this.invalidateLowCost();
 
-		retainSomeGoodClauses();
+		clearSampledClauses();
+//		initMRF(); // TODO(ericgribkoff) Why did I comment this out? It broke inference - need to retain clauses first!
+		retainSatisfiedClauses();
+		
+		if (sampledClauses.size() == 0) {
+//			printAllClauses();
+//			UIMan.verbose(3,  "here");
+			initMRF(); // Could end up here if MLN has no hard clauses, so initial "solution" found by WalkSAT
+			           // is empty; reinit atoms randomly and hope we get some satisfied clauses. Can also get
+			 		   // here if very few soft clauses and none get picked by MC-SAT in this round
+		}
+		
+		UIMan.verbose(2, "    Retained #clauses = " + UIMan.comma(sampledClauses.size()) + 
+				" out of " + UIMan.comma(clauses.size()) + " total clauses");
+		
+//		retainSomeGoodClauses();
 		// TODO: CURRENTLY, CE FINDS ADDING THIS FUNCTION
 		// MAY INFLUENCE THE SPEED OF SAMPLESAT. CHECK IT
 		// IN THE FUTURE
-		// unitPropagation();
+		
+		//TODO(ericgribkoff) Re-enable and make sure this UP step works.
+		//unitPropagation();
 
-		sampleSAT(numFlips);
+		boolean sampleSatReturnVal = false;
+		sampleSatReturnVal = sampleSAT(numFlips);
+		
+		if (!sampleSatReturnVal) {
+			Stats.mcsatStepsWhereSampleSatFails += 1;
+		}
 
 		unfixAllAtoms();
 		enableAllClauses();
 		restoreLowTruth();
+		
+//		UIMan.verbose(3, "After SampleSAT:");
+//		printSampledAtoms();
 
-		if(isMLE){
-			updateMLETallies();
-		}else{
-			updateAtomTruthTallies();
-		}
+		
+		updateAtomTruthTallies();
 
 		this.recalcCost();
-
-		if(Config.learning_mode){
-			updateClauseVoiTallies();
-		}
 
 		return this.getCost();
 
 	}
 
 
+	public MRF simplifyWithHardUnits(LinkedHashSet<Integer> hardUnits) {
+		// adj gives literal to clause map
+		for (Integer lit: hardUnits) {
+			if (adj.get(lit) != null) {
+				for (GClause cee : adj.get(lit)) {
+					if (cee.weight < 0) {
+						continue;
+					}
+					if (!cee.isUnitClause()) {
+						cee.ignoreAfterUnitPropagation = true;
+					}
+				}
+			}
+			if (adj.get(-lit) != null) {
+				if (-lit == 3) {
+					UIMan.println("here");
+				}
+				for (GClause cee : adj.get(-lit)) {
+					if (cee.weight < 0) {
+						continue;
+					}
+					int tmpLit[] = new int[cee.lits.length-1];
+					int index = 0;
+					for (int t : cee.lits) {
+						if (t != -lit) {
+					    	tmpLit[index] = t;
+					    	index++;
+						}
+					}
+					cee.lits = tmpLit;
+				}
+			}
+		}
+		
+		MRF mrf = new MRF(mln);
+		mrf.ownsAllAtoms = true;
+		for (int i : coreAtoms) {
+			GAtom n = atoms.get(i);
+			mrf.atoms.put(n.id, n);
+			mrf.addAtom(n.id);
+		}
+		
+		for (GClause cee : clauses) {
+		    if (!cee.ignoreAfterUnitPropagation) {
+				if (cee.lits.length == 0 && cee.isHardClause()) {
+					ExceptionMan
+							.die("stopping here with an unsatisfiable hard clause");
+				}
+				mrf.clauses.add(cee);
+			}
+		}
+		mrf.buildIndices();
+		return mrf;
+	}
+	
+	public MRF unitPropagateAndGetNewMRF() {
+		//TODO(ericgribkoff) Potentially buggy
+		return this;
+//		unitPropagateGround();
+//		
+//		MRF mrf = new MRF(mln);
+//		mrf.ownsAllAtoms = true;
+//		for (int i : coreAtoms) {
+//			GAtom n = atoms.get(i);
+//			mrf.atoms.put(n.id, n);
+//			mrf.addAtom(n.id);
+//		}
+//		LinkedHashMap<Integer, Boolean> hardUnitClauses = new LinkedHashMap<Integer,Boolean>();
+////		if (cee.isUnitClause() && cee.isHardClause()) {
+////			//if (!hardUnitClauses.contains(cee.lits[0])) {
+////			//	hardUnitClauses.add(cee.lits[0]);
+////				mrf.clauses.add(cee);
+////			//}
+////		}
+////		else if (!cee.ignoreAfterUnitPropagation) {
+////			mrf.clauses.add(cee);
+////		}
+//		for (GClause cee : clauses) {
+////			if ((cee.isUnitClause() && cee.isHardClause()) || 
+////					!cee.ignoreAfterUnitPropagation) {
+////				mrf.clauses.add(cee);
+////			}
+//			if (cee.isUnitClause() && cee.isHardClause()) {
+//				if (!hardUnitClauses.containsKey(Math.abs(cee.lits[0]))) {
+//					hardUnitClauses.put(Math.abs(cee.lits[0]), (cee.lits[0] * cee.weight > 0));
+//					mrf.clauses.add(cee);
+//				    UIMan.verbose(3, "Adding " + cee);
+//				} else {
+//					if (hardUnitClauses.get(Math.abs(cee.lits[0])) == (cee.lits[0] * cee.weight > 0)) {
+//						UIMan.verbose(3, "Skipping " + cee + " (already added)");
+//					} else {
+//						ExceptionMan.die("stopping here with an unsatisfiable hard clause\n" + 
+//								"trying to add " + cee + " but already had its negation as a hard clause");
+//					}
+//				}
+//			}
+//			else if (!cee.ignoreAfterUnitPropagation) {
+//				mrf.clauses.add(cee);
+//			}
+//		}
+//		mrf.buildIndices();
+//		return mrf;
+//	}
+//	
+//	private void unitPropagateGround() {
+//		Deque<Integer> Q = new ArrayDeque<Integer>();
+//		LinkedHashSet<Integer> QIds = new LinkedHashSet<Integer>();
+//		int lit;
+//		// adj gives literal to clause map
+//		for (GClause cee : clauses) {
+//			if (Timer.hasTimedOut()) {
+//				ExceptionMan.die("Tuffy timed out");
+//			}
+//			if (cee.isUnitClause() && cee.isHardClause()) {
+//				lit = cee.lits[0];
+//				cee.ignoreAfterUnitPropagation = true;
+//				if(lit > 0){
+//					if (cee.isPositiveClause()) {
+//						if (!QIds.contains(Math.abs(lit))) {
+//							Q.add(lit);
+//							QIds.add(Math.abs(lit));
+////							UIMan.verbose(3, "From " + cee + ", Adding to Q1: " + lit);
+//						}
+//						fixAtom(lit, true);
+//					} else {
+//						if (!QIds.contains(Math.abs(lit))) {
+//							Q.add(-lit);
+//							QIds.add(Math.abs(lit));
+////							UIMan.verbose(3, "From " + cee + ", Adding to Q2: " + -lit);
+//						}
+//						fixAtom(lit, false);
+//					}
+//				}else{
+//					if (cee.isPositiveClause()) {
+//						if (!QIds.contains(Math.abs(lit))) {
+//							Q.add(lit);
+//							QIds.add(Math.abs(lit));
+////							UIMan.verbose(3, "From " + cee + ", Adding to Q3: " + lit);
+//						}
+//						fixAtom(-lit, false);
+//					} else {
+//						if (!QIds.contains(Math.abs(lit))) {
+//							Q.add(-lit);
+//							QIds.add(Math.abs(lit));
+////							UIMan.verbose(3, "From " + cee + ", Adding to Q4: " + -lit);
+//						}
+//						fixAtom(-lit, true);
+//					}
+//				}
+//			}
+//		}
+//		while (!Q.isEmpty()) {
+//			if (Timer.hasTimedOut()) {
+//				ExceptionMan.die("Tuffy timed out");
+//			}
+//			lit = Q.pop();
+////			UIMan.verbose(3, "Popped from Q: " + lit + "");
+//			QIds.remove(Math.abs(lit));
+//			ArrayList<GClause> tmp = adj.get(lit);
+//			if (adj.get(lit) != null) {
+//				//TODO(ericgribkoff) Make any difference to inference if cee has negative weight and is removed?
+//				for (GClause cee : adj.get(lit)) {
+//					for (int k : cee.lits) {
+//							if (k != lit) {
+//								adj.get(k).remove(cee);
+//							}
+//					}
+////					UIMan.verbose(3, "Removing clause (unless hard unit clause) " + cee);
+//					cee.ignoreAfterUnitPropagation = true;
+//				}
+//			}
+//			ArrayList<Integer> aidToDelete = new ArrayList<Integer>(); 
+//			if (adj.get(-lit) != null) {
+//				for (GClause cee : adj.get(-lit)) {
+//					if (cee.ignoreAfterUnitPropagation) {
+//						continue;
+//					}
+//					if (cee.lits.length == 1) {
+//						UIMan.verbose(3, "Clause " + cee + " is unsatisfiable");
+//						continue;
+//					}
+//					int tmpLit[] = new int[cee.lits.length-1];
+//					int index = 0;
+//					for (int t : cee.lits) {
+//						if (t != -lit) {
+//					    	tmpLit[index] = t;
+//					    	index++;
+//						}
+//					}
+//					StringBuilder clauseStr = new StringBuilder();
+//					clauseStr.append(tmpLit[0]);
+//					for (int i = 1; i < tmpLit.length; i++) {
+//						clauseStr.append(", ").append(tmpLit[i]);
+//					}
+////					UIMan.verbose(3, "Clause " + cee + " becomes: " + clauseStr);
+//					cee.lits = tmpLit;
+//					if (cee.isUnitClause() && cee.isHardClause()) {
+//						int k = cee.lits[0];
+//						if (k != -lit) {
+//							if(k > 0){
+//								if (cee.isPositiveClause()) {
+//									// TODO(ericgribkoff): Moving away from this code anyways, but
+//									// this shouldn't check for abs(k) - we can have -l and l
+//									// and here we should catch this and return that the formulas
+//									// are unsatisfiable. Currently this is not caught till after
+//									// this unit prop routine finishes and the new MRF is being generated
+//									// in unitPropagateAndGetNewMRF()
+//									if (!QIds.contains(Math.abs(k))) {
+//										Q.add(k);
+//										QIds.add(Math.abs(k));
+////										UIMan.verbose(3, "Adding to Q1: " + k);
+//									}
+//									fixAtom(k, true);
+//								} else {
+//									if (!QIds.contains(Math.abs(k))) {
+//										Q.add(-k);
+//										QIds.add(Math.abs(k));
+////										UIMan.verbose(3, "Adding to Q2: " + -k);
+//									}
+//									fixAtom(k, false);
+//								}
+//							}else{
+//								if (cee.isPositiveClause()) {
+//									if (!QIds.contains(Math.abs(k))) {
+//										Q.add(k);
+//										QIds.add(Math.abs(k));
+////										UIMan.verbose(3, "Adding to Q3: " + k);
+//									}
+//									fixAtom(-k, false);
+//								} else {
+//									if (!QIds.contains(Math.abs(k))) {
+//										Q.add(-k);
+//										QIds.add(Math.abs(k));
+////										UIMan.verbose(3, "Adding to Q4: " + -k);
+//									}
+//									fixAtom(-k, true);
+//								}
+//							}
+//						}
+//						adj.get(k).remove(cee);
+//						cee.ignoreAfterUnitPropagation = true;
+//					}
+//				}
+//			}
+//		}
+	}
+	
+	/**
+	 * Test if a clause is always true no matter how we flip flippable atoms.
+	 * The existing implementation does not work, at least not when ownsAllAtoms is true
+	 * in the non-partitioned case.
+	 * @param gc the clause
+	 * 
+	 */
+	protected boolean isAlwaysTrueNonPartititioned(GClause gc){
+		int fixed = 0;
+		for(int lit : gc.lits){
+//			if(!ownsAtom(Math.abs(lit))){
+				if(isTrueLit(lit)){
+					return true;
+				}
+				fixed ++;
+//			}
+		}
+		return fixed == gc.lits.length;
+	}
+	
 	/**
 	 * Try to satisfy as many clauses as possible with unit propagation.
 	 * Used as a preprocessing step of SampleSAT, which tries to uniformly 
@@ -3654,7 +2491,7 @@ public class MRF {
 		 */
 		for(GClause cee : clauses){
 			if(cee.dead || cee.isPositiveClause()) continue;
-			if(isAlwaysTrue(cee)) continue;
+			if(isAlwaysTrueNonPartititioned(cee)) continue;
 			for(int lit : cee.lits){
 				if(lit > 0){
 					fixAtom(lit, false);
@@ -3663,7 +2500,6 @@ public class MRF {
 				}
 			}
 		}
-
 		/**
 		 *  Propagate to positive clauses.
 		 *  We only need to fix one literal of each positive clause.
@@ -3675,7 +2511,7 @@ public class MRF {
 			done = true;
 			for(GClause cee : clauses){
 				if(cee.dead || !cee.isPositiveClause()) continue;
-				if(isAlwaysTrue(cee)) continue;
+				if(isAlwaysTrueNonPartititioned(cee)) continue;
 
 				int numCand = 0, lastCand = 0;
 				for(int lit : cee.lits){
@@ -3696,29 +2532,5 @@ public class MRF {
 
 
 
-	/*
-	public class myInt{
-
-		int value;
-
-		public myInt(int _value){
-			value = _value;
-		}
-
-		public void addOne(){
-			value ++;
-		}
-
-		public void add(int _v){
-			value += _v;
-		}
-
-		public int getValue(){
-			return value;
-		}
-
-	}
-	 */
-
-
 }
+

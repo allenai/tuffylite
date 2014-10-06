@@ -58,6 +58,11 @@ public class GClause {
 	 */
 	public boolean dead = false;
 	
+	/**
+	 * Whether this clause should be ignored after unit propagation
+	 */
+	public boolean ignoreAfterUnitPropagation = false;
+	
 	
 	/**
 	 * The largest fcid seen when parsing the database for all GClause.
@@ -70,6 +75,10 @@ public class GClause {
 	 */
 	public boolean isPositiveClause(){
 		return weight >= 0;
+	}
+	
+	public boolean isUnitClause(){
+		return lits.length == 1;
 	}
 	
 	/**
@@ -141,6 +150,7 @@ public class GClause {
 		return 0;
 	}
 
+	public boolean tautology = false; //TODO(ericgribkoff) revisit
 	/**
 	 * Initialize GClause from results of SQL. This involves set
 	 * $cid$ to {@link GClause#id}, $weight$ {@link GClause#weight},
@@ -155,9 +165,21 @@ public class GClause {
 			weight = rs.getDouble("weight");
 						
 			Array a = rs.getArray("lits");
+			int[] atomIdsInClause = new int[Config.maxAtomId];
 			Integer[] ilits = (Integer[]) a.getArray();
 			lits = new int[ilits.length];
 			for(int i=0; i<lits.length; i++){
+				if (ilits[i] < Config.maxAtomId) {
+					if (atomIdsInClause[Math.abs(ilits[i])] != 0) {
+						if (Math.signum(ilits[i]) != atomIdsInClause[Math.abs(ilits[i])]) {
+							lits[i] = ilits[i]; // just add to certify the tautology
+							tautology = true;
+							return;
+						}
+					} else {
+						atomIdsInClause[Math.abs(ilits[i])] = (int) Math.signum(ilits[i]);
+					}
+				}
 				lits[i] = ilits[i];
 			}
 			if(Config.track_clause_provenance){
