@@ -189,7 +189,7 @@ public class Config {
 			MCSAT_OUTPUT_TUPLE_ORDER.PROBABILITY;
 
 	public static double marginal_output_min_prob = 0;
-	public static boolean mcsat_output_hidden_atoms = false;
+	public static boolean mcsat_output_hidden_atoms = true;
 	public static int mcsat_dump_interval = 0;
 	
 	public static boolean mcsat_cumulative = false;
