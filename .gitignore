@@ -1,0 +1,15 @@
+.cache
+.classpath
+.history
+.project
+.settings
+
+# Ignore any bin directory in the project root.
+bin/**
+logs/
+
+# sbt specific
+target/
+
+# intellij stuff
+.idea
