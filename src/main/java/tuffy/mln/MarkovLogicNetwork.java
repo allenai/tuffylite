@@ -426,7 +426,7 @@ public class MarkovLogicNetwork implements Cloneable{
 			}
 		}
 		for(Clause c : listClauses){
-			UIMan.verbose(2, "\n" + c.toString());
+			UIMan.verbose(4, "\n" + c.toString());
 		}
 	}
 

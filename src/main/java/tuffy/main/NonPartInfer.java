@@ -19,13 +19,13 @@ public class NonPartInfer extends Infer{
 	public void run(CommandOptions opt){
 		try {
 		
-			UIMan.println(">>> Running non-partition inference.");
+			UIMan.verbose(3, ">>> Running non-partition inference.");
 			setUp(opt);
 			Timer.start("groundOverall");
-			UIMan.println(">>> Starting grounding...");
+			UIMan.verbose(3, ">>> Starting grounding...");
 			ground();
-			UIMan.println("### total grounding = " + Timer.elapsed("groundOverall"));
-			
+			UIMan.verbose(3, "### total grounding = " + Timer.elapsed("groundOverall"));
+
 			if (Timer.hasTimedOut()) {
 				ExceptionMan.die("Tuffy timed out");
 			}
@@ -40,22 +40,22 @@ public class NonPartInfer extends Infer{
 			MRF mrf = null;
 			
 //			if((!opt.marginal && !opt.mle) || opt.dual){
-//				UIMan.println(">>> Running MAP inference...");
+//				UIMan.verbose(3, ">>> Running MAP inference...");
 //				String mapfout = options.fout;
 //				if(opt.dual) mapfout += ".map";
 //	
-//				UIMan.println("    Loading MRF from DB to RAM...");
+//				UIMan.verbose(3, "    Loading MRF from DB to RAM...");
 //				mrf = dmover.loadSimpleMrfFromDb(mln.relAtoms, mln.relClauses);
 //				mrf.inferWalkSAT(options.maxTries, options.maxFlips);
 //				dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms, true);
 //				
-//				UIMan.println("### Best answer has cost " + UIMan.decimalRound(2,mrf.lowCost));
-//				UIMan.println(">>> Writing answer to file: " + mapfout);
+//				UIMan.verbose(3, "### Best answer has cost " + UIMan.decimalRound(2,mrf.lowCost));
+//				UIMan.verbose(3, ">>> Writing answer to file: " + mapfout);
 //				dmover.dumpTruthToFile(mln.relAtoms, mapfout);
 //			}
 	
 			if((opt.marginal && !opt.mle) || opt.dual){
-				UIMan.println(">>> Running marginal inference...");
+				UIMan.verbose(3, ">>> Running marginal inference...");
 				String mfout = options.fout;
 				if(opt.dual) mfout += ".marginal";
 				
@@ -67,14 +67,14 @@ public class NonPartInfer extends Infer{
 							
 				if (Config.unitPropagate) {
 					Timer.start("fullUnitPropagate");
-					UIMan.println(">>> Starting unit propagation...");
+					UIMan.verbose(3, ">>> Starting unit propagation...");
 					mrf = mrf.unitPropagateAndGetNewMRF();
 					dmover.writeMRFClausesToTable(mrf, mln.relClauses);
 					writeClausesToFile();
 					writeWCNFToFile();
-					UIMan.println("### MRF Size After Unit Prop: atoms = " + mrf.atoms.size() + "; clauses = " + mrf.clauses.size());
+					UIMan.verbose(3, "### MRF Size After Unit Prop: atoms = " + mrf.atoms.size() + "; clauses = " + mrf.clauses.size());
 					Stats.javaUPGroundingTimeMs += Timer.elapsedMilliSeconds("fullUnitPropagate");
-					UIMan.println("### total unit propagation = " + Timer.elapsed("fullUnitPropagate"));
+					UIMan.verbose(3, "### total unit propagation = " + Timer.elapsed("fullUnitPropagate"));
 				}
 				
 //				Stats.numberGroundAtoms = mrf.atoms.size();
@@ -89,34 +89,35 @@ public class NonPartInfer extends Infer{
 				MRF.computeStats(mrf);
 				
 				Timer.start("mcsat");
-				UIMan.println(">>>Starting MC-Sat...");
+				UIMan.verbose(3, ">>>Starting MC-Sat...");
 				double sumCost = mrf.mcsat(options.mcsatSamples, options.maxFlips);
-				UIMan.println("### total mcsat = " + Timer.elapsed("mcsat"));
+				UIMan.verbose(3, "### total mcsat = " + Timer.elapsed("mcsat"));
 				dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms);
 		
-				UIMan.println("### Average Cost = " + UIMan.decimalRound(2,sumCost/options.mcsatSamples));
+				UIMan.verbose(3, "### Average Cost = " + UIMan.decimalRound(2,sumCost/options.mcsatSamples));
 				
-				UIMan.println(">>> Writing answer to file: " + mfout);
+				UIMan.verbose(3, ">>> Writing answer to file: " + mfout);
 				dmover.dumpProbsToFile(mln.relAtoms, mfout);
+                UIMan.verbose(3, ">>> Written answer to file: " + mfout);
 
-				UIMan.println(Stats.numberGroundClauses +"");
-				UIMan.println(Stats.numberUnits +"");
-				UIMan.println(Stats.numberGroundAtoms +"");
-				UIMan.println(Stats.numberSamplesAtTimeout+"");
-				UIMan.println(Stats.numberClausesAtTimeout+"");
-				UIMan.println(Stats.glucoseTimeMs+"");
-				UIMan.println(Stats.javaUPGroundingTimeMs +"");
-				UIMan.println(Stats.mcsatStepsWhereSampleSatFails +"");
+				UIMan.verbose(3, "numberGroundClauses                     : " + Stats.numberGroundClauses);
+				UIMan.verbose(3, "numberUnits                             : " + Stats.numberUnits);
+				UIMan.verbose(3, "numberGroundAtoms                       : " + Stats.numberGroundAtoms);
+				UIMan.verbose(3, "numberSamplesAtTimeout                  : " + Stats.numberSamplesAtTimeout);
+				UIMan.verbose(3, "numberClausesAtTimeout                  : " + Stats.numberClausesAtTimeout);
+				UIMan.verbose(3, "glucoseTimeMs                           : " + Stats.glucoseTimeMs);
+				UIMan.verbose(3, "javaUPGroundingTimeMs                   : " + Stats.javaUPGroundingTimeMs);
+				UIMan.verbose(3, "mcsatStepsWhereSampleSatFails           : " + Stats.mcsatStepsWhereSampleSatFails);
 				
-				UIMan.println("WalkSAT Random Step Prob: (-randomStep)" + Config.walksat_random_step_probability);
-				UIMan.println("Simulated Annealing Step Prob: (-saProb)" + Config.simulatedAnnealingSampleSATProb);
-				UIMan.println("Simulated Annealing inverse temp: (-sa)" + Config.samplesat_sa_coef);
-				UIMan.println("Number MC-SAT Samples: (-mcsatSamples)" + options.mcsatSamples);
-				UIMan.println("Number Flips: (-maxFlips)" + options.maxFlips);
+				UIMan.verbose(3, "WalkSAT Random Step Prob (-randomStep)  : " + Config.walksat_random_step_probability);
+				UIMan.verbose(3, "Simulated Annealing Step Prob (-saProb) : " + Config.simulatedAnnealingSampleSATProb);
+				UIMan.verbose(3, "Simulated Annealing inverse temp (-sa)  : " + Config.samplesat_sa_coef);
+				UIMan.verbose(3, "Number MC-SAT Samples (-mcsatSamples)   : " + options.mcsatSamples);
+				UIMan.verbose(3, "Number Flips (-maxFlips)                : " + options.maxFlips);
 			}
 			
 //			if(opt.mle){
-//				UIMan.println(">>> Running MLE inference...");
+//				UIMan.verbose(3, ">>> Running MLE inference...");
 //				String mfout = options.fout;
 //				if(opt.dual) mfout += ".mle";
 //				
@@ -130,9 +131,9 @@ public class NonPartInfer extends Infer{
 //				
 //				dmover.flushAtomStates(mrf.atoms.values(), mln.relAtoms, true);
 //		
-//				UIMan.println("### Prob = " + UIMan.decimalRound(2,sumCost));
+//				UIMan.verbose(3, "### Prob = " + UIMan.decimalRound(2,sumCost));
 //				
-//				UIMan.println(">>> Writing answer to file: " + mfout);
+//				UIMan.verbose(3, ">>> Writing answer to file: " + mfout);
 //				dmover.dumpTruthToFile(mln.relAtoms, mfout);
 //				
 //				int solutionid = 0;
@@ -153,20 +154,20 @@ public class NonPartInfer extends Infer{
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			db.close();
-			UIMan.println(Stats.numberGroundClauses +"");
-			UIMan.println(Stats.numberUnits +"");
-			UIMan.println(Stats.numberGroundAtoms +"");
-			UIMan.println(Stats.numberSamplesAtTimeout+"");
-			UIMan.println(Stats.numberClausesAtTimeout+"");
-			UIMan.println(Stats.glucoseTimeMs+"");
-			UIMan.println(Stats.javaUPGroundingTimeMs +"");
-			UIMan.println(Stats.mcsatStepsWhereSampleSatFails +"");
+			UIMan.verbose(3, Stats.numberGroundClauses +"");
+			UIMan.verbose(3, Stats.numberUnits +"");
+			UIMan.verbose(3, Stats.numberGroundAtoms +"");
+			UIMan.verbose(3, Stats.numberSamplesAtTimeout+"");
+			UIMan.verbose(3, Stats.numberClausesAtTimeout+"");
+			UIMan.verbose(3, Stats.glucoseTimeMs+"");
+			UIMan.verbose(3, Stats.javaUPGroundingTimeMs +"");
+			UIMan.verbose(3, Stats.mcsatStepsWhereSampleSatFails +"");
 			
-			UIMan.println("WalkSAT Random Step Prob: (-randomStep)" + Config.walksat_random_step_probability);
-			UIMan.println("Simulated Annealing Step Prob: (-saProb)" + Config.simulatedAnnealingSampleSATProb);
-			UIMan.println("Simulated Annealing inverse temp: (-sa)" + Config.samplesat_sa_coef);
-			UIMan.println("Number MC-SAT Samples: (-mcsatSamples)" + options.mcsatSamples);
-			UIMan.println("Number Flips: (-maxFlips)" + options.maxFlips);
+			UIMan.verbose(3, "WalkSAT Random Step Prob: (-randomStep)" + Config.walksat_random_step_probability);
+			UIMan.verbose(3, "Simulated Annealing Step Prob: (-saProb)" + Config.simulatedAnnealingSampleSATProb);
+			UIMan.verbose(3, "Simulated Annealing inverse temp: (-sa)" + Config.samplesat_sa_coef);
+			UIMan.verbose(3, "Number MC-SAT Samples: (-mcsatSamples)" + options.mcsatSamples);
+			UIMan.verbose(3, "Number Flips: (-maxFlips)" + options.maxFlips);
 			
 			throw e1;
 		}
