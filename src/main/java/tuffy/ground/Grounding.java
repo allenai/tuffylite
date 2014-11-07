@@ -1128,7 +1128,7 @@ public class Grounding {
 			if (Config.verbose_level == 1)
 				UIMan.print(".");
 			UIMan.verboseInline(2, ">>> Grounding clause " + (clsidx++) + " / " + clstotal);
-            UIMan.verbose(4, "\n" + c.toString());
+			UIMan.verbose(4, "\n" + c.toString());
 			UIMan.verbose(4, sql);
 			sql = "INSERT INTO " + cbuffer + "\n" + sql;
 			Timer.start("gnd");
@@ -1140,13 +1140,13 @@ public class Grounding {
 
 			UIMan.verboseInline(2, " | " + Timer.elapsed("gnd"));
 			UIMan.verboseInline(2, " | " + UIMan.comma(db.getLastUpdateRowCount()) + " new clauses");
-            UIMan.verboseInline(2, " | " + UIMan.comma(totalclauses) + " total clauses");
+			UIMan.verboseInline(2, " | " + UIMan.comma(totalclauses) + " total clauses");
 
 			if ( Config.iterativeUnitPropagate && c.isHardClauseOrTemplate() ) {
 				// prune:
 				// find hard clauses
 				Timer.start("iterativeUP");
-                UIMan.verboseInline(3, " | new units");
+				UIMan.verboseInline(3, " | new units");
 				dmover.dumpCNFToFile(atoms, cbuffer, "temp.cnf");
 				try {
 					Process p;
@@ -1207,7 +1207,7 @@ public class Grounding {
 				Stats.glucoseTimeMs += Timer.elapsedMilliSeconds("iterativeUP");
 				UIMan.verboseInline(2, " | " + Timer.elapsed("iterativeUP") + " iterative UP");
 			}
-            UIMan.verbose(2, "");
+			UIMan.verbose(2, "");
 			// totalclauses += db.getLastUpdateRowCount();
 			if (Timer.elapsedSeconds("gnd") > longestSec) {
 				longestClause = c;

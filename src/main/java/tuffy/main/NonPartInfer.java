@@ -98,7 +98,7 @@ public class NonPartInfer extends Infer{
 				
 				UIMan.verbose(3, ">>> Writing answer to file: " + mfout);
 				dmover.dumpProbsToFile(mln.relAtoms, mfout);
-                UIMan.verbose(3, ">>> Written answer to file: " + mfout);
+				UIMan.verbose(3, ">>> Written answer to file: " + mfout);
 
 				UIMan.verbose(3, "numberGroundClauses                     : " + Stats.numberGroundClauses);
 				UIMan.verbose(3, "numberUnits                             : " + Stats.numberUnits);
