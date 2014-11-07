@@ -8,6 +8,8 @@ description := "An internal version of Tuffy downloaded from: http://i.stanford.
 
 Publish.settings
 
+publishArtifact in (Compile, packageDoc) := false   // to avoid "javadoc: error - invalid flag: -target"
+
 resolvers ++= Seq("AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
                         "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",
                         "Sonatype SNAPSHOTS" at "https://oss.sonatype.org/content/repositories/snapshots/",
