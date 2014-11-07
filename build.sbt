@@ -2,11 +2,13 @@ name := "tuffy-internal"
 
 organization := "edu.stanford.hazy"
 
-version := "0.4.1-SNAPSHOT"
+version := "0.4.2-SNAPSHOT"
 
 description := "An internal version of Tuffy downloaded from: http://i.stanford.edu/hazy/tuffy/download/"
 
 Publish.settings
+
+publishArtifact in (Compile, packageDoc) := false   // to avoid "javadoc: error - invalid flag: -target"
 
 resolvers ++= Seq("AllenAI Snapshots" at "http://utility.allenai.org:8081/nexus/content/repositories/snapshots",
                         "AllenAI Releases" at "http://utility.allenai.org:8081/nexus/content/repositories/releases",

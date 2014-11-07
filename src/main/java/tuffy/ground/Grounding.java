@@ -367,7 +367,7 @@ public class Grounding {
 						+ p.getRelAct()
 						+ " ta "
 						+ " ON p.id=ta.id WHERE p.atomid>0 or ta.id IS NOT NULL";
-				UIMan.verbose(2, sql);
+				UIMan.verbose(4, sql);
 				db.update(sql);
 			} else {
 				sql = "INSERT INTO "
@@ -382,7 +382,7 @@ public class Grounding {
 						+ p.getRelAct()
 						+ " ta "
 						+ " ON p.id=ta.id WHERE p.atomid>0 or ta.id IS NOT NULL";
-				UIMan.verbose(2, sql);
+				UIMan.verbose(4, sql);
 				db.update(sql);
 			}
 
@@ -395,9 +395,9 @@ public class Grounding {
 
 			// UIMan.verbose(3, "----- popularting " + p + "\t" +
 			// db.explain(sql));
-			UIMan.verbose(2, sql);
+			UIMan.verbose(4, sql);
 			db.update(sql);
-			UIMan.verbose(2, "analyzing table");
+			UIMan.verbose(4, "analyzing table");
 			db.vacuum(p.getRelName());
 			db.analyze(p.getRelName());
 
@@ -1127,9 +1127,9 @@ public class Grounding {
 //			}
 			if (Config.verbose_level == 1)
 				UIMan.print(".");
-			UIMan.verbose(2, ">>> Grounding clause " + (clsidx++) + " / "
-					+ clstotal + "\n" + c.toString());
-			UIMan.verbose(3, sql);
+			UIMan.verboseInline(2, ">>> Grounding clause " + (clsidx++) + " / " + clstotal);
+			UIMan.verbose(4, "\n" + c.toString());
+			UIMan.verbose(4, sql);
 			sql = "INSERT INTO " + cbuffer + "\n" + sql;
 			Timer.start("gnd");
 
@@ -1138,17 +1138,15 @@ public class Grounding {
 			// report stats
 			totalclauses += db.getLastUpdateRowCount();
 
-			UIMan.verbose(2, "### took " + Timer.elapsed("gnd"));
-			UIMan.verbose(
-					2,
-					"### new clauses = "
-							+ UIMan.comma(db.getLastUpdateRowCount())
-							+ "; total = " + UIMan.comma(totalclauses) + "\n");
+			UIMan.verboseInline(2, " | " + Timer.elapsed("gnd"));
+			UIMan.verboseInline(2, " | " + UIMan.comma(db.getLastUpdateRowCount()) + " new clauses");
+			UIMan.verboseInline(2, " | " + UIMan.comma(totalclauses) + " total clauses");
 
 			if ( Config.iterativeUnitPropagate && c.isHardClauseOrTemplate() ) {
 				// prune:
 				// find hard clauses
 				Timer.start("iterativeUP");
+				UIMan.verboseInline(3, " | new units");
 				dmover.dumpCNFToFile(atoms, cbuffer, "temp.cnf");
 				try {
 					Process p;
@@ -1168,7 +1166,7 @@ public class Grounding {
 					         new BufferedReader(new InputStreamReader(p.getInputStream()));
 					String line = "";			
 					line = reader.readLine();
-					UIMan.verbose(3, line);
+					UIMan.verbose(4, line);
 					if (line != null) {
 						String[] parts = line.split(" ");
 						for (int i = 1; i < parts.length; i++) {
@@ -1178,7 +1176,7 @@ public class Grounding {
 								continue;
 							}
 
-							UIMan.verbose(3, "New unit: " + literal);
+							UIMan.verboseInline(3, " " + literal);
 							hardUnits.add(literal);
 							
 							boolean truth_val = literal > 0;
@@ -1207,9 +1205,9 @@ public class Grounding {
 
 				// report stats after pruning
 				Stats.glucoseTimeMs += Timer.elapsedMilliSeconds("iterativeUP");
-				UIMan.verbose(2,
-						"### iterative UP took " + Timer.elapsed("iterativeUP"));
+				UIMan.verboseInline(2, " | " + Timer.elapsed("iterativeUP") + " iterative UP");
 			}
+			UIMan.verbose(2, "");
 			// totalclauses += db.getLastUpdateRowCount();
 			if (Timer.elapsedSeconds("gnd") > longestSec) {
 				longestClause = c;

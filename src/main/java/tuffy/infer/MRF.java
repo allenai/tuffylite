@@ -1643,8 +1643,6 @@ public class MRF {
     	return sampleSAT(nSteps, false);
     }
 	public boolean sampleSAT(long nSteps, boolean walkSATMode){
-		UIMan.verbose(3, "    Running SampleSAT for " + UIMan.comma(nSteps) + " flips...");
-
 //		printSampledClauses();
 		
 		if (sampledClauses.size() == 0) {
@@ -1977,7 +1975,7 @@ public class MRF {
 		
 		initStrategy = INIT_STRATEGY.COIN_FLIP;
 		
-		UIMan.println(">>> Running MC-SAT for " + numSamples + " samples...");
+		UIMan.verbose(3, ">>> Running MC-SAT for " + numSamples + " samples...");
 		
 		// init
 		UIMan.verbose(1, ">>> MC-SAT INIT: running WalkSAT on hard clauses...");
@@ -1988,9 +1986,10 @@ public class MRF {
 		UIMan.verbose(1, "### hard clauses = " + sampledClauses.size());
 		
 		boolean foundSatisfyingAssignment = false;
+		UIMan.verbose(3, "    Using " + UIMan.comma(numFlips) + " flips in SampleSAT per sample...");
 		foundSatisfyingAssignment = sampleSAT(numFlips, true);
 		
-		UIMan.println("### Found initial satisfying assignment: " + foundSatisfyingAssignment);
+		UIMan.verbose(3, "### Found initial satisfying assignment: " + foundSatisfyingAssignment);
 		if (!foundSatisfyingAssignment) {
 			ExceptionMan.die("WalkSAT failed to satisfy hard clauses");
 		}
@@ -2023,12 +2022,14 @@ public class MRF {
 				}
 			}
 
-			UIMan.verbose(3, ">>> MC-SAT Sample #" + i + "");
-			
+			UIMan.verbose(4, ">>> MC-SAT Sample #" + i + "");
+			UIMan.verboseInline(3, ".");
+
 			sumCost += performMCSatStep(numFlips);
 			int curTime = (int) Timer.elapsedSeconds();
 
 		}
+		UIMan.verbose(3, "");
 
 
 		updateAtomMarginalProbs(numSamples);
@@ -2176,7 +2177,7 @@ public class MRF {
 			 		   // here if very few soft clauses and none get picked by MC-SAT in this round
 		}
 		
-		UIMan.verbose(2, "    Retained #clauses = " + UIMan.comma(sampledClauses.size()) + 
+		UIMan.verbose(4, "    Retained #clauses = " + UIMan.comma(sampledClauses.size()) +
 				" out of " + UIMan.comma(clauses.size()) + " total clauses");
 		
 //		retainSomeGoodClauses();
@@ -2225,9 +2226,6 @@ public class MRF {
 				}
 			}
 			if (adj.get(-lit) != null) {
-				if (-lit == 3) {
-					UIMan.println("here");
-				}
 				for (GClause cee : adj.get(-lit)) {
 					if (cee.weight < 0) {
 						continue;

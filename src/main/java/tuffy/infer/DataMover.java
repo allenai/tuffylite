@@ -128,6 +128,7 @@ public class DataMover {
 			//System.gc(); disabling this
 			// load clauses
 			UIMan.verbose(3, "Selecting clauses from DB...");
+			UIMan.verboseInline(3, "skipping tautological clauses: ");
 			while(rs.next()){
 				if (Timer.hasTimedOut()) {
 					rs.close();
@@ -141,9 +142,10 @@ public class DataMover {
 				if (!f.tautology) {
 					mrf.clauses.add(f);
 				} else {
-					UIMan.verbose(3, "skipping tautological clause");
+					UIMan.verboseInline(3, ".");
 				}
 			}
+			UIMan.verbose(3, "");
 			rs.close();
 
 			//System.gc(); disabling this
