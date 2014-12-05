@@ -693,11 +693,12 @@ public class MarkovLogicNetwork implements Cloneable{
 					ExceptionMan.handle(e);
 				}
 			}
-			try {
-				DebugMan.runGC();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+            // TODO(ashish33) Check if GC is really needed; commenting out for now
+//			try {
+//				DebugMan.runGC();
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
 		}
 	}
 
@@ -767,13 +768,14 @@ public class MarkovLogicNetwork implements Cloneable{
 		UIMan.verbose(1, "    constants = " + mapConstantID.size());
 		db.createConstantTable(mapConstantID, Config.relConstants);
 		mapConstantID = null;
-		try {
-			DebugMan.runGC();
-			DebugMan.runGC();
-			DebugMan.runGC();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+        // TODO(ashish33) Check if GC is really needed; commenting out for now
+//		try {
+//			DebugMan.runGC();
+//			DebugMan.runGC();
+//			DebugMan.runGC();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 		materializeAllTypes(db);
 		UIMan.println(">>> Storing evidence...");
 		storeAllEvidence();
