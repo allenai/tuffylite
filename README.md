@@ -36,5 +36,5 @@ On the down side, TuffyLite focuses mainly on the inference aspect, especially m
 
 ## Contact
 
-Please contact [Erik Gribkoff](http://homes.cs.washington.edu/~eagribko) or [Ashish Sabharwal](http://ashishs.people.allenai.org) if you have any questions or comments.
+Please contact [Eric Gribkoff](http://homes.cs.washington.edu/~eagribko) or [Ashish Sabharwal](http://ashishs.people.allenai.org) if you have any questions or comments.
 
