@@ -1,4 +1,4 @@
-# TuffyLite
+# TuffyLite [![Build Status](https://semaphoreci.com/api/v1/allenai/tuffylite/branches/master/badge.svg)](https://semaphoreci.com/allenai/tuffylite)
 
 TuffyLite is a modified version of the open source [Tuffy solver](http://hazy.cs.wisc.edu/hazy/tuffy) for performing inference with Markov Logic Networks (MLNs). Specifically, it is an inference-only variant of [Tuffy version 0.3](http://hazy.cs.wisc.edu/hazy/tuffy/download/tuffy-src-0.3-mar2014.zip) implementing the changes described in the following paper:
 
