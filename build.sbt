@@ -7,7 +7,7 @@ lazy val buildSettings = Seq(
   publishArtifact in (Compile, packageDoc) := false   // to avoid "javadoc: error - invalid flag: -target"
 )
 
-lazy val openie = Project(id = "tuffy-internal", base = file("."))
+lazy val tuffy = Project(id = "tuffy-internal", base = file("."))
   .settings(buildSettings)
   .settings(PublishTo.ai2BintrayPublic)
 
