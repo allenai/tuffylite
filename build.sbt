@@ -1,5 +1,3 @@
-import org.allenai.plugins.CoreDependencies
-
 lazy val buildSettings = Seq(
   organization := "edu.stanford.hazy",
   description := "An internal version of Tuffy downloaded from: http://i.stanford.edu/hazy/tuffy/download/",
@@ -13,7 +11,6 @@ lazy val tuffy = Project(id = "tuffy-internal", base = file("."))
 
 resolvers ++= Seq(
   "scala-tools.org" at "http://scala-tools.org/repo-releases",
-  "Sonatype SNAPSHOTS" at "https://oss.sonatype.org/content/repositories/snapshots/",
   "conjars" at "http://conjars.org/repo",
   "apache.releases" at "https://repository.apache.org/content/repositories/releases"
 )
