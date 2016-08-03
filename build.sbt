@@ -1,8 +1,11 @@
+import org.allenai.plugins.CoreRepositories.Licenses
+
 lazy val buildSettings = Seq(
   organization := "edu.stanford.hazy",
   description := "An internal version of Tuffy downloaded from: http://i.stanford.edu/hazy/tuffy/download/",
   publishMavenStyle := true,
-  publishArtifact in (Compile, packageDoc) := false   // to avoid "javadoc: error - invalid flag: -target"
+  publishArtifact in (Compile, packageDoc) := false,   // to avoid "javadoc: error - invalid flag: -target"
+  licenses += Licenses.apache2
 )
 
 lazy val tuffy = Project(id = "tuffy-internal", base = file("."))
