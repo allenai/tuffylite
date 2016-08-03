@@ -5,7 +5,21 @@ lazy val buildSettings = Seq(
   description := "An internal version of Tuffy downloaded from: http://i.stanford.edu/hazy/tuffy/download/",
   publishMavenStyle := true,
   publishArtifact in (Compile, packageDoc) := false,   // to avoid "javadoc: error - invalid flag: -target"
-  licenses += Licenses.apache2
+  licenses += Licenses.apache2,
+  homepage := Some(url("https://github.com/allenai/tuffylite")),
+  scmInfo := Some(ScmInfo(
+    url("https://github.com/allenai/tuffylite"),
+    "https://github.com/allenai/tuffylite.git")),
+  pomExtra := (
+    <developers>
+      <developer>
+        <id>allenai-dev-role</id>
+        <name>Allen Institute for Artificial Intelligence</name>
+        <email>dev-role@allenai.org</email>
+      </developer>
+    </developers>),
+  // TODO (colinarenz): When this is included in sbt-plugins, it can be removed.
+  bintrayOrganization := Some("allenai")
 )
 
 lazy val tuffy = Project(id = "tuffy-internal", base = file("."))
